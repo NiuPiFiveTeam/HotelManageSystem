@@ -46588,6 +46588,34 @@ Ext.define('Ext.overrides.dom.Helper', function() {
     return node;
   }};
 }());
+Ext.define('Ext.data.proxy.Rest', {extend:Ext.data.proxy.Ajax, alternateClassName:'Ext.data.RestProxy', alias:'proxy.rest', defaultActionMethods:{create:'POST', read:'GET', update:'PUT', destroy:'DELETE'}, slashRe:/\/$/, periodRe:/\.$/, config:{appendId:true, format:null, batchActions:false, actionMethods:{create:'POST', read:'GET', update:'PUT', destroy:'DELETE'}}, buildUrl:function(request) {
+  var me = this, operation = request.getOperation(), records = operation.getRecords(), record = records ? records[0] : null, format = me.getFormat(), url = me.getUrl(request), id, params;
+  if (record && !record.phantom) {
+    id = record.getId();
+  } else {
+    id = operation.getId();
+  }
+  if (me.getAppendId() && me.isValidId(id)) {
+    if (!url.match(me.slashRe)) {
+      url += '/';
+    }
+    url += encodeURIComponent(id);
+    params = request.getParams();
+    if (params) {
+      delete params[me.getIdParam()];
+    }
+  }
+  if (format) {
+    if (!url.match(me.periodRe)) {
+      url += '.';
+    }
+    url += format;
+  }
+  request.setUrl(url);
+  return me.callParent([request]);
+}, isValidId:function(id) {
+  return id || id === 0;
+}});
 Ext.define('Ext.dom.GarbageCollector', {singleton:true, interval:30000, constructor:function() {
   var me = this;
   me.lastTime = Ext.now();
@@ -60933,6 +60961,312 @@ Ext.define('Ext.dd.DDTarget', {extend:Ext.dd.DragDrop, constructor:function(id, 
 setOuterHandleElId:Ext.emptyFn, addInvalidHandleClass:Ext.emptyFn, addInvalidHandleId:Ext.emptyFn, addInvalidHandleType:Ext.emptyFn, removeInvalidHandleClass:Ext.emptyFn, removeInvalidHandleId:Ext.emptyFn, removeInvalidHandleType:Ext.emptyFn, toString:function() {
   return 'DDTarget ' + this.id;
 }});
+Ext.define('Ext.dd.ScrollManager', {singleton:true, vthresh:25 * (window.devicePixelRatio || 1), hthresh:25 * (window.devicePixelRatio || 1), increment:100, frequency:500, animate:true, animDuration:0.4, ddGroup:undefined, dirTrans:{up:-1, left:-1, down:1, right:1}, constructor:function() {
+  var ddm = Ext.dd.DragDropManager;
+  ddm.fireEvents = Ext.Function.createSequence(ddm.fireEvents, this.onFire, this);
+  ddm.stopDrag = Ext.Function.createSequence(ddm.stopDrag, this.onStop, this);
+  this.doScroll = this.doScroll.bind(this);
+  this.ddmInstance = ddm;
+  this.els = {};
+  this.dragEl = null;
+  this.proc = {};
+}, onStop:function(e) {
+  var sm = Ext.dd.ScrollManager;
+  sm.dragEl = null;
+  sm.clearProc();
+}, triggerRefresh:function() {
+  if (this.ddmInstance.dragCurrent) {
+    this.ddmInstance.refreshCache(this.ddmInstance.dragCurrent.groups);
+  }
+}, doScroll:function() {
+  var me = this;
+  if (me.ddmInstance.dragCurrent) {
+    var proc = me.proc, procEl = proc.el, scrollComponent = proc.component, ddScrollConfig = proc.el.ddScrollConfig, distance = ddScrollConfig && ddScrollConfig.increment ? ddScrollConfig.increment : me.increment, animate = ddScrollConfig && 'animate' in ddScrollConfig ? ddScrollConfig.animate : me.animate, afterScroll = function() {
+      me.triggerRefresh();
+    };
+    if (animate) {
+      if (animate === true) {
+        animate = {callback:afterScroll};
+      } else {
+        animate.callback = animate.callback ? Ext.Function.createSequence(animate.callback, afterScroll) : afterScroll;
+      }
+    }
+    if (scrollComponent) {
+      distance = distance * me.dirTrans[proc.dir];
+      if (proc.dir === 'up' || proc.dir === 'down') {
+        scrollComponent.scrollBy(0, distance, animate);
+      } else {
+        scrollComponent.scrollBy(distance, 0, animate);
+      }
+    } else {
+      procEl.scroll(proc.dir, distance, animate);
+    }
+    if (!animate) {
+      afterScroll();
+    }
+  }
+}, clearProc:function() {
+  var proc = this.proc;
+  if (proc.id) {
+    Ext.uninterval(proc.id);
+  }
+  proc.id = 0;
+  proc.el = null;
+  proc.dir = '';
+}, startProc:function(el, dir) {
+  var me = this, proc = me.proc, group, freq;
+  me.clearProc();
+  proc.el = el;
+  proc.dir = dir;
+  group = el.ddScrollConfig ? el.ddScrollConfig.ddGroup : undefined;
+  freq = el.ddScrollConfig && el.ddScrollConfig.frequency ? el.ddScrollConfig.frequency : me.frequency;
+  if (group === undefined || me.ddmInstance.dragCurrent.ddGroup === group) {
+    proc.id = Ext.interval(me.doScroll, freq);
+  }
+}, onFire:function(e, isDrop) {
+  var me = this, pt, proc, els, id, el, elementRegion, configSource, ownerCt, scrollerOwner;
+  if (isDrop || !me.ddmInstance.dragCurrent) {
+    return;
+  }
+  if (!me.dragEl || me.dragEl !== me.ddmInstance.dragCurrent) {
+    me.dragEl = me.ddmInstance.dragCurrent;
+    me.refreshCache();
+  }
+  pt = e.getPoint();
+  proc = me.proc;
+  els = me.els;
+  for (id in els) {
+    el = els[id];
+    elementRegion = el.getRegion();
+    configSource = el.ddScrollConfig || me;
+    if (elementRegion && elementRegion.contains(pt)) {
+      if (!el.isScrollable()) {
+        ownerCt = el.component && el.component.ownerCt;
+        scrollerOwner = ownerCt && ownerCt.getScrollerOwner && ownerCt.getScrollerOwner();
+        if (scrollerOwner) {
+          el = scrollerOwner.getScrollable().getElement();
+          elementRegion = el.getRegion();
+        } else {
+          continue;
+        }
+      }
+      if (elementRegion.bottom - pt.y <= configSource.vthresh) {
+        if (proc.el !== el) {
+          me.startProc(el, 'down');
+        }
+        return;
+      } else {
+        if (elementRegion.right - pt.x <= configSource.hthresh) {
+          if (proc.el !== el) {
+            me.startProc(el, 'right');
+          }
+          return;
+        } else {
+          if (pt.y - elementRegion.top <= configSource.vthresh) {
+            if (proc.el !== el) {
+              me.startProc(el, 'up');
+            }
+            return;
+          } else {
+            if (pt.x - elementRegion.left <= configSource.hthresh) {
+              if (proc.el !== el) {
+                me.startProc(el, 'left');
+              }
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+  me.clearProc();
+}, register:function(el) {
+  if (Ext.isArray(el)) {
+    for (var i = 0, len = el.length; i < len; i++) {
+      this.register(el[i]);
+    }
+  } else {
+    el = Ext.get(el);
+    this.els[el.id] = el;
+  }
+}, unregister:function(el) {
+  if (Ext.isArray(el)) {
+    for (var i = 0, len = el.length; i < len; i++) {
+      this.unregister(el[i]);
+    }
+  } else {
+    el = Ext.get(el);
+    delete this.els[el.id];
+  }
+}, refreshCache:function() {
+  var els = this.els, id;
+  for (id in els) {
+    if (typeof els[id] === 'object') {
+      els[id]._region = els[id].getRegion();
+    }
+  }
+}});
+Ext.define('Ext.dd.DropTarget', {extend:Ext.dd.DDTarget, constructor:function(el, config) {
+  this.el = Ext.get(el);
+  Ext.apply(this, config);
+  if (this.containerScroll) {
+    Ext.dd.ScrollManager.register(this.el);
+  }
+  this.callParent([this.el.dom, this.ddGroup || this.group, {isTarget:true}]);
+}, containerScroll:false, dropAllowed:Ext.baseCSSPrefix + 'dd-drop-ok', dropNotAllowed:Ext.baseCSSPrefix + 'dd-drop-nodrop', isTarget:true, isNotifyTarget:true, notifyEnter:function(source, e, data) {
+  if (this.overClass) {
+    this.el.addCls(this.overClass);
+  }
+  return this.dropAllowed;
+}, notifyOver:function(source, e, data) {
+  return this.dropAllowed;
+}, notifyOut:function(source, e, data) {
+  if (this.overClass) {
+    this.el.removeCls(this.overClass);
+  }
+}, notifyDrop:function(source, e, data) {
+  if (this.overClass) {
+    this.el.removeCls(this.overClass);
+  }
+  return false;
+}, destroy:function() {
+  if (this.containerScroll) {
+    Ext.dd.ScrollManager.unregister(this.el);
+  }
+  this.callParent();
+}});
+Ext.define('Ext.dd.DragZone', {extend:Ext.dd.DragSource, constructor:function(el, config) {
+  var me = this, scroll;
+  me.callParent([el, config]);
+  scroll = me.containerScroll;
+  if (scroll) {
+    el = me.scrollEl || el;
+    el = Ext.get(el);
+    if (Ext.isObject(scroll)) {
+      el.ddScrollConfig = scroll;
+    }
+    Ext.dd.ScrollManager.register(el);
+  }
+}, getDragData:function(e) {
+  return Ext.dd.Registry.getHandleFromEvent(e);
+}, onInitDrag:function(x, y) {
+  this.proxy.update(this.dragData.ddel.cloneNode(true));
+  this.onStartDrag(x, y);
+  return true;
+}, getRepairXY:function(e) {
+  return Ext.fly(this.dragData.ddel).getXY();
+}, destroy:function() {
+  if (this.containerScroll) {
+    Ext.dd.ScrollManager.unregister(this.scrollEl || this.el);
+  }
+  this.callParent();
+}});
+Ext.define('Ext.dd.Registry', {singleton:true, constructor:function() {
+  this.elements = {};
+  this.handles = {};
+  this.autoIdSeed = 0;
+}, getId:function(el, autogen) {
+  if (typeof el === 'string') {
+    return el;
+  }
+  var id = el.id;
+  if (!id && autogen !== false) {
+    id = 'extdd-' + ++this.autoIdSeed;
+    el.id = id;
+  }
+  return id;
+}, register:function(el, data) {
+  data = data || {};
+  if (typeof el === 'string') {
+    el = document.getElementById(el);
+  }
+  data.ddel = el;
+  this.elements[this.getId(el)] = data;
+  if (data.isHandle !== false) {
+    this.handles[data.ddel.id] = data;
+  }
+  if (data.handles) {
+    var hs = data.handles, i, len;
+    for (i = 0, len = hs.length; i < len; i++) {
+      this.handles[this.getId(hs[i])] = data;
+    }
+  }
+}, unregister:function(el) {
+  var id = this.getId(el, false), data = this.elements[id], hs, i, len;
+  if (data) {
+    delete this.elements[id];
+    if (data.handles) {
+      hs = data.handles;
+      for (i = 0, len = hs.length; i < len; i++) {
+        delete this.handles[this.getId(hs[i], false)];
+      }
+    }
+  }
+}, getHandle:function(id) {
+  if (typeof id !== 'string') {
+    id = id.id;
+  }
+  return this.handles[id];
+}, getHandleFromEvent:function(e) {
+  var t = e.getTarget();
+  return t ? this.handles[t.id] : null;
+}, getTarget:function(id) {
+  if (typeof id !== 'string') {
+    id = id.id;
+  }
+  return this.elements[id];
+}, getTargetFromEvent:function(e) {
+  var t = e.getTarget();
+  return t ? this.elements[t.id] || this.handles[t.id] : null;
+}});
+Ext.define('Ext.dd.DropZone', {extend:Ext.dd.DropTarget, getTargetFromEvent:function(e) {
+  return Ext.dd.Registry.getTargetFromEvent(e);
+}, onNodeEnter:function(nodeData, source, e, data) {
+}, onNodeOver:function(nodeData, source, e, data) {
+  return this.dropAllowed;
+}, onNodeOut:function(nodeData, source, e, data) {
+}, onNodeDrop:function(nodeData, source, e, data) {
+  return false;
+}, onContainerOver:function(source, e, data) {
+  return this.dropNotAllowed;
+}, onContainerDrop:function(source, e, data) {
+  return false;
+}, notifyEnter:function(source, e, data) {
+  this.callParent([source, e, data]);
+  return this.dropNotAllowed;
+}, notifyOver:function(source, e, data) {
+  var me = this, n = me.getTargetFromEvent(e);
+  if (!n) {
+    if (me.lastOverNode) {
+      me.onNodeOut(me.lastOverNode, source, e, data);
+      me.lastOverNode = null;
+    }
+    return me.onContainerOver(source, e, data);
+  }
+  if (me.lastOverNode !== n) {
+    if (me.lastOverNode) {
+      me.onNodeOut(me.lastOverNode, source, e, data);
+    }
+    me.onNodeEnter(n, source, e, data);
+    me.lastOverNode = n;
+  }
+  return me.onNodeOver(n, source, e, data);
+}, notifyOut:function(source, e, data) {
+  this.callParent([source, e, data]);
+  if (this.lastOverNode) {
+    this.onNodeOut(this.lastOverNode, source, e, data);
+    this.lastOverNode = null;
+  }
+}, notifyDrop:function(source, e, data) {
+  var me = this, n = me.getTargetFromEvent(e), result = n ? me.onNodeDrop(n, source, e, data) : me.onContainerDrop(source, e, data);
+  if (me.lastOverNode) {
+    me.onNodeOut(me.lastOverNode, source, e, data);
+    me.lastOverNode = null;
+  }
+  return result;
+}, triggerCacheRefresh:function() {
+  Ext.dd.DDM.refreshCache(this.groups);
+}});
 Ext.define('Ext.event.publisher.MouseEnterLeave', {extend:Ext.event.publisher.Dom, type:'mouseEnterLeave'}, function(MouseEnterLeave) {
   var eventMap = {mouseover:'mouseenter', mouseout:'mouseleave'};
   if (!Ext.supports.MouseEnterLeave) {
@@ -63175,6 +63509,2285 @@ defaultMaxHeight:500, minWidth:null, maxWidth:null, minHeight:null, maxHeight:nu
     Ext.MessageBox = Ext.Msg = new MessageBox;
   });
 });
+Ext.define('Ext.form.field.Picker', {extend:Ext.form.field.Text, alias:'widget.pickerfield', alternateClassName:'Ext.form.Picker', config:{triggers:{picker:{handler:'onTriggerClick', scope:'this', focusOnMousedown:true}}}, renderConfig:{editable:true}, keyMap:{scope:'this', DOWN:'onDownArrow', ESC:'onEsc'}, keyMapTarget:'inputEl', isPickerField:true, matchFieldWidth:true, pickerAlign:'tl-bl?', openCls:Ext.baseCSSPrefix + 'pickerfield-open', isExpanded:false, applyTriggers:function(triggers) {
+  var me = this, picker = triggers.picker;
+  if (!picker.cls) {
+    picker.cls = me.triggerCls;
+  }
+  return me.callParent([triggers]);
+}, getSubTplData:function(fieldData) {
+  var me = this, data, ariaAttr;
+  data = me.callParent([fieldData]);
+  if (!me.ariaStaticRoles[me.ariaRole]) {
+    ariaAttr = data.ariaElAttributes;
+    if (ariaAttr) {
+      ariaAttr['aria-haspopup'] = true;
+      ariaAttr['aria-expanded'] = false;
+    }
+  }
+  return data;
+}, initEvents:function() {
+  this.callParent();
+  if (Ext.isGecko) {
+    this.inputEl.dom.setAttribute('autocomplete', 'off');
+  }
+}, updateEditable:function(editable, oldEditable) {
+  var me = this;
+  if (!editable) {
+    me.inputEl.on('click', me.onInputElClick, me);
+  } else {
+    me.inputEl.un('click', me.onInputElClick, me);
+  }
+  me.callParent([editable, oldEditable]);
+}, onEsc:function(e) {
+  if (Ext.isIE) {
+    e.preventDefault();
+  }
+  if (this.isExpanded) {
+    this.collapse();
+    e.stopEvent();
+  }
+}, onDownArrow:function(e) {
+  var me = this;
+  if (e.time - me.lastDownArrow > 150) {
+    delete me.lastDownArrow;
+  }
+  if (!me.isExpanded) {
+    e.stopEvent();
+    me.onTriggerClick(me, me.getPickerTrigger(), e);
+    me.lastDownArrow = e.time;
+  } else {
+    if (!e.stopped && e.time - me.lastDownArrow < 150) {
+      delete me.lastDownArrow;
+    }
+  }
+}, expand:function() {
+  var me = this, bodyEl, picker, doc;
+  if (me.rendered && !me.isExpanded && !me.destroyed) {
+    bodyEl = me.bodyEl;
+    picker = me.getPicker();
+    doc = Ext.getDoc();
+    picker.setMaxHeight(picker.initialConfig.maxHeight);
+    if (me.matchFieldWidth) {
+      picker.setWidth(me.bodyEl.getWidth());
+    }
+    picker.show();
+    me.isExpanded = true;
+    me.alignPicker();
+    bodyEl.addCls(me.openCls);
+    if (!me.ariaStaticRoles[me.ariaRole]) {
+      if (!me.ariaEl.dom.hasAttribute('aria-owns')) {
+        me.ariaEl.dom.setAttribute('aria-owns', picker.listEl ? picker.listEl.id : picker.el.id);
+      }
+      me.ariaEl.dom.setAttribute('aria-expanded', true);
+    }
+    me.touchListeners = doc.on({translate:false, touchstart:me.collapseIf, scope:me, delegated:false, destroyable:true});
+    me.scrollListeners = Ext.on({scroll:me.onGlobalScroll, scope:me, destroyable:true});
+    Ext.on('resize', me.alignPicker, me, {buffer:1});
+    me.fireEvent('expand', me);
+    me.onExpand();
+  }
+}, onExpand:Ext.emptyFn, alignPicker:function() {
+  var me = this, picker;
+  if (me.rendered && !me.destroyed) {
+    picker = me.getPicker();
+    if (picker.isVisible() && picker.isFloating()) {
+      me.doAlign();
+    }
+  }
+}, doAlign:function() {
+  var me = this, picker = me.picker, aboveSfx = '-above', newPos, isAbove;
+  picker.el.alignTo(me.triggerWrap, me.pickerAlign, me.pickerOffset);
+  newPos = picker.floatParent ? picker.getOffsetsTo(picker.floatParent.getTargetEl()) : picker.getXY();
+  picker.x = newPos[0];
+  picker.y = newPos[1];
+  isAbove = picker.el.getY() < me.inputEl.getY();
+  me.bodyEl[isAbove ? 'addCls' : 'removeCls'](me.openCls + aboveSfx);
+  picker[isAbove ? 'addCls' : 'removeCls'](picker.baseCls + aboveSfx);
+}, collapse:function() {
+  var me = this;
+  if (me.isExpanded && !me.destroyed && !me.destroying) {
+    var openCls = me.openCls, picker = me.picker, aboveSfx = '-above';
+    picker.hide();
+    me.isExpanded = false;
+    me.bodyEl.removeCls([openCls, openCls + aboveSfx]);
+    picker.el.removeCls(picker.baseCls + aboveSfx);
+    if (!me.ariaStaticRoles[me.ariaRole]) {
+      me.ariaEl.dom.setAttribute('aria-expanded', false);
+    }
+    me.touchListeners.destroy();
+    me.scrollListeners.destroy();
+    Ext.un('resize', me.alignPicker, me);
+    me.fireEvent('collapse', me);
+    me.onCollapse();
+  }
+}, onCollapse:Ext.emptyFn, collapseIf:function(e) {
+  var me = this;
+  if (!me.destroyed && !e.within(me.bodyEl, false, true) && !me.owns(e.target) && !Ext.fly(e.target).isFocusable()) {
+    me.collapse();
+  }
+}, getPicker:function() {
+  var me = this, picker = me.picker;
+  if (!picker) {
+    me.creatingPicker = true;
+    me.picker = picker = me.createPicker();
+    picker.ownerCmp = me;
+    delete me.creatingPicker;
+  }
+  return me.picker;
+}, onFocusLeave:function(e) {
+  this.collapse();
+  this.callParent([e]);
+}, getRefItems:function() {
+  var result = [];
+  if (this.picker) {
+    result[0] = this.picker;
+  }
+  return result;
+}, getPickerTrigger:function() {
+  return this.triggers && this.triggers.picker;
+}, createPicker:Ext.emptyFn, onInputElClick:function(e) {
+  this.onTriggerClick(this, this.getPickerTrigger(), e);
+}, onTriggerClick:function(field, trigger, e) {
+  var me = this;
+  if (!me.readOnly && !me.disabled) {
+    if (me.isExpanded) {
+      me.collapse();
+    } else {
+      me.expand();
+    }
+  }
+}, doDestroy:function() {
+  var me = this, picker = me.picker;
+  Ext.un('resize', me.alignPicker, me);
+  Ext.destroy(me.keyNav, picker);
+  if (picker) {
+    me.picker = picker.pickerField = null;
+  }
+  me.callParent();
+}, privates:{onGlobalScroll:function(scroller) {
+  var scrollEl = scroller.getElement();
+  if (!this.picker.owns(scrollEl) && scrollEl.isAncestor(this.el)) {
+    this.collapse();
+  }
+}}});
+Ext.define('Ext.selection.Model', {extend:Ext.mixin.Observable, alternateClassName:'Ext.AbstractSelectionModel', alias:'selection.abstract', mixins:[Ext.util.StoreHolder, Ext.mixin.Factoryable], factoryConfig:{defaultType:'dataviewmodel'}, $configPrefixed:false, $configStrict:false, config:{store:null, selected:{}}, isSelectionModel:true, allowDeselect:undefined, toggleOnClick:true, ordered:false, selected:null, pruneRemoved:true, suspendChange:0, ignoreRightMouseSelection:false, constructor:function(cfg) {
+  var me = this;
+  me.modes = {SINGLE:true, SIMPLE:true, MULTI:true};
+  me.callParent([cfg]);
+  me.setSelectionMode(me.mode);
+  if (me.selectionMode !== 'SINGLE') {
+    me.allowDeselect = true;
+  }
+}, updateStore:function(store, oldStore) {
+  this.bindStore(store, !oldStore);
+}, applySelected:function(selected) {
+  if (!selected.isBag && !selected.isCollection) {
+    selected = new Ext.util[this.ordered ? 'Collection' : 'Bag'](Ext.apply({rootProperty:'data'}, selected));
+  }
+  return selected;
+}, getStoreListeners:function() {
+  var me = this;
+  return {add:me.onStoreAdd, clear:me.onStoreClear, remove:me.onStoreRemove, update:me.onStoreUpdate, idchanged:me.onIdChanged, load:me.onStoreLoad, refresh:me.onStoreRefresh, pageadd:me.onPageAdd, pageremove:me.onPageRemove};
+}, onBindStore:function(store, oldStore, initial) {
+  if (!initial) {
+    this.updateSelectedInstances(this.selected);
+  }
+}, suspendChanges:function() {
+  ++this.suspendChange;
+}, resumeChanges:function() {
+  if (this.suspendChange) {
+    --this.suspendChange;
+  }
+}, selectAll:function(suppressEvent) {
+  var me = this, selections = me.store.getRange(), start = me.getSelection().length;
+  me.suspendChanges();
+  me.doSelect(selections, true, suppressEvent);
+  if (!me.destroyed) {
+    me.resumeChanges();
+    if (!suppressEvent) {
+      me.maybeFireSelectionChange(me.getSelection().length !== start);
+    }
+  }
+}, deselectAll:function(suppressEvent) {
+  var me = this, selections = me.getSelection(), selIndexes = {}, store = me.store, start = selections.length, i, l, rec;
+  for (i = 0, l = selections.length; i < l; i++) {
+    rec = selections[i];
+    selIndexes[rec.id] = store.indexOf(rec);
+  }
+  selections = Ext.Array.sort(selections, function(r1, r2) {
+    var idx1 = selIndexes[r1.id], idx2 = selIndexes[r2.id];
+    return idx1 < idx2 ? -1 : 1;
+  });
+  me.suspendChanges();
+  me.doDeselect(selections, suppressEvent);
+  if (!me.destroyed) {
+    me.resumeChanges();
+    if (!suppressEvent) {
+      me.maybeFireSelectionChange(me.getSelection().length !== start);
+    }
+  }
+}, getSelectionStart:function() {
+  return this.selectionStart;
+}, setSelectionStart:function(selection) {
+  this.selectionStart = selection;
+}, selectWithEvent:function(record, e) {
+  var me = this, isSelected = me.isSelected(record), shift = e.shiftKey;
+  switch(me.selectionMode) {
+    case 'MULTI':
+      me.selectWithEventMulti(record, e, isSelected);
+      break;
+    case 'SIMPLE':
+      me.selectWithEventSimple(record, e, isSelected);
+      break;
+    case 'SINGLE':
+      me.selectWithEventSingle(record, e, isSelected);
+      break;
+  }
+  if (me.destroyed) {
+    return;
+  }
+  if (!shift) {
+    if (me.isSelected(record)) {
+      me.selectionStart = record;
+    } else {
+      me.selectionStart = null;
+    }
+  }
+}, vetoSelection:function(e) {
+  if (e.stopSelection) {
+    return true;
+  } else {
+    if (e.type !== 'keydown' && e.button !== 0) {
+      if (this.ignoreRightMouseSelection || this.isSelected(e.record)) {
+        return true;
+      }
+    } else {
+      return e.type === 'mousedown';
+    }
+  }
+}, onNavigate:function(e) {
+  if (!e.record || this.vetoSelection(e.keyEvent)) {
+    return;
+  }
+  this.onBeforeNavigate(e);
+  var me = this, keyEvent = e.keyEvent, ctrlKey = keyEvent.ctrlKey || e.ctrlKey, recIdx = e.recordIndex, record = e.record, lastFocused = e.previousRecord, isSelected = me.isSelected(record), from = me.selectionStart && me.isSelected(e.previousRecord) ? me.selectionStart : me.selectionStart = e.previousRecord, fromIdx = e.previousRecordIndex, key = keyEvent.getCharCode(), isSpace = key === keyEvent.SPACE, changedRec = e.record !== e.previousRecord, direction = key === keyEvent.UP || key === keyEvent.PAGE_UP || 
+  key === keyEvent.HOME || key === keyEvent.LEFT && changedRec ? 'up' : key === keyEvent.DOWN || key === keyEvent.PAGE_DOWN || key === keyEvent.END || key === keyEvent.RIGHT && changedRec ? 'down' : null;
+  switch(me.selectionMode) {
+    case 'MULTI':
+      me.setSelectionStart(e.selectionStart);
+      if (key === keyEvent.A && ctrlKey) {
+        me.selected.beginUpdate();
+        me.selectRange(0, me.store.getCount() - 1);
+        me.selected.endUpdate();
+      } else {
+        if (isSpace) {
+          if (keyEvent.shiftKey) {
+            me.selectRange(from, record, ctrlKey);
+          } else {
+            if (isSelected) {
+              if (me.allowDeselect) {
+                me.doDeselect(record);
+              }
+            } else {
+              me.doSelect(record, ctrlKey);
+            }
+          }
+        } else {
+          if (keyEvent.shiftKey && from) {
+            if (direction === 'up' && fromIdx <= recIdx) {
+              me.deselectRange(lastFocused, recIdx + 1);
+            } else {
+              if (direction === 'down' && fromIdx >= recIdx) {
+                me.deselectRange(lastFocused, recIdx - 1);
+              } else {
+                if (from !== record) {
+                  me.selectRange(from, record, ctrlKey);
+                }
+              }
+            }
+            me.lastSelected = record;
+          } else {
+            if (key) {
+              if (!ctrlKey) {
+                me.doSelect(record, false);
+              }
+            } else {
+              me.selectWithEvent(record, keyEvent);
+            }
+          }
+        }
+      }
+      break;
+    case 'SIMPLE':
+      if (key === keyEvent.A && ctrlKey) {
+        me.selected.beginUpdate();
+        me.selectRange(0, me.store.getCount() - 1);
+        me.selected.endUpdate();
+      } else {
+        if (isSelected) {
+          me.doDeselect(record);
+        } else {
+          me.doSelect(record, true);
+        }
+      }
+      break;
+    case 'SINGLE':
+      if (!ctrlKey) {
+        if (direction) {
+          me.doSelect(record, false);
+        } else {
+          if (isSpace || !key) {
+            me.selectWithEvent(record, keyEvent);
+          }
+        }
+      }
+  }
+  if (!keyEvent.shiftKey && !me.destroyed && me.isSelected(record)) {
+    me.selectionStart = record;
+    me.selectionStartIdx = recIdx;
+  }
+}, selectRange:function(startRow, endRow, keepExisting) {
+  var me = this, store = me.store, selected = me.selected.items, result, i, len, toSelect, toDeselect, idx, rec;
+  if (me.isLocked()) {
+    return;
+  }
+  result = me.normalizeRowRange(startRow, endRow);
+  startRow = result[0];
+  endRow = result[1];
+  toSelect = [];
+  for (i = startRow; i <= endRow; i++) {
+    if (!me.isSelected(store.getAt(i))) {
+      toSelect.push(store.getAt(i));
+    }
+  }
+  if (!keepExisting) {
+    toDeselect = [];
+    me.suspendChanges();
+    for (i = 0, len = selected.length; i < len; ++i) {
+      rec = selected[i];
+      idx = store.indexOf(rec);
+      if (idx < startRow || idx > endRow) {
+        toDeselect.push(rec);
+      }
+    }
+    for (i = 0, len = toDeselect.length; i < len; ++i) {
+      me.doDeselect(toDeselect[i]);
+      if (me.destroyed) {
+        break;
+      }
+    }
+    if (!me.destroyed) {
+      me.resumeChanges();
+    }
+  }
+  if (!me.destroyed) {
+    if (toSelect.length) {
+      me.doMultiSelect(toSelect, true);
+    } else {
+      if (toDeselect) {
+        me.maybeFireSelectionChange(toDeselect.length > 0);
+      }
+    }
+  }
+}, deselectRange:function(startRow, endRow) {
+  var me = this, store = me.store, result, i, toDeselect, record;
+  if (me.isLocked()) {
+    return;
+  }
+  result = me.normalizeRowRange(startRow, endRow);
+  startRow = result[0];
+  endRow = result[1];
+  toDeselect = [];
+  for (i = startRow; i <= endRow; i++) {
+    record = store.getAt(i);
+    if (me.isSelected(record)) {
+      toDeselect.push(record);
+    }
+  }
+  if (toDeselect.length) {
+    me.doDeselect(toDeselect);
+  }
+}, normalizeRowRange:function(startRow, endRow) {
+  var store = this.store, tmp;
+  if (!Ext.isNumber(startRow)) {
+    startRow = store.indexOf(startRow);
+  }
+  startRow = Math.max(0, startRow);
+  if (!Ext.isNumber(endRow)) {
+    endRow = store.indexOf(endRow);
+  }
+  endRow = Math.min(endRow, store.getCount() - 1);
+  if (startRow > endRow) {
+    tmp = endRow;
+    endRow = startRow;
+    startRow = tmp;
+  }
+  return [startRow, endRow];
+}, select:function(records, keepExisting, suppressEvent) {
+  if (Ext.isDefined(records) && !(Ext.isArray(records) && !records.length)) {
+    this.doSelect(records, keepExisting, suppressEvent);
+  }
+}, deselect:function(records, suppressEvent) {
+  this.doDeselect(records, suppressEvent);
+}, doSelect:function(records, keepExisting, suppressEvent) {
+  var me = this, record;
+  if (me.locked || records == null) {
+    return;
+  }
+  if (typeof records === 'number') {
+    record = me.store.getAt(records);
+    if (!record) {
+      return;
+    }
+    records = [record];
+  }
+  if (me.selectionMode === 'SINGLE') {
+    if (records.isModel) {
+      records = [records];
+    }
+    if (records.length) {
+      me.doSingleSelect(records[0], suppressEvent);
+    }
+  } else {
+    me.doMultiSelect(records, keepExisting, suppressEvent);
+  }
+}, doMultiSelect:function(records, keepExisting, suppressEvent) {
+  var me = this, selected = me.selected, change = false, result, i, len, record, commit;
+  if (me.locked) {
+    return;
+  }
+  records = !Ext.isArray(records) ? [records] : records;
+  len = records.length;
+  if (!keepExisting && selected.getCount() > 0) {
+    result = me.deselectDuringSelect(records, suppressEvent);
+    if (me.destroyed) {
+      return;
+    }
+    if (result[0]) {
+      me.maybeFireSelectionChange(result[1] > 0 && !suppressEvent);
+      return;
+    } else {
+      change = result[1] > 0;
+    }
+  }
+  commit = function() {
+    if (!selected.getCount()) {
+      me.selectionStart = record;
+    }
+    if (!suppressEvent) {
+      selected.add(record);
+    }
+    change = true;
+  };
+  for (i = 0; i < len; i++) {
+    record = records[i];
+    if (me.isSelected(record)) {
+      continue;
+    }
+    me.onSelectChange(record, true, suppressEvent, commit);
+    if (me.destroyed) {
+      return;
+    }
+  }
+  me.lastSelected = record;
+  if (suppressEvent) {
+    selected.add(records);
+  }
+  me.maybeFireSelectionChange(change && !suppressEvent);
+}, deselectDuringSelect:function(toSelect, suppressEvent) {
+  var me = this, selected = me.selected.getRange(), len = selected.length, changed = 0, failed = false, item, i;
+  me.suspendChanges();
+  me.deselectingDuringSelect = true;
+  for (i = 0; i < len; ++i) {
+    item = selected[i];
+    if (!Ext.Array.contains(toSelect, item)) {
+      if (me.doDeselect(item, suppressEvent)) {
+        ++changed;
+      } else {
+        failed = true;
+      }
+    }
+    if (me.destroyed) {
+      failed = true;
+      changed = 0;
+      break;
+    }
+  }
+  me.deselectingDuringSelect = false;
+  if (!me.destroyed) {
+    me.resumeChanges();
+  }
+  return [failed, changed];
+}, doDeselect:function(records, suppressEvent) {
+  var me = this, selected = me.selected, i = 0, len, record, attempted = 0, accepted = 0, commit;
+  if (me.locked || !me.store) {
+    return false;
+  }
+  if (typeof records === 'number') {
+    record = me.store.getAt(records);
+    if (!record) {
+      return false;
+    }
+    records = [record];
+  } else {
+    if (!Ext.isArray(records)) {
+      records = [records];
+    }
+  }
+  commit = function() {
+    ++accepted;
+    if (!suppressEvent) {
+      selected.remove(record);
+    }
+    if (record === me.selectionStart) {
+      me.selectionStart = null;
+    }
+  };
+  len = records.length;
+  me.suspendChanges();
+  for (; i < len; i++) {
+    record = records[i];
+    if (me.isSelected(record)) {
+      if (me.lastSelected === record) {
+        me.lastSelected = selected.last();
+      }
+      ++attempted;
+      me.onSelectChange(record, false, suppressEvent, commit);
+      if (me.destroyed) {
+        return false;
+      }
+    }
+  }
+  me.resumeChanges();
+  if (suppressEvent) {
+    selected.remove(records);
+  }
+  me.maybeFireSelectionChange(accepted > 0 && !suppressEvent);
+  return accepted === attempted;
+}, doSingleSelect:function(record, suppressEvent) {
+  var me = this, changed = false, selected = me.selected, commit;
+  if (me.locked) {
+    return;
+  }
+  if (me.isSelected(record)) {
+    return;
+  }
+  commit = function() {
+    if (selected.getCount()) {
+      me.suspendChanges();
+      var result = me.deselectDuringSelect([record], suppressEvent);
+      if (me.destroyed) {
+        return;
+      }
+      me.resumeChanges();
+      if (result[0]) {
+        return false;
+      }
+    }
+    me.lastSelected = record;
+    if (!selected.getCount()) {
+      me.selectionStart = record;
+    }
+    selected.add(record);
+    changed = true;
+  };
+  me.onSelectChange(record, true, suppressEvent, commit);
+  if (changed && !me.destroyed) {
+    me.maybeFireSelectionChange(!suppressEvent);
+  }
+}, maybeFireSelectionChange:function(fireEvent) {
+  var me = this;
+  if (fireEvent && !me.suspendChange) {
+    me.fireEvent('selectionchange', me, me.getSelection());
+  }
+}, getSelection:function() {
+  return this.selected.getRange();
+}, getSelectionMode:function() {
+  return this.selectionMode;
+}, setSelectionMode:function(selMode) {
+  selMode = selMode ? selMode.toUpperCase() : 'SINGLE';
+  this.selectionMode = this.modes[selMode] ? selMode : 'SINGLE';
+}, isLocked:function() {
+  return this.locked;
+}, setLocked:function(locked) {
+  this.locked = !!locked;
+}, isRangeSelected:function(startRow, endRow) {
+  var me = this, store = me.store, i, result;
+  result = me.normalizeRowRange(startRow, endRow);
+  startRow = result[0];
+  endRow = result[1];
+  for (i = startRow; i <= endRow; i++) {
+    if (!me.isSelected(store.getAt(i))) {
+      return false;
+    }
+  }
+  return true;
+}, isSelected:function(record) {
+  record = Ext.isNumber(record) ? this.store.getAt(record) : record;
+  return this.selected ? this.selected.contains(record) : false;
+}, hasSelection:function() {
+  var selected = this.getSelected();
+  return !!(selected && selected.getCount());
+}, refresh:function() {
+  var me = this, store = me.store, toBeRemoved = [], oldSelections = me.getSelection(), len = oldSelections.length, selected = me.getSelected(), change, d, storeData, selection, rec, i;
+  if (!store || !(selected.isCollection || selected.isBag || selected.isRows) || !selected.getCount()) {
+    return;
+  }
+  storeData = store.getData();
+  if (storeData.getSource) {
+    d = storeData.getSource();
+    if (d) {
+      storeData = d;
+    }
+  }
+  me.refreshing = true;
+  selected.beginUpdate();
+  me.suspendChanges();
+  for (i = 0; i < len; i++) {
+    selection = oldSelections[i];
+    rec = storeData.get(selection.getId());
+    if (rec) {
+      if (rec !== selection) {
+        if (selected.replace) {
+          selected.replace(rec);
+        } else {
+          selected.add(rec);
+        }
+      }
+      if (!me.lastSelected) {
+        me.lastSelected = rec;
+      }
+    } else {
+      if (me.pruneRemoved) {
+        toBeRemoved.push(selection);
+      }
+    }
+  }
+  if (toBeRemoved.length) {
+    change = true;
+    selected.remove(toBeRemoved);
+  }
+  me.resumeChanges();
+  if (change) {
+    selected.endUpdate();
+  } else {
+    selected.updating--;
+  }
+  me.refreshing = false;
+  me.maybeFireSelectionChange(change);
+}, clearSelections:function() {
+  var selected = this.getSelected();
+  if (selected) {
+    selected.clear();
+  }
+  this.lastSelected = null;
+}, onStoreAdd:Ext.emptyFn, onStoreClear:function() {
+  if ((!this.store.isLoading() || this.store.clearing) && this.hasSelection()) {
+    this.clearSelections();
+    this.maybeFireSelectionChange(true);
+  }
+}, onStoreRemove:function(store, records, index, isMove) {
+  var me = this, toDeselect = records, i, len, rec, moveMap;
+  if (me.selectionStart && Ext.Array.contains(records, me.selectionStart)) {
+    me.selectionStart = null;
+  }
+  if (isMove || me.locked || !me.pruneRemoved) {
+    return;
+  }
+  moveMap = store.isMoving(null, true);
+  if (moveMap) {
+    toDeselect = null;
+    for (i = 0, len = records.length; i < len; ++i) {
+      rec = records[i];
+      if (!moveMap[rec.id]) {
+        (toDeselect || (toDeselect = [])).push(rec);
+      }
+    }
+  }
+  if (toDeselect) {
+    me.deselect(toDeselect);
+  }
+}, onPageRemove:function(pageMap, pageNumber, records) {
+  this.onStoreRemove(this.store, records);
+}, onPageAdd:function(pageMap, pageNumber, records) {
+  var len = records.length, i, record;
+  for (i = 0; i < len; i++) {
+    record = records[i];
+    if (this.selected.get(record.id)) {
+      this.selected.replace(record);
+    }
+  }
+}, getCount:function() {
+  return this.selected.getCount();
+}, onUpdate:Ext.emptyFn, destroy:function() {
+  var me = this;
+  me.clearSelections();
+  me.bindStore(null);
+  me.selected = Ext.destroy(me.selected);
+  me.callParent();
+}, onStoreUpdate:Ext.emptyFn, onIdChanged:function(store, rec, oldId, newId) {
+  this.selected.updateKey(rec, oldId);
+}, onStoreRefresh:function() {
+  this.updateSelectedInstances(this.selected);
+}, updateSelectedInstances:function(selected) {
+  var me = this, store = me.getStore(), lastSelected = me.lastSelected, removeCount = 0, prune = me.pruneRemovedOnRefresh(), items, length, i, selectedRec, rec, lastSelectedChanged;
+  if (store && store.isBufferedStore) {
+    return;
+  }
+  items = selected.getRange();
+  length = items.length;
+  if (lastSelected) {
+    me.lastSelected = store.getById(lastSelected.id);
+    lastSelectedChanged = me.lastSelected !== lastSelected;
+  }
+  me.refreshing = true;
+  if (store) {
+    for (i = 0; i < length; ++i) {
+      selectedRec = items[i];
+      rec = store.getById(selectedRec.id);
+      if (rec) {
+        if (rec !== selectedRec) {
+          selected.add(rec);
+        }
+      } else {
+        if (prune) {
+          selected.remove(selectedRec);
+          ++removeCount;
+        }
+      }
+    }
+  } else {
+    removeCount = selected.getCount();
+    selected.removeAll();
+  }
+  me.refreshing = false;
+  me.maybeFireSelectionChange(removeCount > 0);
+  if (lastSelectedChanged) {
+    me.fireEvent('lastselectedchanged', me, me.getSelection(), lastSelected);
+  }
+}, pruneRemovedOnRefresh:function() {
+  return this.pruneRemoved;
+}, onStoreLoad:Ext.emptyFn, onSelectChange:function(record, isSelected, suppressEvent, commitFn) {
+  var me = this, eventName = isSelected ? 'select' : 'deselect';
+  if ((suppressEvent || me.fireEvent('before' + eventName, me, record)) !== false && commitFn() !== false) {
+    if (!suppressEvent && !me.destroyed) {
+      me.fireEvent(eventName, me, record);
+    }
+  }
+}, onEditorKey:Ext.emptyFn, beforeViewRender:function(view) {
+  Ext.Array.include(this.views || (this.views = []), view);
+}, onHeaderClick:Ext.emptyFn, resolveListenerScope:function(defaultScope) {
+  var view = this.view, scope;
+  if (view) {
+    scope = view.resolveSatelliteListenerScope(this, defaultScope);
+  }
+  return scope || this.callParent([defaultScope]);
+}, bindComponent:Ext.emptyFn, privates:{onBeforeNavigate:Ext.privateFn, getLastSelected:function() {
+  return this.lastSelected;
+}, selectWithEventMulti:function(record, e, isSelected) {
+  var me = this, shift = e.shiftKey, ctrl = e.ctrlKey, start = shift ? me.getSelectionStart() : null, selected = me.getSelection(), len = selected.length, toDeselect, i, item;
+  if (shift && start) {
+    me.selectRange(start, record, ctrl);
+  } else {
+    if (ctrl && isSelected) {
+      if (me.allowDeselect) {
+        me.doDeselect(record, false);
+      }
+    } else {
+      if (ctrl) {
+        me.doSelect(record, true, false);
+      } else {
+        if (isSelected && !shift && !ctrl && len > 1) {
+          if (me.allowDeselect) {
+            toDeselect = [];
+            for (i = 0; i < len; ++i) {
+              item = selected[i];
+              if (item !== record) {
+                toDeselect.push(item);
+              }
+            }
+            me.doDeselect(toDeselect);
+          }
+        } else {
+          if (!isSelected) {
+            me.doSelect(record, false);
+          }
+        }
+      }
+    }
+  }
+}, selectWithEventSimple:function(record, e, isSelected) {
+  if (isSelected) {
+    this.doDeselect(record);
+  } else {
+    this.doSelect(record, true);
+  }
+}, selectWithEventSingle:function(record, e, isSelected) {
+  var me = this, allowDeselect = me.allowDeselect;
+  if (allowDeselect && !e.ctrlKey) {
+    allowDeselect = me.toggleOnClick;
+  }
+  if (allowDeselect && isSelected) {
+    me.doDeselect(record);
+  } else {
+    me.doSelect(record, false);
+  }
+}}});
+Ext.define('Ext.selection.DataViewModel', {extend:Ext.selection.Model, alias:'selection.dataviewmodel', deselectOnContainerClick:true, bindComponent:function(view) {
+  var me = this, viewListeners;
+  if (me.view !== view) {
+    if (me.view) {
+      me.navigationModel = null;
+      Ext.destroy(me.viewListeners, me.navigationListeners);
+    }
+    me.view = view;
+    if (view) {
+      viewListeners = me.getViewListeners();
+      viewListeners.scope = me;
+      viewListeners.destroyable = true;
+      me.navigationModel = view.getNavigationModel();
+      me.viewListeners = view.on(viewListeners);
+      me.navigationListeners = me.navigationModel.on({navigate:me.onNavigate, scope:me, destroyable:true});
+    }
+  }
+}, getViewListeners:function() {
+  var me = this, eventListeners = {};
+  eventListeners[me.view.triggerCtEvent] = me.onContainerClick;
+  return eventListeners;
+}, onUpdate:function(record) {
+  var view = this.view;
+  if (view && this.isSelected(record)) {
+    view.onItemSelect(record);
+  }
+}, onContainerClick:function() {
+  if (this.deselectOnContainerClick) {
+    this.deselectAll();
+  }
+}, onSelectChange:function(record, isSelected, suppressEvent, commitFn) {
+  var me = this, view = me.view, eventName = isSelected ? 'select' : 'deselect', recordIndex = me.store.indexOf(record);
+  if ((suppressEvent || me.fireEvent('before' + eventName, me, record, recordIndex)) !== false && commitFn() !== false) {
+    if (view && !view.destroyed) {
+      if (isSelected) {
+        view.onItemSelect(record);
+      } else {
+        view.onItemDeselect(record);
+      }
+    }
+    if (!suppressEvent && !me.destroyed) {
+      me.fireEvent(eventName, me, record, recordIndex);
+    }
+  }
+}, destroy:function() {
+  this.bindComponent();
+  Ext.destroy(this.keyNav);
+  this.callParent();
+}});
+Ext.define('Ext.view.NavigationModel', {mixins:[Ext.util.Observable, Ext.mixin.Factoryable, Ext.util.StoreHolder], alias:'view.navigation.default', config:{store:null}, focusCls:Ext.baseCSSPrefix + 'view-item-focused', constructor:function() {
+  this.mixins.observable.constructor.call(this);
+}, bindComponent:function(view) {
+  if (this.view !== view) {
+    this.view = view;
+    this.bindView(view);
+  }
+}, bindView:function(view) {
+  var me = this, dataSource = view.dataSource, listeners;
+  me.initKeyNav(view);
+  if (!dataSource.isEmptyStore) {
+    me.setStore(dataSource);
+  }
+  listeners = me.getViewListeners();
+  listeners.destroyable = true;
+  me.viewListeners = me.viewListeners || [];
+  me.viewListeners.push(view.on(listeners));
+}, updateStore:function(store) {
+  this.mixins.storeholder.bindStore.apply(this, [store]);
+}, getViewListeners:function() {
+  var me = this;
+  return {containermousedown:me.onContainerMouseDown, itemmousedown:me.onItemMouseDown, itemclick:me.onItemClick, itemcontextmenu:me.onItemMouseDown, scope:me};
+}, initKeyNav:function(view) {
+  var me = this;
+  me.keyNav = new Ext.util.KeyNav({target:view, ignoreInputFields:true, eventName:'itemkeydown', defaultEventAction:'stopEvent', processEvent:me.processViewEvent, up:me.onKeyUp, down:me.onKeyDown, right:me.onKeyRight, left:me.onKeyLeft, pageDown:me.onKeyPageDown, pageUp:me.onKeyPageUp, home:me.onKeyHome, end:me.onKeyEnd, space:me.onKeySpace, enter:me.onKeyEnter, A:{ctrl:true, handler:me.onSelectAllKeyPress}, scope:me});
+}, processViewEvent:function(view, record, node, index, event) {
+  return event;
+}, addKeyBindings:function(binding) {
+  this.keyNav.addBindings(binding);
+}, enable:function() {
+  this.keyNav.enable();
+  this.disabled = false;
+}, disable:function() {
+  this.keyNav.disable();
+  this.disabled = true;
+}, onContainerMouseDown:function(view, mousedownEvent) {
+  if (Ext.getScrollbarSize().width) {
+    if (!view.el.getClientRegion().contains(mousedownEvent.getPoint())) {
+      mousedownEvent.preventDefault();
+      view.lastFocused = 'scrollbar';
+    }
+  }
+}, onItemMouseDown:function(view, record, item, index, mousedownEvent) {
+  if (mousedownEvent.pointerType !== 'touch') {
+    this.setPosition(index);
+  }
+}, onItemClick:function(view, record, item, index, clickEvent) {
+  if (this.record === record) {
+    this.fireNavigateEvent(clickEvent);
+  } else {
+    this.setPosition(index, clickEvent);
+  }
+}, setPosition:function(recordIndex, keyEvent, suppressEvent, preventNavigation, preventFocus) {
+  var me = this, view = me.view, selModel = view.getSelectionModel(), dataSource = view.dataSource, newRecord, newRecordIndex;
+  if (recordIndex == null || !view.all.getCount()) {
+    me.record = me.recordIndex = null;
+  } else {
+    if (typeof recordIndex === 'number') {
+      newRecordIndex = Math.max(Math.min(recordIndex, dataSource.getCount() - 1), 0);
+      newRecord = dataSource.getAt(recordIndex);
+    } else {
+      if (recordIndex.isEntity) {
+        newRecord = dataSource.getById(recordIndex.id);
+        newRecordIndex = dataSource.indexOf(newRecord);
+        if (newRecordIndex === -1) {
+          newRecord = dataSource.getAt(0);
+          newRecordIndex = 0;
+        }
+      } else {
+        if (recordIndex.tagName) {
+          newRecord = view.getRecord(recordIndex);
+          newRecordIndex = dataSource.indexOf(newRecord);
+        } else {
+          newRecord = newRecordIndex = null;
+        }
+      }
+    }
+  }
+  if (newRecord === me.record) {
+    me.recordIndex = newRecordIndex;
+    return me.focusPosition(newRecordIndex);
+  }
+  if (me.item) {
+    me.item.removeCls(me.focusCls);
+  }
+  me.previousRecordIndex = me.recordIndex;
+  me.previousRecord = me.record;
+  me.previousItem = me.item;
+  me.recordIndex = newRecordIndex;
+  me.record = newRecord;
+  preventNavigation = preventNavigation || me.record === me.lastFocused;
+  if (newRecord) {
+    me.focusPosition(me.recordIndex);
+  } else {
+    if (!preventFocus) {
+      me.item = null;
+    }
+  }
+  if (!suppressEvent) {
+    selModel.fireEvent('focuschange', selModel, me.previousRecord, me.record);
+  }
+  if (!preventNavigation && keyEvent) {
+    me.fireNavigateEvent(keyEvent);
+  }
+}, focusPosition:function(recordIndex) {
+  var me = this;
+  if (recordIndex != null && recordIndex !== -1) {
+    if (recordIndex.isEntity) {
+      recordIndex = me.view.dataSource.indexOf(recordIndex);
+    }
+    me.item = me.view.all.item(recordIndex);
+    if (me.item) {
+      me.lastFocused = me.record;
+      me.lastFocusedIndex = me.recordIndex;
+      me.focusItem(me.item);
+    } else {
+      me.record = null;
+    }
+  } else {
+    me.item = null;
+  }
+}, focusItem:function(item) {
+  item.addCls(this.focusCls);
+  item.focus();
+}, getPosition:function() {
+  return this.record ? this.recordIndex : null;
+}, getRecordIndex:function() {
+  return this.recordIndex;
+}, getItem:function() {
+  return this.item;
+}, getRecord:function() {
+  return this.record;
+}, getLastFocused:function() {
+  if (this.view.dataSource.indexOf(this.lastFocused) === -1) {
+    return null;
+  }
+  return this.lastFocused;
+}, onKeyUp:function(keyEvent) {
+  var newPosition = this.recordIndex - 1;
+  if (newPosition < 0) {
+    newPosition = this.view.all.getCount() - 1;
+  }
+  this.setPosition(newPosition, keyEvent);
+}, onKeyDown:function(keyEvent) {
+  var newPosition = this.recordIndex + 1;
+  if (newPosition > this.view.all.getCount() - 1) {
+    newPosition = 0;
+  }
+  this.setPosition(newPosition, keyEvent);
+}, onKeyRight:function(keyEvent) {
+  var newPosition = this.recordIndex + 1;
+  if (newPosition > this.view.all.getCount() - 1) {
+    newPosition = 0;
+  }
+  this.setPosition(newPosition, keyEvent);
+}, onKeyLeft:function(keyEvent) {
+  var newPosition = this.recordIndex - 1;
+  if (newPosition < 0) {
+    newPosition = this.view.all.getCount() - 1;
+  }
+  this.setPosition(newPosition, keyEvent);
+}, onKeyPageDown:Ext.emptyFn, onKeyPageUp:Ext.emptyFn, onKeyHome:function(keyEvent) {
+  this.setPosition(0, keyEvent);
+}, onKeyEnd:function(keyEvent) {
+  this.setPosition(this.view.all.getCount() - 1, keyEvent);
+}, onKeySpace:function(keyEvent) {
+  this.fireNavigateEvent(keyEvent);
+}, onKeyEnter:function(keyEvent) {
+  keyEvent.stopEvent();
+  keyEvent.view.fireEvent('itemclick', keyEvent.view, keyEvent.record, keyEvent.item, keyEvent.recordIndex, keyEvent);
+}, onSelectAllKeyPress:function(keyEvent) {
+  this.fireNavigateEvent(keyEvent);
+}, fireNavigateEvent:function(keyEvent) {
+  var me = this;
+  me.fireEvent('navigate', {navigationModel:me, keyEvent:keyEvent, previousRecordIndex:me.previousRecordIndex, previousRecord:me.previousRecord, previousItem:me.previousItem, recordIndex:me.recordIndex, record:me.record, item:me.item});
+}, destroy:function() {
+  this.setStore(null);
+  Ext.destroy(this.viewListeners, this.keyNav);
+  this.callParent();
+}});
+Ext.define('Ext.view.AbstractView', {extend:Ext.Component, mixins:[Ext.util.StoreHolder], isDataView:true, inheritableStatics:{getRecord:function(node) {
+  return this.getBoundView(node).getRecord(node);
+}, getBoundView:function(node) {
+  return Ext.getCmp(node.getAttribute('data-boundView'));
+}}, defaultBindProperty:'store', renderBuffer:new Ext.dom.Fly(document.createElement('div')), statics:{updateDelay:Ext.platformTags.desktop ? 200 : 1000, queueRecordChange:function(view, store, record, operation, modifiedFieldNames) {
+  var me = this, changeQueue = me.changeQueue || (me.changeQueue = {}), recId = record.internalId, recChange, updated, len, i, fieldName, value, checkForReversion;
+  recChange = changeQueue[recId] || (changeQueue[recId] = {operation:operation, record:record, data:{}, views:[]});
+  updated = recChange.data;
+  Ext.Array.include(recChange.views, view);
+  if (modifiedFieldNames && (len = modifiedFieldNames.length)) {
+    for (i = 0; i < len; i++) {
+      fieldName = modifiedFieldNames[i];
+      value = record.data[fieldName];
+      if (updated.hasOwnProperty(fieldName)) {
+        if (record.isEqual(updated[fieldName], value)) {
+          delete updated[fieldName];
+          checkForReversion = true;
+        }
+      } else {
+        updated[fieldName] = value;
+      }
+    }
+    if (checkForReversion && !Ext.Object.getKeys(updated).length) {
+      delete changeQueue[recId];
+    }
+  } else {
+    Ext.apply(updated, record.data);
+  }
+  if (!me.flushQueueTask) {
+    me.flushQueueTask = new Ext.util.DelayedTask(Ext.global.requestAnimationFrame ? Ext.Function.createAnimationFrame(me.flushChangeQueue, me) : me.flushChangeQueue.bind(me), me, null, false);
+  }
+  if (!me.flushTimer) {
+    me.flushTimer = me.flushQueueTask.delay(Ext.view.AbstractView.updateDelay);
+  }
+}, flushChangeQueue:function() {
+  var me = this, dirtyViews, len, changeQueue, recChange, recId, i, view;
+  if (Ext.isScrolling) {
+    return me.flushTimer = me.flushQueueTask.delay(1);
+  }
+  me.flushTimer = null;
+  changeQueue = me.changeQueue;
+  me.changeQueue = {};
+  for (recId in changeQueue) {
+    recChange = changeQueue[recId];
+    dirtyViews = recChange.views;
+    len = dirtyViews.length;
+    for (i = 0; i < len; i++) {
+      view = dirtyViews[i];
+      if (!view.destroyed) {
+        view.handleUpdate(view.dataSource, recChange.record, recChange.operation, Ext.Object.getKeys(recChange.data));
+      }
+    }
+  }
+}}, config:{store:'ext-empty-store', navigationModel:{type:'default'}, selectionModel:{type:'dataviewmodel'}}, publishes:['selection'], twoWayBindable:['selection'], selection:null, throttledUpdate:false, deferInitialRefresh:false, itemCls:Ext.baseCSSPrefix + 'dataview-item', loadingText:'Loading...', loadMask:true, loadingUseMsg:true, selectedItemCls:Ext.baseCSSPrefix + 'item-selected', emptyText:'', deferEmptyText:true, trackOver:false, blockRefresh:false, preserveScrollOnRefresh:false, preserveScrollOnReload:false, 
+autoDestroyBoundStore:true, ariaRole:'listbox', itemAriaRole:'option', last:false, focusable:true, tabIndex:0, triggerEvent:'itemclick', triggerCtEvent:'containerclick', refreshNeeded:true, updateSuspendCounter:0, addCmpEvents:Ext.emptyFn, constructor:function(config) {
+  if (config && config.selModel) {
+    config.selectionModel = config.selModel;
+  }
+  this.callParent([config]);
+}, initComponent:function() {
+  var me = this, isDef = Ext.isDefined, itemTpl = me.itemTpl, memberFn = {}, selection = me.selection, store;
+  if (selection) {
+    me.selection = null;
+    me.setSelection(selection);
+  }
+  if (itemTpl) {
+    if (Ext.isArray(itemTpl)) {
+      if (typeof itemTpl[itemTpl.length - 1] !== 'string') {
+        itemTpl = itemTpl.slice(0);
+        memberFn = itemTpl.pop();
+      }
+      itemTpl = itemTpl.join('');
+    } else {
+      if (Ext.isObject(itemTpl)) {
+        memberFn = Ext.apply(memberFn, itemTpl.initialConfig);
+        itemTpl = itemTpl.html;
+      }
+    }
+    if (!me.itemSelector) {
+      me.itemSelector = '.' + me.itemCls;
+    }
+    if (memberFn.fn) {
+      memberFn.baseFn = memberFn.fn;
+      delete memberFn.fn;
+      itemTpl = '{%this.baseFn(out, values, parent, xindex, xcount, xkey)%}';
+    }
+    itemTpl = Ext.String.format('\x3ctpl for\x3d"."\x3e\x3cdiv class\x3d"{0}" role\x3d"{2}"\x3e{1}\x3c/div\x3e\x3c/tpl\x3e', me.itemCls, itemTpl, me.itemAriaRole);
+    me.tpl = new Ext.XTemplate(itemTpl, memberFn);
+  }
+  if (!isDef(me.tpl) || !isDef(me.itemSelector)) {
+    Ext.raise({sourceClass:'Ext.view.View', tpl:me.tpl, itemSelector:me.itemSelector, msg:'DataView requires both tpl and itemSelector configurations to be defined.'});
+  }
+  me.callParent();
+  me.tpl = me.lookupTpl('tpl');
+  if (isDef(me.overCls) || isDef(me.overClass)) {
+    if (Ext.isDefined(Ext.global.console)) {
+      Ext.global.console.warn('Ext.view.View: Using the deprecated overCls or overClass configuration. Use overItemCls instead.');
+    }
+    me.overItemCls = me.overCls || me.overClass;
+    delete me.overCls;
+    delete me.overClass;
+  }
+  if (isDef(me.selectedCls) || isDef(me.selectedClass)) {
+    if (Ext.isDefined(Ext.global.console)) {
+      Ext.global.console.warn('Ext.view.View: Using the deprecated selectedCls or selectedClass configuration. Use selectedItemCls instead.');
+    }
+    me.selectedItemCls = me.selectedCls || me.selectedClass;
+    delete me.selectedCls;
+    delete me.selectedClass;
+  }
+  if (me.overItemCls) {
+    me.trackOver = true;
+  }
+  me.addCmpEvents();
+  store = me.store = Ext.data.StoreManager.lookup(me.store || 'ext-empty-store');
+  if (!me.dataSource) {
+    me.dataSource = store;
+  }
+  me.bindStore(store, true);
+  me.getNavigationModel().bindComponent(this);
+  if (!me.all) {
+    me.all = new Ext.CompositeElementLite;
+  }
+  me.scrollState = {top:0, left:0};
+  me.savedTabIndexAttribute = 'data-savedtabindex-' + me.id;
+}, getElConfig:function() {
+  var result = this.mixins.renderable.getElConfig.call(this);
+  if (this.focusable) {
+    result.tabIndex = 0;
+  }
+  return result;
+}, onRender:function(parentNode, containerIdx) {
+  var mask = this.loadMask;
+  this.callParent([parentNode, containerIdx]);
+  if (mask) {
+    this.createMask(mask);
+  }
+}, beforeLayout:function() {
+  var me = this;
+  me.callParent();
+  if (me.refreshNeeded && !me.pendingRefresh) {
+    if (me.refreshCounter) {
+      me.refreshView();
+    } else {
+      me.doFirstRefresh(me.dataSource);
+    }
+  }
+}, onMaskBeforeShow:function() {
+  var me = this, loadingHeight = me.loadingHeight;
+  if (loadingHeight && loadingHeight > me.getHeight()) {
+    me.hasLoadingHeight = true;
+    me.oldMinHeight = me.minHeight;
+    me.minHeight = loadingHeight;
+    me.updateLayout();
+  }
+}, onMaskHide:function() {
+  var me = this;
+  if (!me.destroying && me.hasLoadingHeight) {
+    me.minHeight = me.oldMinHeight;
+    me.updateLayout();
+    delete me.hasLoadingHeight;
+  }
+}, beforeRender:function() {
+  this.callParent();
+  this.getSelectionModel().beforeViewRender(this);
+}, afterRender:function() {
+  this.callParent();
+  if (this.focusable) {
+    this.focusEl = this.el;
+  }
+}, getRefItems:function() {
+  var mask = this.loadMask, result = [];
+  if (mask && mask.isComponent) {
+    result.push(mask);
+  }
+  return result;
+}, getSelection:function() {
+  return this.getSelectionModel().getSelection();
+}, setSelection:function(selection) {
+  var current = this.selection;
+  if (selection !== current) {
+    this.selection = selection;
+    this.updateSelection(selection, current);
+  }
+}, updateSelection:function(selection) {
+  var me = this, sm;
+  if (!me.ignoreNextSelection) {
+    me.ignoreNextSelection = true;
+    sm = me.getSelectionModel();
+    if (selection) {
+      sm.select(selection);
+    } else {
+      sm.deselectAll();
+    }
+    me.ignoreNextSelection = false;
+  }
+  me.publishState('selection', selection);
+}, updateBindSelection:function(selModel, selection) {
+  var me = this, selected = null;
+  if (!me.ignoreNextSelection) {
+    me.ignoreNextSelection = true;
+    if (selection.length) {
+      selected = selModel.getLastSelected();
+      me.hasHadSelection = true;
+    }
+    if (me.hasHadSelection) {
+      me.setSelection(selected);
+    }
+    me.ignoreNextSelection = false;
+  }
+}, applySelectionModel:function(selModel, oldSelModel) {
+  var me = this, grid = me.grid, mode, ariaAttr, ariaDom;
+  if (oldSelModel) {
+    if (!oldSelModel.destroyed) {
+      oldSelModel.un({scope:me, selectionchange:me.updateBindSelection, lastselectedchanged:me.updateBindSelection});
+    }
+    Ext.destroy(me.selModelRelayer);
+    selModel = Ext.Factory.selection(selModel);
+  } else {
+    if (selModel && selModel.isSelectionModel) {
+      selModel.locked = me.disableSelection;
+    } else {
+      if (me.simpleSelect) {
+        mode = 'SIMPLE';
+      } else {
+        if (me.multiSelect) {
+          mode = 'MULTI';
+        } else {
+          mode = 'SINGLE';
+        }
+      }
+      if (typeof selModel === 'string') {
+        selModel = {type:selModel};
+      }
+      selModel = Ext.Factory.selection(Ext.apply({allowDeselect:me.allowDeselect || me.multiSelect, mode:mode, locked:me.disableSelection}, selModel));
+    }
+  }
+  if (selModel.mode !== 'SINGLE') {
+    ariaDom = (grid || me).ariaEl.dom;
+    if (ariaDom) {
+      ariaDom.setAttribute('aria-multiselectable', true);
+    } else {
+      if (!grid) {
+        ariaAttr = me.ariaRenderAttributes || (me.ariaRenderAttributes = {});
+        ariaAttr['aria-multiselectable'] = true;
+      }
+    }
+  }
+  me.selModelRelayer = me.relayEvents(selModel, ['selectionchange', 'beforeselect', 'beforedeselect', 'select', 'deselect', 'focuschange']);
+  selModel.on({scope:me, lastselectedchanged:me.updateBindSelection, selectionchange:me.updateBindSelection});
+  return selModel;
+}, updateSelectionModel:function(selectionModel) {
+  this.selModel = selectionModel;
+}, applyNavigationModel:function(navigationModel) {
+  return Ext.Factory.viewNavigation(navigationModel);
+}, onFocusEnter:function(e) {
+  var me = this, navigationModel = me.getNavigationModel(), focusPosition = me.lastFocused;
+  me.lastFocused = null;
+  if (focusPosition === 'scrollbar') {
+    e.relatedTarget.focus();
+    return;
+  }
+  me.toggleChildrenTabbability(false);
+  if (!me.itemFocused && me.all.getCount()) {
+    if (e.event.getTarget() === me.tabGuardEl) {
+      focusPosition = me.all.getCount() - 1;
+    } else {
+      focusPosition = navigationModel.getLastFocused();
+    }
+    navigationModel.setPosition(focusPosition || 0, e.event, null, !focusPosition);
+    me.itemFocused = navigationModel.getPosition() != null;
+  }
+  if (me.itemFocused) {
+    me.el.dom.setAttribute('tabIndex', -1);
+    if (me.tabGuardEl) {
+      me.tabGuardEl.setAttribute('tabIndex', -1);
+    }
+  }
+  me.callParent([e]);
+}, onFocusLeave:function(e) {
+  var me = this;
+  if (me.itemFocused && !me.refreshing) {
+    me.getNavigationModel().setPosition(null, e.event, null, true);
+    me.itemFocused = false;
+    me.el.dom.setAttribute('tabIndex', 0);
+    if (me.tabGuardEl) {
+      me.tabGuardEl.setAttribute('tabIndex', 0);
+    }
+  }
+  me.callParent([e]);
+}, cancelFocusTask:function() {
+  var task = this.getFocusTask();
+  if (task) {
+    task.cancel();
+  }
+}, onRemoved:function(isDestroying) {
+  this.callParent([isDestroying]);
+  if (!isDestroying) {
+    this.onFocusLeave({});
+  }
+}, refresh:function() {
+  var me = this, items = me.all, prevItemCount = items.getCount(), refreshCounter = me.refreshCounter, targetEl, records, selModel = me.getSelectionModel(), restoreFocus, scroller = refreshCounter && items.getCount() && me.preserveScrollOnRefresh && me.getScrollable(), bufferedRenderer = me.bufferedRenderer, scrollPos;
+  if (!me.rendered || me.destroyed) {
+    return;
+  }
+  if (!me.hasListeners.beforerefresh || me.fireEvent('beforerefresh', me) !== false) {
+    me.refreshing = true;
+    restoreFocus = me.saveFocusState();
+    targetEl = me.getTargetEl();
+    records = me.getViewRange();
+    if (scroller) {
+      scrollPos = scroller.getPosition();
+      if (!(scrollPos.x || scrollPos.y)) {
+        scrollPos = null;
+      }
+    }
+    if (refreshCounter || me.emptyEl) {
+      me.clearViewEl();
+    }
+    if (refreshCounter) {
+      me.refreshCounter++;
+    } else {
+      me.refreshCounter = 1;
+    }
+    me.tpl.append(targetEl, me.collectData(records, items.startIndex || 0));
+    if (records.length < 1) {
+      me.addEmptyText();
+      items.clear();
+    } else {
+      me.collectNodes(targetEl.dom);
+      me.updateIndexes(0);
+    }
+    restoreFocus();
+    if (me.refreshSelmodelOnRefresh !== false) {
+      selModel.refresh();
+    }
+    me.refreshNeeded = false;
+    me.refreshSize(items.getCount() !== prevItemCount);
+    me.fireItemMutationEvent('refresh', me, records);
+    if (scroller) {
+      scroller.scrollTo(scrollPos);
+    }
+    if (!me.viewReady) {
+      me.viewReady = true;
+      me.fireEvent('viewready', me);
+    }
+    me.refreshing = false;
+    if (bufferedRenderer) {
+      bufferedRenderer.refreshSize();
+    }
+    me.cleanupData();
+  }
+  if (!me.tabGuardEl) {
+    me.tabGuardEl = me.el.createChild({cls:Ext.baseCSSPrefix + 'tab-guard ' + Ext.baseCSSPrefix + 'tab-guard-after', tabIndex:'0'}, null, true);
+  }
+}, addEmptyText:function() {
+  var me = this, store = me.getStore();
+  if (me.emptyText && !store.isLoading() && (!me.deferEmptyText || me.refreshCounter > 1 || store.isLoaded())) {
+    if (!me.emptyEl) {
+      me.emptyEl = Ext.core.DomHelper.insertHtml('beforeEnd', me.getTargetEl().dom, me.emptyText);
+    } else {
+      Ext.fly(me.emptyEl).setHtml(me.emptyText);
+    }
+  }
+}, getEmptyText:function() {
+  return this.emptyText;
+}, setEmptyText:function(emptyText) {
+  var me = this;
+  if (me.emptyText !== emptyText) {
+    me.emptyText = emptyText;
+    me.refresh();
+  }
+  return me;
+}, getViewRange:function() {
+  return this.dataSource.getRange();
+}, refreshSize:function(forceLayout) {
+  var me = this, sizeModel = me.getSizeModel();
+  if (sizeModel.height.shrinkWrap || sizeModel.width.shrinkWrap || forceLayout) {
+    me.updateLayout();
+  }
+}, afterFirstLayout:function(width, height) {
+  var me = this, scroller = me.getScrollable();
+  if (scroller) {
+    me.viewScrollListeners = scroller.on({scroll:me.onViewScroll, scrollend:me.onViewScrollEnd, scope:me, onFrame:!!Ext.global.requestAnimationFrame, destroyable:true});
+  }
+  me.callParent([width, height]);
+}, clearViewEl:function() {
+  var me = this, targetEl = me.getTargetEl(), all = me.all, store = me.getStore(), i, removedItems, removedRecs, nodeContainerIsTarget = me.getNodeContainer() === targetEl;
+  removedItems = all.slice();
+  removedRecs = [];
+  for (i = all.startIndex; i <= all.endIndex; i++) {
+    removedRecs.push(store.getByInternalId(all.item(i, true).getAttribute('data-recordId')));
+  }
+  me.fireItemMutationEvent('itemremove', removedRecs, all.startIndex || 0, removedItems, me);
+  me.clearEmptyEl();
+  me.all.clear(!nodeContainerIsTarget);
+  targetEl = nodeContainerIsTarget ? targetEl.dom : me.getNodeContainer();
+  if (targetEl) {
+    targetEl.innerHTML = '';
+  }
+}, clearEmptyEl:function() {
+  var emptyEl = this.emptyEl;
+  if (emptyEl) {
+    Ext.removeNode(emptyEl);
+  }
+  this.emptyEl = null;
+}, onViewScroll:function(scroller, x, y) {
+  if (!this.destroyed) {
+    this.fireEvent('scroll', this, x, y);
+  }
+}, onViewScrollEnd:function(scroller, x, y) {
+  if (!this.destroyed) {
+    this.fireEvent('scrollend', this, x, y);
+  }
+}, saveScrollState:function() {
+  var me = this, state = me.scrollState;
+  if (me.rendered) {
+    state.left = me.getScrollX();
+    state.top = me.getScrollY();
+  }
+}, restoreScrollState:function() {
+  var me = this, state = me.scrollState;
+  if (me.rendered) {
+    me.setScrollX(state.left);
+    me.setScrollY(state.top);
+  }
+}, prepareData:function(data, recordIndex, record) {
+  var associatedData, attr, hasCopied;
+  if (record) {
+    associatedData = record.getAssociatedData();
+    for (attr in associatedData) {
+      if (associatedData.hasOwnProperty(attr)) {
+        if (!hasCopied) {
+          data = Ext.Object.chain(data);
+          hasCopied = true;
+        }
+        data[attr] = associatedData[attr];
+      }
+    }
+  }
+  return data;
+}, collectData:function(records, startIndex) {
+  var data = [], i = 0, len = records.length, record;
+  for (; i < len; i++) {
+    record = records[i];
+    data[i] = this.prepareData(record.data, startIndex + i, record);
+  }
+  return data;
+}, cleanupData:Ext.emptyFn, bufferRender:function(records, index) {
+  var me = this, div = me.renderBuffer, result = document.createDocumentFragment(), nodes, len, i;
+  me.tpl.overwrite(div, me.collectData(records, index));
+  nodes = div.query(me.getItemSelector());
+  for (i = 0, len = nodes.length; i < len; i++) {
+    result.appendChild(nodes[i]);
+  }
+  return {fragment:result, children:nodes};
+}, nodeContainerSelector:null, setItemsDraggable:function(draggable) {
+  var me = this, selector = '#' + me.id + ' ' + me.getItemSelector(), styleSheet = me.viewStyleSheet;
+  if (draggable) {
+    if (!styleSheet) {
+      styleSheet = Ext.view.AbstractView.prototype.viewStyleSheet = Ext.util.CSS.createStyleSheet('', 'AbstractView');
+    }
+    Ext.util.CSS.createRule(styleSheet, selector, 'touch-action: pinch-zoom double-tap-zoom;-ms-touch-action: pinch-zoom double-tap-zoom;-webkit-user-drag: none;');
+  } else {
+    if (styleSheet) {
+      Ext.util.CSS.deleteRule(selector);
+    }
+  }
+}, getNodeContainerSelector:function() {
+  return this.nodeContainerSelector;
+}, onUpdate:function(store, record, operation, modifiedFieldNames, details) {
+  var me = this, isFiltered = details && details.filtered;
+  if (!isFiltered && me.getNode(record)) {
+    if (me.throttledUpdate) {
+      me.statics().queueRecordChange(me, store, record, operation, modifiedFieldNames);
+    } else {
+      me.handleUpdate(store, record, operation, modifiedFieldNames, details);
+    }
+  }
+}, handleUpdate:function(store, record) {
+  var me = this, index, node, selModel = me.getSelectionModel();
+  if (me.viewReady && !me.refreshNeeded) {
+    index = me.dataSource.indexOf(record);
+    if (index > -1) {
+      if (me.getNode(record)) {
+        node = me.bufferRender([record], index).children[0];
+        me.all.replaceElement(index, node, true);
+        me.updateIndexes(index, index);
+        selModel.onUpdate(record);
+        me.refreshSizePending = true;
+        if (selModel.isSelected(record)) {
+          me.onItemSelect(record);
+        }
+        if (me.hasListeners.itemupdate) {
+          me.fireEvent('itemupdate', record, index, node, me);
+        }
+        return node;
+      }
+    }
+  }
+}, onReplace:function(store, startIndex, oldRecords, newRecords) {
+  var me = this, all = me.all, scroller = me.getScrollable(), yPos = scroller && scroller.getPosition().y, selModel = me.getSelectionModel(), origStart = startIndex, result, item, fragment, children, oldItems, endIndex, restoreFocus;
+  if (me.rendered) {
+    result = me.bufferRender(newRecords, startIndex, true);
+    fragment = result.fragment;
+    children = result.children;
+    item = all.item(startIndex);
+    if (item) {
+      all.item(startIndex).insertSibling(fragment, 'before', true);
+    } else {
+      me.appendNodes(fragment);
+    }
+    all.insert(startIndex, children);
+    if (oldRecords.length) {
+      restoreFocus = me.saveFocusState();
+    }
+    startIndex += newRecords.length;
+    endIndex = startIndex + oldRecords.length - 1;
+    oldItems = all.removeRange(startIndex, endIndex, true);
+    if (scroller) {
+      scroller.scrollTo(null, yPos);
+    }
+    if (me.refreshSelmodelOnRefresh !== false) {
+      selModel.refresh();
+    }
+    me.updateIndexes(startIndex);
+    me.fireItemMutationEvent('itemremove', oldRecords, origStart, oldItems, me);
+    me.fireItemMutationEvent('itemadd', newRecords, origStart, children, me);
+    restoreFocus();
+    me.refreshSize();
+  }
+}, onAdd:function(store, records, index) {
+  var me = this, nodes, selModel = me.getSelectionModel();
+  if (me.rendered && !me.refreshNeeded) {
+    if (me.all.getCount() === 0) {
+      me.refresh();
+      nodes = me.all.slice();
+    } else {
+      nodes = me.doAdd(records, index);
+      if (me.refreshSelmodelOnRefresh !== false) {
+        selModel.refresh();
+      }
+      me.updateIndexes(index);
+      me.refreshSizePending = true;
+    }
+    me.fireItemMutationEvent('itemadd', records, index, nodes, me);
+  }
+}, appendNodes:function(nodes) {
+  var all = this.all, count = all.getCount();
+  if (this.nodeContainerSelector) {
+    this.getNodeContainer().appendChild(nodes);
+  } else {
+    all.item(count - 1).insertSibling(nodes, 'after');
+  }
+}, doAdd:function(records, index) {
+  var me = this, result = me.bufferRender(records, index, true), fragment = result.fragment, children = result.children, all = me.all, count = all.getCount(), firstRowIndex = all.startIndex || 0, lastRowIndex = all.endIndex || count - 1;
+  if (count === 0 || index > lastRowIndex) {
+    me.appendNodes(fragment);
+  } else {
+    if (index <= firstRowIndex) {
+      all.item(firstRowIndex).insertSibling(fragment, 'before', true);
+    } else {
+      all.item(index).insertSibling(children, 'before', true);
+    }
+  }
+  all.insert(index, children);
+  return children;
+}, onRemove:function(store, records, index) {
+  var me = this, rows = me.all, currIdx, i, record, nodes, node, restoreFocus;
+  if (me.rendered && !me.refreshNeeded && rows.getCount()) {
+    if (me.dataSource.getCount() === 0) {
+      me.refresh();
+    } else {
+      restoreFocus = me.saveFocusState();
+      nodes = [];
+      for (i = records.length - 1; i >= 0; --i) {
+        record = records[i];
+        currIdx = index + i;
+        if (nodes) {
+          node = rows.item(currIdx);
+          nodes[i] = node ? node.dom : undefined;
+        }
+        if (rows.item(currIdx)) {
+          me.doRemove(record, currIdx);
+        }
+      }
+      me.fireItemMutationEvent('itemremove', records, index, nodes, me);
+      restoreFocus();
+      me.updateIndexes(index);
+    }
+    me.refreshSizePending = true;
+  }
+}, doRemove:function(record, index) {
+  this.all.removeElement(index, true);
+}, eventLifecycleMap:{refresh:'onViewRefresh', itemremove:'onItemRemove', itemadd:'onItemAdd'}, fireItemMutationEvent:function(eventName) {
+  var me = this, ownerGrid = me.ownerGrid, vm;
+  Ext.suspendLayouts();
+  if (ownerGrid) {
+    if (eventName !== 'refresh') {
+      vm = me.lookupViewModel();
+    }
+    ownerGrid[me.eventLifecycleMap[eventName]].apply(ownerGrid, Ext.Array.slice(arguments, 1));
+  }
+  me.fireEvent.apply(me, arguments);
+  if (vm) {
+    vm.notify();
+  }
+  Ext.resumeLayouts(true);
+}, saveFocusState:function() {
+  var me = this, store = me.dataSource || me.store, navModel = me.getNavigationModel(), lastFocusedIndex = navModel.recordIndex, lastFocusedRec = navModel.record, containsFocus = me.el.contains(Ext.Element.getActiveElement());
+  if (lastFocusedRec) {
+    if (containsFocus) {
+      me.el.dom.focus();
+    }
+    return function() {
+      if (store.getCount()) {
+        lastFocusedIndex = Math.min(lastFocusedIndex, me.all.getCount() - 1);
+        navModel.setPosition(store.contains(lastFocusedRec) ? lastFocusedRec : lastFocusedIndex, null, null, true, !containsFocus);
+      }
+    };
+  }
+  return Ext.emptyFn;
+}, refreshNode:function(record) {
+  if (Ext.isNumber(record)) {
+    record = this.store.getAt(record);
+  }
+  this.onUpdate(this.dataSource, record);
+}, updateIndexes:function(startIndex, endIndex) {
+  var me = this, nodes = me.all.elements, records = me.getViewRange(), selModel = me.getSelectionModel(), myId = me.id, node, record, i;
+  startIndex = startIndex || 0;
+  endIndex = endIndex || (endIndex === 0 ? 0 : nodes.length - 1);
+  for (i = startIndex; i <= endIndex; i++) {
+    node = nodes[i];
+    record = records[i];
+    node.setAttribute('data-recordIndex', i);
+    node.setAttribute('data-recordId', record.internalId);
+    node.setAttribute('data-boundView', myId);
+    if (selModel.getLastSelected()) {
+      me[selModel.isSelected(record) ? 'onItemSelect' : 'onItemDeselect'](record);
+    }
+  }
+}, bindStore:function(store, initial) {
+  var me = this, selModel = me.getSelectionModel(), navModel = me.getNavigationModel();
+  if (selModel && !selModel.destroyed) {
+    selModel.bindStore(store, initial);
+    selModel.bindComponent(store ? me : null);
+  }
+  me.mixins.storeholder.bindStore.apply(me, arguments);
+  if (navModel && !navModel.destroyed) {
+    navModel.setStore(store);
+  }
+  if (store && me.componentLayoutCounter && !me.blockRefresh) {
+    me.doFirstRefresh(store, !initial);
+  }
+}, doFirstRefresh:function(store, noDefer) {
+  var me = this;
+  if (me.deferInitialRefresh && !noDefer) {
+    Ext.defer(me.doFirstRefresh, 1, me, [store, true]);
+  } else {
+    if (store && !me.deferRefreshForLoad(store)) {
+      me.refresh();
+    }
+  }
+}, onUnbindStore:function(store) {
+  this.setMaskBind(null);
+  if (this.dataSource === store) {
+    this.dataSource = null;
+  }
+}, onBindStore:function(store, oldStore) {
+  var me = this;
+  if (me.store.isBufferedStore) {
+    me.store.preserveScrollOnReload = me.preserveScrollOnReload;
+  }
+  if (oldStore && oldStore.isBufferedStore) {
+    delete oldStore.preserveScrollOnReload;
+  }
+  me.setMaskBind(store);
+  if (!me.dataSource) {
+    me.dataSource = store;
+  }
+}, setMaskBind:function(store) {
+  var mask = this.loadMask;
+  if (this.rendered && mask && store && !mask.bindStore) {
+    mask = this.createMask();
+  }
+  if (mask && mask.bindStore) {
+    mask.bindStore(store);
+  }
+}, getStoreListeners:function() {
+  var me = this;
+  return {refresh:me.onDataRefresh, replace:me.onReplace, add:me.onAdd, remove:me.onRemove, update:me.onUpdate, clear:me.onDataRefresh, beginupdate:me.onBeginUpdate, endupdate:me.onEndUpdate};
+}, onBeginUpdate:function() {
+  ++this.updateSuspendCounter;
+  Ext.suspendLayouts();
+}, onEndUpdate:function() {
+  var me = this;
+  if (me.updateSuspendCounter) {
+    --me.updateSuspendCounter;
+  }
+  Ext.resumeLayouts(true);
+  if (me.refreshSizePending) {
+    me.refreshSize(true);
+    me.refreshSizePending = false;
+  }
+}, onDataRefresh:function(store) {
+  var me = this, preserveScrollOnRefresh = me.preserveScrollOnRefresh;
+  if (store.loadCount > (me.lastRefreshLoadCount || 0)) {
+    me.preserveScrollOnRefresh = me.preserveScrollOnReload;
+  }
+  me.refreshView();
+  me.preserveScrollOnRefresh = preserveScrollOnRefresh;
+  me.lastRefreshLoadCount = store.loadCount;
+}, refreshView:function(startIndex) {
+  var me = this, blocked = me.blockRefresh || !me.rendered || me.up('[collapsed],[isCollapsingOrExpanding\x3d1],[hidden]'), bufferedRenderer = me.bufferedRenderer;
+  if (blocked) {
+    me.refreshNeeded = true;
+  } else {
+    if (bufferedRenderer) {
+      bufferedRenderer.refreshView(startIndex);
+    } else {
+      me.refresh();
+    }
+  }
+}, findItemByChild:function(node) {
+  return Ext.fly(node).findParent(this.getItemSelector(), this.getTargetEl());
+}, findTargetByEvent:function(e) {
+  return e.getTarget(this.getItemSelector(), this.getTargetEl());
+}, getSelectedNodes:function() {
+  var nodes = [], records = this.getSelectionModel().getSelection(), ln = records.length, i = 0;
+  for (; i < ln; i++) {
+    nodes.push(this.getNode(records[i]));
+  }
+  return nodes;
+}, getRecords:function(nodes) {
+  var me = this, records = [], i;
+  for (i = 0; i < nodes.length; i++) {
+    records.push(me.getRecord(nodes[i]));
+  }
+  return records;
+}, getRecord:function(node) {
+  var dom = Ext.getDom(node), id = dom.getAttribute('data-recordId');
+  return this.dataSource.getByInternalId(id);
+}, isSelected:function(node) {
+  var r = this.getRecord(node);
+  return this.getSelectionModel().isSelected(r);
+}, select:function(records, keepExisting, suppressEvent) {
+  this.getSelectionModel().select(records, keepExisting, suppressEvent);
+}, deselect:function(records, suppressEvent) {
+  this.getSelectionModel().deselect(records, suppressEvent);
+}, getNode:function(nodeInfo) {
+  var me = this, out;
+  if (me.rendered && (nodeInfo || nodeInfo === 0)) {
+    if (Ext.isString(nodeInfo)) {
+      out = document.getElementById(nodeInfo);
+    } else {
+      if (nodeInfo.isModel) {
+        out = me.getNodeByRecord(nodeInfo);
+      } else {
+        if (Ext.isNumber(nodeInfo)) {
+          out = me.all.elements[nodeInfo];
+        } else {
+          if (nodeInfo.target && nodeInfo.target.nodeType) {
+            nodeInfo = nodeInfo.target;
+          }
+          out = Ext.fly(nodeInfo).findParent(me.itemSelector, me.getTargetEl());
+        }
+      }
+    }
+  }
+  return out || null;
+}, getNodeByRecord:function(record) {
+  var index = this.store.indexOf(record);
+  return this.all.elements[index] || null;
+}, getNodes:function(start, end) {
+  var all = this.all;
+  if (end !== undefined) {
+    end++;
+  }
+  return all.slice(start, end);
+}, indexOf:function(node) {
+  node = this.getNode(node);
+  if (!node && node !== 0) {
+    return -1;
+  }
+  if (node.getAttribute('data-recordIndex')) {
+    return Number(node.getAttribute('data-recordIndex'));
+  }
+  return this.all.indexOf(node);
+}, doDestroy:function() {
+  var me = this, count = me.updateSuspendCounter, tabGuardEl = me.tabGuardEl;
+  if (me.viewScrollListeners) {
+    me.viewScrollListeners.destroy();
+  }
+  if (me.all && !me.all.destroyed) {
+    me.all.clear();
+  }
+  if (tabGuardEl) {
+    if (tabGuardEl.parentNode) {
+      tabGuardEl.parentNode.removeChild(tabGuardEl);
+    }
+  }
+  me.emptyEl = null;
+  me.setItemsDraggable(false);
+  me.bindStore(null);
+  if (me.selModelRelayer) {
+    me.selModelRelayer.destroy();
+  }
+  Ext.destroy(me.navigationModel, me.selectionModel, me.loadMask);
+  while (count--) {
+    Ext.resumeLayouts(true);
+  }
+  me.callParent();
+}, onItemSelect:function(record) {
+  var node = this.getNode(record);
+  if (node) {
+    Ext.fly(node).addCls(this.selectedItemCls);
+    node.setAttribute('aria-selected', 'true');
+  }
+  return node;
+}, onItemDeselect:function(record) {
+  var node = this.getNode(record);
+  if (node) {
+    Ext.fly(node).removeCls(this.selectedItemCls);
+    node.setAttribute('aria-selected', 'false');
+  }
+  return node;
+}, getItemSelector:function() {
+  return this.itemSelector;
+}, addItemCls:function(itemInfo, cls) {
+  var item = this.getNode(itemInfo);
+  if (item) {
+    Ext.fly(item).addCls(cls);
+  }
+}, removeItemCls:function(itemInfo, cls) {
+  var item = this.getNode(itemInfo);
+  if (item) {
+    Ext.fly(item).removeCls(cls);
+  }
+}, setStore:function(newStore) {
+  var me = this;
+  if (me.store !== newStore) {
+    if (me.isConfiguring) {
+      me.store = newStore;
+    } else {
+      me.bindStore(newStore, false);
+    }
+  }
+}, privates:{deferRefreshForLoad:function(store) {
+  return store.isLoading();
+}, toggleChildrenTabbability:function(enableTabbing) {
+  var focusEl = this.getTargetEl();
+  if (enableTabbing) {
+    focusEl.restoreTabbableState({skipSelf:true});
+  } else {
+    focusEl.saveTabbableState({skipSelf:true, includeSaved:false});
+  }
+}, collectNodes:function(targetEl) {
+  var all = this.all, options = {role:this.itemAriaRole};
+  all.fill(Ext.fly(targetEl).query(this.getItemSelector()), all.startIndex || 0);
+  if (this.focusable) {
+    options.tabindex = '-1';
+  }
+  all.set(options);
+}, createMask:function(mask) {
+  var me = this, maskStore = me.getStore(), cfg;
+  if (maskStore && !maskStore.isEmptyStore && !maskStore.loadsSynchronously()) {
+    cfg = {target:me, msg:me.loadingText, useMsg:me.loadingUseMsg, store:maskStore};
+    if (me.loadingCls) {
+      cfg.msgCls = me.loadingCls;
+    }
+    if (Ext.isObject(mask)) {
+      cfg = Ext.apply(cfg, mask);
+    }
+    me.loadMask = new Ext.LoadMask(cfg);
+    me.loadMask.on({scope:me, beforeshow:me.onMaskBeforeShow, hide:me.onMaskHide});
+  }
+  return me.loadMask;
+}, getNodeContainer:function() {
+  var target = this.getTargetEl(), selector = this.nodeContainerSelector;
+  return selector ? target.down(selector, true) : target;
+}, getOverflowEl:function() {
+  return Ext.Component.prototype.getTargetEl.call(this);
+}}}, function() {
+  Ext.deprecate('extjs', '4.0', function() {
+    Ext.view.AbstractView.override({getSelectionCount:function() {
+      if (Ext.global.console) {
+        Ext.global.console.warn('DataView: getSelectionCount will be removed, please interact with the Ext.selection.DataViewModel');
+      }
+      return this.selModel.getSelection().length;
+    }, getSelectedRecords:function() {
+      if (Ext.global.console) {
+        Ext.global.console.warn('DataView: getSelectedRecords will be removed, please interact with the Ext.selection.DataViewModel');
+      }
+      return this.selModel.getSelection();
+    }, select:function(records, keepExisting, supressEvents) {
+      if (Ext.global.console) {
+        Ext.global.console.warn("DataView: select will be removed, please access select through a DataView's SelectionModel, ie: view.getSelectionModel().select()");
+      }
+      var sm = this.getSelectionModel();
+      return sm.select.apply(sm, arguments);
+    }, clearSelections:function() {
+      if (Ext.global.console) {
+        Ext.global.console.warn("DataView: clearSelections will be removed, please access deselectAll through DataView's SelectionModel, ie: view.getSelectionModel().deselectAll()");
+      }
+      var sm = this.getSelectionModel();
+      return sm.deselectAll();
+    }});
+  });
+});
+Ext.define('Ext.view.View', {extend:Ext.view.AbstractView, alternateClassName:'Ext.DataView', alias:'widget.dataview', inputTagRe:/^textarea$|^input$/i, keyEventRe:/^key/, manageLayoutScroll:false, inheritableStatics:{EventMap:{longpress:'LongPress', mousedown:'MouseDown', mouseup:'MouseUp', click:'Click', dblclick:'DblClick', contextmenu:'ContextMenu', mouseover:'MouseOver', mouseout:'MouseOut', mouseenter:'MouseEnter', mouseleave:'MouseLeave', keydown:'KeyDown', keyup:'KeyUp', keypress:'KeyPress', 
+focus:'Focus'}, TouchEventMap:{touchstart:'mousedown', touchend:'mouseup', tap:'click', doubletap:'dblclick'}}, afterRender:function() {
+  var me = this;
+  me.callParent();
+  me.mon(me.el, {scope:me, click:me.handleEvent, longpress:me.handleEvent, mousedown:me.handleEvent, mouseup:me.handleEvent, dblclick:me.handleEvent, contextmenu:me.handleEvent, keydown:me.handleEvent, keyup:me.handleEvent, keypress:me.handleEvent, mouseover:me.handleMouseOver, mouseout:me.handleMouseOut});
+}, getTargetSelector:function() {
+  return this.dataRowSelector || this.itemSelector;
+}, handleMouseOver:function(e) {
+  var me = this, itemSelector = me.getTargetSelector(), item = e.getTarget(itemSelector);
+  if (!me.destroyed) {
+    if (item) {
+      if (me.mouseOverItem !== item && me.el.contains(item)) {
+        me.mouseOverItem = e.item = item;
+        e.newType = 'mouseenter';
+        me.handleEvent(e);
+      }
+    } else {
+      me.handleEvent(e);
+    }
+  }
+}, handleMouseOut:function(e) {
+  var me = this, itemSelector = me.getTargetSelector(), item = e.getTarget(itemSelector), computedRelatedTarget = e.getRelatedTarget(itemSelector), sourceView;
+  if (item === computedRelatedTarget && !(item === null && computedRelatedTarget === null)) {
+    return;
+  }
+  if (!me.destroyed) {
+    if (item && (sourceView = me.self.getBoundView(item))) {
+      e.item = item;
+      e.newType = 'mouseleave';
+      sourceView.handleEvent(e);
+      sourceView.mouseOverItem = null;
+    } else {
+      me.handleEvent(e);
+    }
+  }
+}, handleEvent:function(e) {
+  var me = this, isKeyEvent = me.keyEventRe.test(e.type);
+  e.isInputFieldEvent = Ext.fly(e.target).isInputField();
+  e.view = me;
+  e.item = e.getTarget(me.itemSelector);
+  if (e.item) {
+    e.record = me.getRecord(e.item);
+  }
+  if (me.processUIEvent(e) !== false && !me.destroyed) {
+    me.processSpecialEvent(e);
+  }
+  if (isKeyEvent && !e.isInputFieldEvent) {
+    if (e.getKey() === e.SPACE || e.isNavKeyPress(true)) {
+      e.preventDefault();
+    }
+  }
+  e.view = null;
+}, processItemEvent:Ext.emptyFn, processContainerEvent:Ext.emptyFn, processSpecialEvent:Ext.emptyFn, processUIEvent:function(e) {
+  if (!Ext.getBody().isAncestor(e.target)) {
+    return;
+  }
+  var me = this, item = e.item, self = me.self, map = self.EventMap, touchMap = self.TouchEventMap, index, record = e.record, type = e.type, newType = type;
+  if (e.newType) {
+    newType = e.newType;
+  }
+  if (item) {
+    newType = touchMap[newType] || newType;
+    index = e.recordIndex = me.indexInStore ? me.indexInStore(record) : me.indexOf(item);
+    if (!record || me.processItemEvent(record, item, index, e) === false) {
+      return false;
+    }
+    if (me['onBeforeItem' + map[newType]](record, item, index, e) === false || me.fireEvent('beforeitem' + newType, me, record, item, index, e) === false || me['onItem' + map[newType]](record, item, index, e) === false) {
+      return false;
+    }
+    me.fireEvent('item' + newType, me, record, item, index, e);
+  } else {
+    type = touchMap[type] || type;
+    if (me.processContainerEvent(e) === false || me['onBeforeContainer' + map[type]](e) === false || me.fireEvent('beforecontainer' + type, me, e) === false || me['onContainer' + map[type]](e) === false) {
+      return false;
+    }
+    me.fireEvent('container' + type, me, e);
+  }
+  return true;
+}, onItemMouseEnter:function(record, item, index, e) {
+  if (this.trackOver) {
+    this.highlightItem(item);
+  }
+}, onItemMouseLeave:function(record, item, index, e) {
+  if (this.trackOver) {
+    this.clearHighlight();
+  }
+}, onItemMouseDown:Ext.emptyFn, onItemLongPress:Ext.emptyFn, onItemMouseUp:Ext.emptyFn, onItemFocus:Ext.emptyFn, onItemClick:Ext.emptyFn, onItemDblClick:Ext.emptyFn, onItemContextMenu:Ext.emptyFn, onItemKeyDown:Ext.emptyFn, onItemKeyUp:Ext.emptyFn, onItemKeyPress:Ext.emptyFn, onBeforeItemLongPress:Ext.emptyFn, onBeforeItemMouseDown:Ext.emptyFn, onBeforeItemMouseUp:Ext.emptyFn, onBeforeItemFocus:Ext.emptyFn, onBeforeItemMouseEnter:Ext.emptyFn, onBeforeItemMouseLeave:Ext.emptyFn, onBeforeItemClick:Ext.emptyFn, 
+onBeforeItemDblClick:Ext.emptyFn, onBeforeItemContextMenu:Ext.emptyFn, onBeforeItemKeyDown:Ext.emptyFn, onBeforeItemKeyUp:Ext.emptyFn, onBeforeItemKeyPress:Ext.emptyFn, onContainerMouseDown:Ext.emptyFn, onContainerLongPress:Ext.emptyFn, onContainerMouseUp:Ext.emptyFn, onContainerMouseOver:Ext.emptyFn, onContainerMouseOut:Ext.emptyFn, onContainerClick:Ext.emptyFn, onContainerDblClick:Ext.emptyFn, onContainerContextMenu:Ext.emptyFn, onContainerKeyDown:Ext.emptyFn, onContainerKeyUp:Ext.emptyFn, onContainerKeyPress:Ext.emptyFn, 
+onBeforeContainerMouseDown:Ext.emptyFn, onBeforeContainerLongPress:Ext.emptyFn, onBeforeContainerMouseUp:Ext.emptyFn, onBeforeContainerMouseOver:Ext.emptyFn, onBeforeContainerMouseOut:Ext.emptyFn, onBeforeContainerClick:Ext.emptyFn, onBeforeContainerDblClick:Ext.emptyFn, onBeforeContainerContextMenu:Ext.emptyFn, onBeforeContainerKeyDown:Ext.emptyFn, onBeforeContainerKeyUp:Ext.emptyFn, onBeforeContainerKeyPress:Ext.emptyFn, setHighlightedItem:function(item) {
+  var me = this, highlighted = me.highlightedItem, overItemCls = me.overItemCls;
+  if (highlighted !== item) {
+    if (highlighted) {
+      Ext.fly(highlighted).removeCls(overItemCls);
+      if (Ext.isIE8) {
+        me.repaintBorder(highlighted);
+        me.repaintBorder(highlighted.nextSibling);
+      }
+      if (me.hasListeners.unhighlightitem) {
+        me.fireEvent('unhighlightitem', me, highlighted);
+      }
+    }
+    me.highlightedItem = item;
+    if (item) {
+      Ext.fly(item).addCls(me.overItemCls);
+      if (Ext.isIE8) {
+        me.repaintBorder(item.nextSibling);
+      }
+      if (me.hasListeners.highlightitem) {
+        me.fireEvent('highlightitem', me, item);
+      }
+    }
+  }
+}, highlightItem:function(item) {
+  this.setHighlightedItem(item);
+}, clearHighlight:function() {
+  this.setHighlightedItem(undefined);
+}, handleUpdate:function(store, record) {
+  var me = this, node, newNode, highlighted;
+  if (me.viewReady) {
+    node = me.getNode(record);
+    newNode = me.callParent(arguments);
+    highlighted = me.highlightedItem;
+    if (highlighted && highlighted === node) {
+      delete me.highlightedItem;
+      if (newNode) {
+        me.highlightItem(newNode);
+      }
+    }
+  }
+}, refresh:function() {
+  this.clearHighlight();
+  this.callParent(arguments);
+}, focusNode:function(rec) {
+  var me = this, node = Ext.fly(me.getNode(rec)), el = me.el, adjustmentY = 0, adjustmentX = 0, elRegion = el.getRegion(), nodeRegion;
+  elRegion.bottom = elRegion.top + el.dom.clientHeight;
+  elRegion.right = elRegion.left + el.dom.clientWidth;
+  if (node) {
+    nodeRegion = node.getRegion();
+    if (nodeRegion.top < elRegion.top) {
+      adjustmentY = nodeRegion.top - elRegion.top;
+    } else {
+      if (nodeRegion.bottom > elRegion.bottom) {
+        adjustmentY = nodeRegion.bottom - elRegion.bottom;
+      }
+    }
+    if (nodeRegion.left < elRegion.left) {
+      adjustmentX = nodeRegion.left - elRegion.left;
+    } else {
+      if (nodeRegion.right > elRegion.right) {
+        adjustmentX = nodeRegion.right - elRegion.right;
+      }
+    }
+    if (adjustmentX || adjustmentY) {
+      me.scrollBy(adjustmentX, adjustmentY, false);
+    }
+    node.set({tabIndex:-1});
+    node.focus();
+  }
+}, privates:{repaintBorder:function(rowIdx) {
+  var node = this.getNode(rowIdx);
+  if (node) {
+    node.className = node.className;
+  }
+}}});
+Ext.define('Ext.view.BoundListKeyNav', {extend:Ext.view.NavigationModel, alias:'view.navigation.boundlist', navigateOnSpace:true, initKeyNav:function(view) {
+  var me = this, field = view.pickerField;
+  if (!me.keyNav) {
+    me.callParent([view]);
+    me.keyNav.map.addBinding({key:Ext.event.Event.ESC, fn:me.onKeyEsc, scope:me});
+  }
+  if (!field) {
+    return;
+  }
+  if (!field.rendered) {
+    field.on('render', Ext.Function.bind(me.initKeyNav, me, [view], 0), me, {single:true});
+    return;
+  }
+  me.fieldKeyNav = new Ext.util.KeyNav({disabled:true, target:field.inputEl, forceKeyDown:true, up:me.onKeyUp, down:me.onKeyDown, right:me.onKeyRight, left:me.onKeyLeft, pageDown:me.onKeyPageDown, pageUp:me.onKeyPageUp, home:me.onKeyHome, end:me.onKeyEnd, tab:me.onKeyTab, space:me.onKeySpace, enter:me.onKeyEnter, A:{ctrl:true, handler:me.onSelectAllKeyPress}, priority:1001, scope:me});
+}, processViewEvent:function(view, record, node, index, event) {
+  if (event.within(view.listWrap)) {
+    return event;
+  }
+  if (event.getKey() === event.ESC) {
+    if (Ext.fly(event.target).isInputField()) {
+      event.target = event.target.parentNode;
+    }
+    return event;
+  }
+}, enable:function() {
+  this.fieldKeyNav.enable();
+  this.callParent();
+}, disable:function() {
+  this.fieldKeyNav.disable();
+  this.callParent();
+}, onItemMouseDown:function(view, record, item, index, event) {
+  this.callParent([view, record, item, index, event]);
+  if (event.pointerType === 'mouse') {
+    event.preventDefault();
+  }
+}, onKeyUp:function(e) {
+  var me = this, boundList = me.view, allItems = boundList.all, oldItem = boundList.highlightedItem, oldItemIdx = oldItem ? boundList.indexOf(oldItem) : -1, newItemIdx = oldItemIdx > 0 ? oldItemIdx - 1 : allItems.getCount() - 1;
+  me.setPosition(newItemIdx);
+  e.preventDefault();
+}, onKeyDown:function(e) {
+  var me = this, boundList = me.view, allItems = boundList.all, oldItem = boundList.highlightedItem, oldItemIdx = oldItem ? boundList.indexOf(oldItem) : -1, newItemIdx = oldItemIdx < allItems.getCount() - 1 ? oldItemIdx + 1 : 0;
+  me.setPosition(newItemIdx);
+  e.preventDefault();
+}, onKeyLeft:Ext.returnTrue, onKeyRight:Ext.returnTrue, onKeyTab:function(e) {
+  var view = this.view, field = view.pickerField;
+  if (view.isVisible()) {
+    if (field.selectOnTab) {
+      this.selectHighlighted(e);
+    }
+    if (field.collapse) {
+      field.collapse();
+    }
+  }
+  return true;
+}, onKeyEnter:function(e) {
+  var view = this.view, selModel = view.getSelectionModel(), field = view.pickerField, count = selModel.getCount();
+  e.stopEvent();
+  this.selectHighlighted(e);
+  if (!field.multiSelect && count === selModel.getCount() && field.collapse) {
+    field.collapse();
+  }
+  field.fireEvent('specialkey', field, e, {fromBoundList:true});
+  return false;
+}, onKeySpace:function() {
+  if (this.navigateOnSpace) {
+    this.callParent(arguments);
+  }
+  return true;
+}, onKeyEsc:function() {
+  if (this.view.pickerField) {
+    this.view.pickerField.collapse();
+  }
+}, focusItem:function(item) {
+  var me = this, boundList = me.view;
+  if (typeof item === 'number') {
+    item = boundList.all.item(item);
+  }
+  if (item) {
+    item = item.dom;
+    boundList.highlightItem(item);
+    boundList.getScrollable().ensureVisible(item, {x:false});
+  }
+}, selectHighlighted:function(e) {
+  var me = this, boundList = me.view, selModel = boundList.getSelectionModel(), highlightedRec, highlightedPosition = me.recordIndex;
+  if (boundList.all.getCount()) {
+    highlightedRec = me.getRecord();
+    if (highlightedRec) {
+      if (e.getKey() === e.ENTER || !selModel.isSelected(highlightedRec)) {
+        selModel.selectWithEvent(highlightedRec, e);
+        if (!boundList.store.data.contains(highlightedRec)) {
+          me.setPosition(Math.min(highlightedPosition, boundList.store.getCount() - 1));
+        }
+      }
+    }
+  }
+}, destroy:function() {
+  this.fieldKeyNav = Ext.destroy(this.fieldKeyNav);
+  this.callParent();
+}});
+Ext.define('Ext.layout.component.BoundList', {extend:Ext.layout.component.Auto, alias:'layout.boundlist', type:'component', beginLayout:function(ownerContext) {
+  var me = this, owner = me.owner, toolbar = owner.pagingToolbar;
+  me.scrollPos = owner.listWrap.getScroll();
+  me.callParent(arguments);
+  if (owner.floating) {
+    ownerContext.savedXY = owner.getXY();
+    owner.setXY([0, -9999]);
+  }
+  if (toolbar) {
+    ownerContext.toolbarContext = ownerContext.context.getCmp(toolbar);
+  }
+  ownerContext.listContext = ownerContext.getEl('listWrap');
+}, beginLayoutCycle:function(ownerContext) {
+  var owner = this.owner;
+  this.callParent(arguments);
+  if (ownerContext.heightModel.auto) {
+    owner.el.setHeight('auto');
+    owner.listWrap.setHeight('auto');
+  }
+}, getLayoutItems:function() {
+  var toolbar = this.owner.pagingToolbar;
+  return toolbar ? [toolbar] : [];
+}, isValidParent:function() {
+  return true;
+}, finishedLayout:function(ownerContext) {
+  var me = this, xy = ownerContext.savedXY, owner = me.owner, listWrap = owner.listWrap, scrollPos = me.scrollPos;
+  me.callParent(arguments);
+  if (xy) {
+    me.owner.setXY(xy);
+  }
+  listWrap.setScrollLeft(scrollPos.left);
+  listWrap.setScrollTop(scrollPos.top);
+}, measureContentWidth:function(ownerContext) {
+  return this.owner.listWrap.getWidth();
+}, measureContentHeight:function(ownerContext) {
+  return this.owner.listWrap.getHeight();
+}, publishInnerHeight:function(ownerContext, height) {
+  var toolbar = ownerContext.toolbarContext, toolbarHeight = 0;
+  if (toolbar) {
+    toolbarHeight = toolbar.getProp('height');
+  }
+  if (toolbarHeight === undefined) {
+    this.done = false;
+  } else {
+    ownerContext.listContext.setHeight(height - ownerContext.getFrameInfo().height - toolbarHeight);
+  }
+}, calculateOwnerHeightFromContentHeight:function(ownerContext) {
+  var height = this.callParent(arguments), toolbar = ownerContext.toolbarContext;
+  if (toolbar) {
+    height += toolbar.getProp('height');
+  }
+  return height;
+}});
 Ext.define('Ext.toolbar.Item', {extend:Ext.Component, alias:'widget.tbitem', alternateClassName:'Ext.Toolbar.Item', enable:Ext.emptyFn, disable:Ext.emptyFn, focus:Ext.emptyFn});
 Ext.define('Ext.toolbar.TextItem', {extend:Ext.toolbar.Item, alias:'widget.tbtext', alternateClassName:'Ext.Toolbar.TextItem', text:'', baseCls:Ext.baseCSSPrefix + 'toolbar-text', ariaRole:null, beforeRender:function() {
   var text = this.text;
@@ -63184,6 +65797,1605 @@ Ext.define('Ext.toolbar.TextItem', {extend:Ext.toolbar.Item, alias:'widget.tbtex
   }
 }, setText:function(text) {
   this.update(text);
+}});
+Ext.define('Ext.form.trigger.Spinner', {extend:Ext.form.trigger.Trigger, alias:'trigger.spinner', cls:Ext.baseCSSPrefix + 'form-trigger-spinner', spinnerCls:Ext.baseCSSPrefix + 'form-spinner', spinnerUpCls:Ext.baseCSSPrefix + 'form-spinner-up', spinnerDownCls:Ext.baseCSSPrefix + 'form-spinner-down', focusCls:Ext.baseCSSPrefix + 'form-spinner-focus', overCls:Ext.baseCSSPrefix + 'form-spinner-over', clickCls:Ext.baseCSSPrefix + 'form-spinner-click', focusFieldOnClick:true, vertical:true, bodyTpl:'\x3ctpl if\x3d"vertical"\x3e' + 
+'\x3cdiv class\x3d"{spinnerCls} {spinnerCls}-{ui} {spinnerUpCls} {spinnerUpCls}-{ui}' + ' {childElCls} {upDisabledCls}"\x3e\x3c/div\x3e' + '\x3c/tpl\x3e' + '\x3cdiv class\x3d"{spinnerCls} {spinnerCls}-{ui} {spinnerDownCls} {spinnerDownCls}-{ui}' + ' {childElCls} {downDisabledCls}"\x3e\x3c/div\x3e' + '\x3ctpl if\x3d"!vertical"\x3e' + '\x3cdiv class\x3d"{spinnerCls} {spinnerCls}-{ui} {spinnerUpCls} {spinnerUpCls}-{ui}' + ' {childElCls} {upDisabledCls}"\x3e\x3c/div\x3e' + '\x3c/tpl\x3e', destroy:function() {
+  var me = this;
+  if (me.spinnerEl) {
+    me.spinnerEl.destroy();
+    me.spinnerEl = me.upEl = me.downEl = null;
+  }
+  me.callParent();
+}, getBodyRenderData:function() {
+  var me = this;
+  return {vertical:me.vertical, upDisabledCls:me.upEnabled ? '' : me.spinnerUpCls + '-disabled', downDisabledCls:me.downEnabled ? '' : me.spinnerDownCls + '-disabled', spinnerCls:me.spinnerCls, spinnerUpCls:me.spinnerUpCls, spinnerDownCls:me.spinnerDownCls};
+}, getStateEl:function() {
+  return this.spinnerEl;
+}, onClick:function() {
+  var me = this, args = arguments, e = me.clickRepeater ? args[1] : args[0], field = me.field;
+  if (!field.readOnly && !field.disabled) {
+    if (me.upEl.contains(e.target)) {
+      Ext.callback(me.upHandler, me.scope, [field, me, e], 0, field);
+    } else {
+      if (me.downEl.contains(e.target)) {
+        Ext.callback(me.downHandler, me.scope, [field, me, e], 0, field);
+      }
+    }
+  }
+  field.inputEl.focus();
+}, onFieldRender:function() {
+  var me = this, vertical = me.vertical, spinnerEl, elements;
+  me.callParent();
+  spinnerEl = me.spinnerEl = me.el.select('.' + me.spinnerCls, true);
+  elements = spinnerEl.elements;
+  me.upEl = vertical ? elements[0] : elements[1];
+  me.downEl = vertical ? elements[1] : elements[0];
+}, setUpEnabled:function(enabled) {
+  this.upEl[enabled ? 'removeCls' : 'addCls'](this.spinnerUpCls + '-disabled');
+}, setDownEnabled:function(enabled) {
+  this.downEl[enabled ? 'removeCls' : 'addCls'](this.spinnerDownCls + '-disabled');
+}});
+Ext.define('Ext.form.field.Spinner', {extend:Ext.form.field.Text, alias:'widget.spinnerfield', alternateClassName:'Ext.form.Spinner', config:{triggers:{spinner:{type:'spinner', upHandler:'onSpinnerUpClick', downHandler:'onSpinnerDownClick', endHandler:'onSpinEnd', scope:'this'}}}, spinUpEnabled:true, spinDownEnabled:true, keyNavEnabled:true, mouseWheelEnabled:true, repeatTriggerClick:true, onSpinUp:Ext.emptyFn, onSpinDown:Ext.emptyFn, ariaRole:'spinbutton', applyTriggers:function(triggers) {
+  var me = this, spinnerTrigger = triggers.spinner;
+  spinnerTrigger.upEnabled = me.spinUpEnabled;
+  spinnerTrigger.downEnabled = me.spinDownEnabled;
+  return me.callParent([triggers]);
+}, onRender:function() {
+  var me = this, spinnerTrigger = me.getTrigger('spinner');
+  me.callParent();
+  if (me.keyNavEnabled) {
+    me.spinnerKeyNav = new Ext.util.KeyNav({target:me.inputEl, scope:me, up:me.spinUp, down:me.spinDown});
+    me.inputEl.on({keyup:me.onInputElKeyUp, scope:me});
+  }
+  if (me.mouseWheelEnabled) {
+    me.mon(me.bodyEl, 'mousewheel', me.onMouseWheel, me);
+  }
+  me.spinUpEl = spinnerTrigger.upEl;
+  me.spinDownEl = spinnerTrigger.downEl;
+}, onSpinnerUpClick:function() {
+  this.spinUp();
+}, onSpinnerDownClick:function() {
+  this.spinDown();
+}, spinUp:function() {
+  var me = this;
+  if (me.spinUpEnabled && !me.disabled) {
+    me.fireEvent('spin', me, 'up');
+    me.fireEvent('spinup', me);
+    me.onSpinUp();
+  }
+}, spinDown:function() {
+  var me = this;
+  if (me.spinDownEnabled && !me.disabled) {
+    me.fireEvent('spin', me, 'down');
+    me.fireEvent('spindown', me);
+    me.onSpinDown();
+  }
+}, setSpinUpEnabled:function(enabled) {
+  var me = this, wasEnabled = me.spinUpEnabled;
+  me.spinUpEnabled = enabled;
+  if (wasEnabled !== enabled && me.rendered) {
+    me.getTrigger('spinner').setUpEnabled(enabled);
+  }
+}, setSpinDownEnabled:function(enabled) {
+  var me = this, wasEnabled = me.spinDownEnabled;
+  me.spinDownEnabled = enabled;
+  if (wasEnabled !== enabled && me.rendered) {
+    me.getTrigger('spinner').setDownEnabled(enabled);
+  }
+}, onMouseWheel:function(e) {
+  var me = this, delta;
+  if (me.hasFocus) {
+    delta = e.getWheelDelta();
+    if (delta > 0) {
+      me.spinUp();
+    } else {
+      if (delta < 0) {
+        me.spinDown();
+      }
+    }
+    e.stopEvent();
+    me.onSpinEnd();
+  }
+}, onInputElKeyUp:function(e) {
+  if (e.keyCode === e.UP || e.keyCode === e.DOWN) {
+    this.onSpinEnd();
+  }
+}, doDestroy:function() {
+  Ext.destroyMembers(this, 'spinnerKeyNav');
+  this.callParent();
+}}, function(Spinner) {
+  var spinEnd = function() {
+    if (!this.destroying && !this.destroyed) {
+      this.fireEvent('spinend', this);
+    }
+  };
+  spinEnd.$skipTimerCheck = true;
+  Spinner.prototype.onSpinEnd = Ext.Function.createBuffered(spinEnd, 100);
+});
+Ext.define('Ext.form.field.Number', {extend:Ext.form.field.Spinner, alias:'widget.numberfield', alternateClassName:['Ext.form.NumberField', 'Ext.form.Number'], allowExponential:true, allowDecimals:true, decimalSeparator:null, submitLocaleSeparator:true, decimalPrecision:2, minValue:Number.NEGATIVE_INFINITY, maxValue:Number.MAX_VALUE, step:1, minText:'The minimum value for this field is {0}', maxText:'The maximum value for this field is {0}', nanText:'{0} is not a valid number', negativeText:'The value cannot be negative', 
+baseChars:'0123456789', autoStripChars:false, initComponent:function() {
+  var me = this;
+  if (me.decimalSeparator === null) {
+    me.decimalSeparator = Ext.util.Format.decimalSeparator;
+  }
+  me.callParent();
+  me.setMinValue(me.minValue);
+  me.setMaxValue(me.maxValue);
+}, getSubTplData:function(fieldData) {
+  var me = this, min = me.minValue, max = me.maxValue, data, inputElAttr, value;
+  data = me.callParent([fieldData]);
+  inputElAttr = data.inputElAriaAttributes;
+  if (inputElAttr) {
+    if (min > Number.NEGATIVE_INFINITY) {
+      inputElAttr['aria-valuemin'] = min;
+    }
+    if (max < Number.MAX_VALUE) {
+      inputElAttr['aria-valuemax'] = max;
+    }
+    value = me.getValue();
+    if (value != null && value >= min && value <= max) {
+      inputElAttr['aria-valuenow'] = value;
+    }
+  }
+  return data;
+}, setValue:function(value) {
+  var me = this, bind, valueBind;
+  if (me.hasFocus) {
+    bind = me.getBind();
+    valueBind = bind && bind.value;
+    if (valueBind && valueBind.syncing && value === me.value) {
+      return me;
+    }
+  }
+  return me.callParent([value]);
+}, getErrors:function(value) {
+  value = arguments.length > 0 ? value : this.processRawValue(this.getRawValue());
+  var me = this, errors = me.callParent([value]), format = Ext.String.format, num;
+  if (value.length < 1) {
+    return errors;
+  }
+  value = String(value).replace(me.decimalSeparator, '.');
+  if (isNaN(value)) {
+    errors.push(format(me.nanText, value));
+  }
+  num = me.parseValue(value);
+  if (me.minValue === 0 && num < 0) {
+    errors.push(this.negativeText);
+  } else {
+    if (num < me.minValue) {
+      errors.push(format(me.minText, me.minValue));
+    }
+  }
+  if (num > me.maxValue) {
+    errors.push(format(me.maxText, me.maxValue));
+  }
+  return errors;
+}, rawToValue:function(rawValue) {
+  var value = this.fixPrecision(this.parseValue(rawValue));
+  if (value === null) {
+    value = rawValue || null;
+  }
+  return value;
+}, valueToRaw:function(value) {
+  var me = this, decimalSeparator = me.decimalSeparator;
+  value = me.parseValue(value);
+  value = me.fixPrecision(value);
+  value = Ext.isNumber(value) ? value : parseFloat(String(value).replace(decimalSeparator, '.'));
+  value = isNaN(value) ? '' : String(value).replace('.', decimalSeparator);
+  return value;
+}, getSubmitValue:function() {
+  var me = this, value = me.callParent();
+  if (!me.submitLocaleSeparator) {
+    value = value.replace(me.decimalSeparator, '.');
+  }
+  return value;
+}, onChange:function(newValue) {
+  var ariaDom = this.ariaEl.dom;
+  this.toggleSpinners();
+  this.callParent(arguments);
+  if (ariaDom) {
+    if (Ext.isNumber(newValue) && isFinite(newValue)) {
+      ariaDom.setAttribute('aria-valuenow', newValue);
+    } else {
+      ariaDom.removeAttribute('aria-valuenow');
+    }
+  }
+}, toggleSpinners:function() {
+  var me = this, value = me.getValue(), valueIsNull = value === null, enabled;
+  if (me.spinUpEnabled || me.spinUpDisabledByToggle) {
+    enabled = valueIsNull || value < me.maxValue;
+    me.setSpinUpEnabled(enabled, true);
+  }
+  if (me.spinDownEnabled || me.spinDownDisabledByToggle) {
+    enabled = valueIsNull || value > me.minValue;
+    me.setSpinDownEnabled(enabled, true);
+  }
+}, setMinValue:function(value) {
+  var me = this, ariaDom = me.ariaEl.dom, minValue, allowed;
+  me.minValue = minValue = Ext.Number.from(value, Number.NEGATIVE_INFINITY);
+  me.toggleSpinners();
+  if (ariaDom) {
+    if (minValue > Number.NEGATIVE_INFINITY) {
+      ariaDom.setAttribute('aria-valuemin', minValue);
+    } else {
+      ariaDom.removeAttribute('aria-valuemin');
+    }
+  }
+  if (me.disableKeyFilter !== true) {
+    allowed = me.baseChars + '';
+    if (me.allowExponential) {
+      allowed += me.decimalSeparator + 'e+-';
+    } else {
+      if (me.allowDecimals) {
+        allowed += me.decimalSeparator;
+      }
+      if (me.minValue < 0) {
+        allowed += '-';
+      }
+    }
+    allowed = Ext.String.escapeRegex(allowed);
+    me.maskRe = new RegExp('[' + allowed + ']');
+    if (me.autoStripChars) {
+      me.stripCharsRe = new RegExp('[^' + allowed + ']', 'gi');
+    }
+  }
+}, setMaxValue:function(value) {
+  var ariaDom = this.ariaEl.dom, maxValue;
+  this.maxValue = maxValue = Ext.Number.from(value, Number.MAX_VALUE);
+  if (ariaDom) {
+    if (maxValue < Number.MAX_VALUE) {
+      ariaDom.setAttribute('aria-valuemax', maxValue);
+    } else {
+      ariaDom.removeAttribute('aria-valuemax');
+    }
+  }
+  this.toggleSpinners();
+}, parseValue:function(value) {
+  value = parseFloat(String(value).replace(this.decimalSeparator, '.'));
+  return isNaN(value) ? null : value;
+}, fixPrecision:function(value) {
+  var me = this, nan = isNaN(value), precision = me.decimalPrecision;
+  if (nan || !value) {
+    return nan ? '' : value;
+  } else {
+    if (!me.allowDecimals || precision <= 0) {
+      precision = 0;
+    }
+  }
+  return parseFloat(Ext.Number.toFixed(parseFloat(value), precision));
+}, onBlur:function(e) {
+  var me = this, v = me.rawToValue(me.getRawValue());
+  if (!Ext.isEmpty(v)) {
+    me.setValue(v);
+  }
+  me.callParent([e]);
+}, setSpinUpEnabled:function(enabled, internal) {
+  this.callParent(arguments);
+  if (!internal) {
+    delete this.spinUpDisabledByToggle;
+  } else {
+    this.spinUpDisabledByToggle = !enabled;
+  }
+}, onSpinUp:function() {
+  var me = this;
+  if (!me.readOnly) {
+    me.setSpinValue(Ext.Number.constrain(me.getValue() + me.step, me.minValue, me.maxValue));
+  }
+}, setSpinDownEnabled:function(enabled, internal) {
+  this.callParent(arguments);
+  if (!internal) {
+    delete this.spinDownDisabledByToggle;
+  } else {
+    this.spinDownDisabledByToggle = !enabled;
+  }
+}, onSpinDown:function() {
+  var me = this;
+  if (!me.readOnly) {
+    me.setSpinValue(Ext.Number.constrain(me.getValue() - me.step, me.minValue, me.maxValue));
+  }
+}, setSpinValue:function(value) {
+  var me = this;
+  if (me.enforceMaxLength) {
+    if (me.fixPrecision(value).toString().length > me.maxLength) {
+      return;
+    }
+  }
+  me.setValue(value);
+}});
+Ext.define('Ext.toolbar.Paging', {extend:Ext.toolbar.Toolbar, xtype:'pagingtoolbar', alternateClassName:'Ext.PagingToolbar', mixins:[Ext.util.StoreHolder], displayInfo:false, prependButtons:false, displayMsg:'Displaying {0} - {1} of {2}', emptyMsg:'No data to display', beforePageText:'Page', afterPageText:'of {0}', firstText:'First Page', prevText:'Previous Page', nextText:'Next Page', lastText:'Last Page', refreshText:'Refresh', inputItemWidth:30, emptyPageData:{total:0, currentPage:0, pageCount:0, 
+toRecord:0, fromRecord:0}, defaultBindProperty:'store', _pagingToolbarCls:Ext.baseCSSPrefix + 'grid-paging-toolbar', getPagingItems:function() {
+  var me = this, inputListeners = {scope:me, blur:me.onPagingBlur};
+  inputListeners[Ext.supports.SpecialKeyDownRepeat ? 'keydown' : 'keypress'] = me.onPagingKeyDown;
+  return [{itemId:'first', tooltip:me.firstText, overflowText:me.firstText, iconCls:Ext.baseCSSPrefix + 'tbar-page-first', disabled:true, handler:me.moveFirst, scope:me}, {itemId:'prev', tooltip:me.prevText, overflowText:me.prevText, iconCls:Ext.baseCSSPrefix + 'tbar-page-prev', disabled:true, handler:me.movePrevious, scope:me}, '-', me.beforePageText, {xtype:'numberfield', itemId:'inputItem', name:'inputItem', cls:Ext.baseCSSPrefix + 'tbar-page-number', allowDecimals:false, minValue:1, hideTrigger:true, 
+  enableKeyEvents:true, keyNavEnabled:false, selectOnFocus:true, submitValue:false, isFormField:false, width:me.inputItemWidth, margin:'-1 2 3 2', listeners:inputListeners}, {xtype:'tbtext', itemId:'afterTextItem', html:Ext.String.format(me.afterPageText, 1)}, '-', {itemId:'next', tooltip:me.nextText, overflowText:me.nextText, iconCls:Ext.baseCSSPrefix + 'tbar-page-next', disabled:true, handler:me.moveNext, scope:me}, {itemId:'last', tooltip:me.lastText, overflowText:me.lastText, iconCls:Ext.baseCSSPrefix + 
+  'tbar-page-last', disabled:true, handler:me.moveLast, scope:me}, '-', {itemId:'refresh', tooltip:me.refreshText, overflowText:me.refreshText, iconCls:Ext.baseCSSPrefix + 'tbar-loading', disabled:me.store.isLoading(), handler:me.doRefresh, scope:me}];
+}, initComponent:function() {
+  var me = this, userItems = me.items || me.buttons || [], pagingItems;
+  me.bindStore(me.store || 'ext-empty-store', true);
+  if (me.store && !me.store.nextPage) {
+    Ext.raise('Store is not compatible with this component (does not support paging)');
+  }
+  pagingItems = me.getPagingItems();
+  if (me.prependButtons) {
+    me.items = userItems.concat(pagingItems);
+  } else {
+    me.items = pagingItems.concat(userItems);
+  }
+  delete me.buttons;
+  if (me.displayInfo) {
+    me.items.push('-\x3e');
+    me.items.push({xtype:'tbtext', itemId:'displayItem'});
+  }
+  me.callParent();
+}, beforeRender:function() {
+  this.callParent(arguments);
+  this.updateBarInfo();
+}, afterRender:function() {
+  this.callParent();
+  this.el.addCls(this._pagingToolbarCls);
+}, onAdded:function(owner) {
+  var me = this, oldStore = me.store, autoStore = me._autoStore, listener, store;
+  if (autoStore === undefined) {
+    me._autoStore = autoStore = !(oldStore && !oldStore.isEmptyStore);
+  }
+  if (autoStore) {
+    listener = me._storeChangeListener;
+    if (listener) {
+      listener.destroy();
+      listener = null;
+    }
+    store = owner && owner.store;
+    if (store) {
+      listener = owner.on({destroyable:true, scope:me, storechange:'onOwnerStoreChange'});
+    }
+    me._storeChangeListener = listener;
+    me.onOwnerStoreChange(owner, store);
+  }
+  me.callParent(arguments);
+}, onOwnerStoreChange:function(owner, store) {
+  this.setStore(store || Ext.getStore('ext-empty-store'));
+}, updateBarInfo:function() {
+  var me = this;
+  if (!me.store.isLoading()) {
+    me.calledInternal = true;
+    me.onLoad();
+    me.calledInternal = false;
+  }
+}, updateInfo:function() {
+  var me = this, displayItem = me.child('#displayItem'), store = me.store, pageData = me.getPageData(), count, msg;
+  if (displayItem) {
+    count = store.getCount();
+    if (count === 0) {
+      msg = me.emptyMsg;
+    } else {
+      msg = Ext.String.format(me.displayMsg, pageData.fromRecord, pageData.toRecord, pageData.total);
+    }
+    displayItem.setText(msg);
+  }
+}, onLoad:function() {
+  var me = this, pageData, currPage, pageCount, afterText, count, isEmpty, item;
+  count = me.store.getCount();
+  isEmpty = count === 0;
+  if (!isEmpty) {
+    pageData = me.getPageData();
+    currPage = pageData.currentPage;
+    pageCount = pageData.pageCount;
+    if (currPage > pageCount) {
+      if (pageCount > 0) {
+        me.store.loadPage(pageCount);
+      } else {
+        me.getInputItem().reset();
+      }
+      return;
+    }
+    afterText = Ext.String.format(me.afterPageText, isNaN(pageCount) ? 1 : pageCount);
+  } else {
+    currPage = 0;
+    pageCount = 0;
+    afterText = Ext.String.format(me.afterPageText, 0);
+  }
+  Ext.suspendLayouts();
+  item = me.child('#afterTextItem');
+  if (item) {
+    item.update(afterText);
+  }
+  item = me.getInputItem();
+  if (item) {
+    item.setDisabled(isEmpty).setValue(currPage);
+  }
+  me.setChildDisabled('#first', currPage === 1 || isEmpty);
+  me.setChildDisabled('#prev', currPage === 1 || isEmpty);
+  me.setChildDisabled('#next', currPage === pageCount || isEmpty);
+  me.setChildDisabled('#last', currPage === pageCount || isEmpty);
+  me.setChildDisabled('#refresh', false);
+  me.updateInfo();
+  Ext.resumeLayouts(true);
+  if (!me.calledInternal) {
+    me.fireEvent('change', me, pageData || me.emptyPageData);
+  }
+}, setChildDisabled:function(selector, disabled) {
+  var item = this.child(selector);
+  if (item) {
+    item.setDisabled(disabled);
+  }
+}, getPageData:function() {
+  var store = this.store, totalCount = store.getTotalCount(), pageCount = Math.ceil(totalCount / store.pageSize), toRecord = Math.min(store.currentPage * store.pageSize, totalCount);
+  return {total:totalCount, currentPage:store.currentPage, pageCount:Ext.Number.isFinite(pageCount) ? pageCount : 1, fromRecord:(store.currentPage - 1) * store.pageSize + 1, toRecord:toRecord || totalCount};
+}, onLoadError:function() {
+  this.setChildDisabled('#refresh', false);
+}, getInputItem:function() {
+  return this.child('#inputItem');
+}, readPageFromInput:function(pageData) {
+  var inputItem = this.getInputItem(), pageNum = false, v;
+  if (inputItem) {
+    v = inputItem.getValue();
+    pageNum = parseInt(v, 10);
+    if (!v || isNaN(pageNum)) {
+      inputItem.setValue(pageData.currentPage);
+      return false;
+    }
+  }
+  return pageNum;
+}, onPagingBlur:function(e) {
+  var inputItem = this.getInputItem(), curPage;
+  if (inputItem) {
+    curPage = this.getPageData().currentPage;
+    inputItem.setValue(curPage);
+  }
+}, onPagingKeyDown:function(field, e) {
+  this.processKeyEvent(field, e);
+}, processKeyEvent:function(field, e) {
+  var me = this, key = e.getKey(), pageData = me.getPageData(), increment = e.shiftKey ? 10 : 1, pageNum;
+  if (key === e.RETURN) {
+    e.stopEvent();
+    pageNum = me.readPageFromInput(pageData);
+    if (pageNum !== false) {
+      pageNum = Math.min(Math.max(1, pageNum), pageData.pageCount);
+      if (pageNum !== pageData.currentPage && me.fireEvent('beforechange', me, pageNum) !== false) {
+        me.store.loadPage(pageNum);
+      }
+    }
+  } else {
+    if (key === e.HOME || key === e.END) {
+      e.stopEvent();
+      pageNum = key === e.HOME ? 1 : pageData.pageCount;
+      field.setValue(pageNum);
+    } else {
+      if (key === e.UP || key === e.PAGE_UP || key === e.DOWN || key === e.PAGE_DOWN) {
+        e.stopEvent();
+        pageNum = me.readPageFromInput(pageData);
+        if (pageNum) {
+          if (key === e.DOWN || key === e.PAGE_DOWN) {
+            increment *= -1;
+          }
+          pageNum += increment;
+          if (pageNum >= 1 && pageNum <= pageData.pageCount) {
+            field.setValue(pageNum);
+          }
+        }
+      }
+    }
+  }
+}, beforeLoad:function() {
+  this.setChildDisabled('#refresh', true);
+}, moveFirst:function() {
+  if (this.fireEvent('beforechange', this, 1) !== false) {
+    this.store.loadPage(1);
+    return true;
+  }
+  return false;
+}, movePrevious:function() {
+  var me = this, store = me.store, prev = store.currentPage - 1;
+  if (prev > 0) {
+    if (me.fireEvent('beforechange', me, prev) !== false) {
+      store.previousPage();
+      return true;
+    }
+  }
+  return false;
+}, moveNext:function() {
+  var me = this, store = me.store, total = me.getPageData().pageCount, next = store.currentPage + 1;
+  if (next <= total) {
+    if (me.fireEvent('beforechange', me, next) !== false) {
+      store.nextPage();
+      return true;
+    }
+  }
+  return false;
+}, moveLast:function() {
+  var me = this, last = me.getPageData().pageCount;
+  if (me.fireEvent('beforechange', me, last) !== false) {
+    me.store.loadPage(last);
+    return true;
+  }
+  return false;
+}, doRefresh:function() {
+  var me = this, store = me.store, current = store.currentPage;
+  if (me.fireEvent('beforechange', me, current) !== false) {
+    store.loadPage(current);
+    return true;
+  }
+  return false;
+}, getStoreListeners:function() {
+  return {beforeload:this.beforeLoad, load:this.onLoad, exception:this.onLoadError};
+}, onBindStore:function() {
+  if (this.rendered) {
+    this.updateBarInfo();
+  }
+}, doDestroy:function() {
+  var me = this, listener = me._storeChangeListener;
+  if (listener) {
+    listener.destroy();
+    me._storeChangeListener = null;
+  }
+  me.bindStore(null);
+  me.callParent();
+}});
+Ext.define('Ext.theme.neptune.toolbar.Paging', {override:'Ext.toolbar.Paging', defaultButtonUI:'plain-toolbar', inputItemWidth:40});
+Ext.define('Ext.theme.triton.toolbar.Paging', {override:'Ext.toolbar.Paging', inputItemWidth:50});
+Ext.define('Ext.view.BoundList', {extend:Ext.view.View, alias:'widget.boundlist', alternateClassName:'Ext.BoundList', mixins:[Ext.mixin.Queryable], pageSize:0, baseCls:Ext.baseCSSPrefix + 'boundlist', itemCls:Ext.baseCSSPrefix + 'boundlist-item', listItemCls:'', shadow:false, trackOver:true, preserveScrollOnRefresh:true, enableInitialSelection:false, refreshSelmodelOnRefresh:true, componentLayout:'boundlist', navigationModel:'boundlist', scrollable:true, ariaEl:'listEl', tabIndex:-1, childEls:['listWrap', 
+'listEl'], renderTpl:['\x3cdiv id\x3d"{id}-listWrap" data-ref\x3d"listWrap"', ' class\x3d"{baseCls}-list-ct ', Ext.dom.Element.unselectableCls, '"\x3e', '\x3cul id\x3d"{id}-listEl" data-ref\x3d"listEl" class\x3d"', Ext.baseCSSPrefix, 'list-plain"', '\x3ctpl foreach\x3d"ariaAttributes"\x3e {$}\x3d"{.}"\x3c/tpl\x3e', '\x3e', '\x3c/ul\x3e', '\x3c/div\x3e', '{%', 'var pagingToolbar\x3dvalues.$comp.pagingToolbar;', 'if (pagingToolbar) {', 'Ext.DomHelper.generateMarkup(pagingToolbar.getRenderTree(), out);', 
+'}', '%}', {disableFormats:true}], focusOnToFront:false, alignOnScroll:false, initComponent:function() {
+  var me = this, baseCls = me.baseCls, itemCls = me.itemCls;
+  me.selectedItemCls = baseCls + '-selected';
+  if (me.trackOver) {
+    me.overItemCls = baseCls + '-item-over';
+  }
+  me.itemSelector = '.' + itemCls;
+  if (me.floating) {
+    me.addCls(baseCls + '-floating');
+  }
+  if (!me.tpl) {
+    me.generateTpl();
+  } else {
+    if (!me.tpl.isTemplate) {
+      me.tpl = new Ext.XTemplate(me.tpl);
+    }
+  }
+  if (me.pageSize) {
+    me.pagingToolbar = me.createPagingToolbar();
+  }
+  me.callParent();
+}, generateTpl:function() {
+  var me = this;
+  me.tpl = new Ext.XTemplate('\x3ctpl for\x3d"."\x3e', '\x3cli role\x3d"option" unselectable\x3d"on" class\x3d"' + me.itemCls + '"\x3e' + me.getInnerTpl(me.displayField) + '\x3c/li\x3e', '\x3c/tpl\x3e');
+}, setDisplayField:function(displayField) {
+  this.displayField = displayField;
+  this.generateTpl();
+}, getRefOwner:function() {
+  return this.pickerField || this.callParent();
+}, getRefItems:function() {
+  var result = this.callParent(), toolbar = this.pagingToolbar;
+  if (toolbar) {
+    result.push(toolbar);
+  }
+  return result;
+}, createPagingToolbar:function() {
+  var me = this;
+  return new Ext.toolbar.Paging({id:me.id + '-paging-toolbar', pageSize:me.pageSize, store:me.dataSource, border:false, ownerCt:me, ownerLayout:me.getComponentLayout()});
+}, refresh:function() {
+  var me = this, tpl = me.tpl;
+  tpl.field = me.pickerField;
+  tpl.store = me.store;
+  me.callParent();
+  tpl.field = tpl.store = null;
+  if (!me.ariaStaticRoles[me.ariaRole]) {
+    me.refreshAriaAttributes();
+  }
+}, refreshAriaAttributes:function() {
+  var me = this, store = me.store, selModel = me.getSelectionModel(), multiSelect, totalCount, nodes, node, record, index, i, len;
+  totalCount = store.isFiltered() ? store.getCount() : store.getTotalCount() || store.getCount();
+  nodes = me.getNodes();
+  multiSelect = me.pickerField && me.pickerField.multiSelect;
+  for (i = 0, len = nodes.length; i < len; i++) {
+    node = nodes[i];
+    record = null;
+    if (totalCount !== len) {
+      record = me.getRecord(node);
+      index = store.indexOf(record);
+      node.setAttribute('aria-setsize', totalCount);
+      node.setAttribute('aria-posinset', index);
+    }
+    if (multiSelect) {
+      record = record || me.getRecord(node);
+      node.setAttribute('aria-selected', selModel.isSelected(record));
+    }
+  }
+}, bindStore:function(store, initial) {
+  var toolbar = this.pagingToolbar;
+  this.callParent(arguments);
+  if (toolbar) {
+    toolbar.bindStore(store, initial);
+  }
+}, getInnerTpl:function(displayField) {
+  return '{' + displayField + '}';
+}, onShow:function() {
+  var field = this.pickerField;
+  this.callParent();
+  if (field && field.rendered && !field.hasFocus) {
+    field.focus();
+  }
+}, afterComponentLayout:function(width, height, oldWidth, oldHeight) {
+  var field = this.pickerField;
+  this.callParent([width, height, oldWidth, oldHeight]);
+  if (field && field.alignPicker) {
+    field.alignPicker();
+  }
+}, onItemSelect:function(record) {
+  var me = this, node;
+  node = me.callParent([record]);
+  if (node) {
+    if (me.ariaSelectable) {
+      node.setAttribute('aria-selected', 'true');
+    } else {
+      node.removeAttribute('aria-selected');
+    }
+  }
+  return node;
+}, onItemDeselect:function(record) {
+  var me = this, node;
+  node = me.callParent([record]);
+  if (node && me.ariaSelectable) {
+    if (me.pickerField && me.pickerField.multiSelect) {
+      node.setAttribute('aria-selected', 'false');
+    } else {
+      node.removeAttribute('aria-selected');
+    }
+  }
+  return node;
+}, onItemClick:function(record) {
+  var me = this, field = me.pickerField, valueField, selected;
+  if (!field) {
+    return;
+  }
+  valueField = field.valueField;
+  selected = me.getSelectionModel().getSelection();
+  if (!field.multiSelect && selected.length) {
+    selected = selected[0];
+    if (selected && field.isEqual(record.get(valueField), selected.get(valueField)) && field.collapse) {
+      field.collapse();
+    }
+  }
+}, onContainerClick:function(e) {
+  var toolbar = this.pagingToolbar, clientRegion;
+  if (toolbar && toolbar.rendered && e.within(toolbar.el)) {
+    return false;
+  }
+  if (Ext.isIE10 || Ext.isIE11) {
+    clientRegion = this.listWrap.getClientRegion();
+    if (!e.getPoint().isContainedBy(clientRegion)) {
+      return false;
+    }
+  }
+}, doDestroy:function() {
+  this.pagingToolbar = Ext.destroy(this.pagingToolbar);
+  this.callParent();
+}, privates:{getNodeContainer:function() {
+  return this.listEl;
+}, getTargetEl:function() {
+  return this.listEl;
+}, getOverflowEl:function() {
+  return this.listWrap;
+}, finishRenderChildren:function() {
+  var toolbar = this.pagingToolbar;
+  this.callParent(arguments);
+  if (toolbar) {
+    toolbar.finishRender();
+  }
+}}});
+Ext.define('Ext.form.field.ComboBox', {extend:Ext.form.field.Picker, alternateClassName:'Ext.form.ComboBox', alias:['widget.combobox', 'widget.combo'], mixins:[Ext.util.StoreHolder], config:{filters:null, selection:null, valueNotFoundText:null, displayTpl:null, delimiter:', ', displayField:'text'}, publishes:['selection'], twoWayBindable:['selection'], triggerCls:Ext.baseCSSPrefix + 'form-arrow-trigger', hiddenName:'', collapseOnSelect:false, hiddenDataCls:Ext.baseCSSPrefix + 'hidden-display ' + 
+Ext.baseCSSPrefix + 'form-data-hidden', ariaRole:'combobox', autoDestroyBoundStore:true, childEls:{'hiddenDataEl':true}, filtered:false, afterRender:function() {
+  var me = this;
+  me.callParent(arguments);
+  me.setHiddenValue(me.value);
+}, multiSelect:false, triggerAction:'all', allQuery:'', queryParam:'query', queryMode:'remote', queryCaching:true, autoLoadOnValue:false, pageSize:0, anyMatch:false, caseSensitive:false, autoSelect:true, autoSelectLast:true, typeAhead:false, typeAheadDelay:250, selectOnTab:true, forceSelection:false, growToLongestValue:true, clearFilterOnBlur:true, defaultListConfig:{loadingHeight:70, minWidth:70, maxHeight:300, shadow:'sides'}, transformInPlace:true, clearValueOnEmpty:true, newlineRe:/\r?\n/g, getGrowWidth:function() {
+  var me = this, value = me.inputEl.dom.value, field, store, dataLn, currentLongestLength, i, item, itemLn;
+  if (me.growToLongestValue) {
+    field = me.displayField;
+    store = me.store;
+    dataLn = store.data.length;
+    currentLongestLength = 0;
+    for (i = 0; i < dataLn; i++) {
+      item = store.getAt(i).data[field];
+      itemLn = item.length;
+      if (itemLn > currentLongestLength) {
+        currentLongestLength = itemLn;
+        value = item;
+      }
+    }
+  }
+  return value;
+}, initComponent:function() {
+  var me = this, isDefined = Ext.isDefined, store = me.store, transform = me.transform, transformSelect, isLocalMode;
+  if (me.typeAhead && me.multiSelect) {
+    Ext.raise('typeAhead and multiSelect are mutually exclusive options -- please remove one of them.');
+  }
+  if (me.typeAhead && !me.editable) {
+    Ext.raise('If typeAhead is enabled the combo must be editable: true -- please change one of those settings.');
+  }
+  if (me.selectOnFocus && !me.editable) {
+    Ext.raise('If selectOnFocus is enabled the combo must be editable: true -- please change one of those settings.');
+  }
+  if ('pinList' in me) {
+    me.collapseOnSelect = !me.pinList;
+  }
+  if (transform) {
+    transformSelect = Ext.getDom(transform);
+    if (transformSelect) {
+      if (!me.store) {
+        store = Ext.Array.map(Ext.Array.from(transformSelect.options), function(option) {
+          return [option.value, option.text];
+        });
+      }
+      if (!me.name) {
+        me.name = transformSelect.name;
+      }
+      if (!('value' in me)) {
+        me.value = transformSelect.value;
+      }
+    }
+  }
+  if (!me.displayTpl) {
+    me.setDisplayTpl(false);
+  }
+  me.bindStore(store || 'ext-empty-store', true, true);
+  isLocalMode = me.queryMode === 'local';
+  if (!isDefined(me.queryDelay)) {
+    me.queryDelay = isLocalMode ? 10 : 500;
+  }
+  if (!isDefined(me.minChars)) {
+    me.minChars = isLocalMode ? 0 : 4;
+  }
+  me.callParent();
+  me.doQueryTask = new Ext.util.DelayedTask(me.doRawQuery, me);
+  if (transformSelect) {
+    if (me.transformInPlace) {
+      me.render(transformSelect.parentNode, transformSelect);
+      delete me.renderTo;
+    }
+    Ext.removeNode(transformSelect);
+  }
+}, initEvents:function() {
+  var me = this;
+  me.callParent();
+  me.altArrowKeyNav = new Ext.util.KeyNav({target:me.inputEl, forceKeyDown:true, priority:1002, scope:me, down:{alt:true, handler:me.onAltDownArrow}, up:{alt:true, handler:me.onAltUpArrow}});
+}, getSubTplData:function(fieldData) {
+  var me = this, id = me.id, data, ariaAttr;
+  data = me.callParent([fieldData]);
+  if (!me.ariaStaticRoles[me.ariaRole]) {
+    ariaAttr = data.ariaElAttributes;
+    if (ariaAttr) {
+      ariaAttr['aria-owns'] = id + '-inputEl ' + id + '-picker-listEl';
+      ariaAttr['aria-autocomplete'] = 'list';
+    }
+  }
+  return data;
+}, getSubTplMarkup:function(fieldData) {
+  var me = this, hiddenDataElMarkup = '', markup = me.callParent(arguments);
+  if (me.hiddenName) {
+    hiddenDataElMarkup = '\x3cdiv id\x3d"' + fieldData.id + '-hiddenDataEl" data-ref\x3d"hiddenDataEl" class\x3d"' + me.hiddenDataCls + '" role\x3d"presentation"\x3e\x3c/div\x3e';
+  }
+  return hiddenDataElMarkup + markup;
+}, applyDisplayTpl:function(displayTpl) {
+  var me = this;
+  if (!displayTpl) {
+    displayTpl = new Ext.XTemplate('\x3ctpl for\x3d"."\x3e' + '{[typeof values \x3d\x3d\x3d "string" ? values : values["' + me.getDisplayField() + '"]]}' + '\x3ctpl if\x3d"xindex \x3c xcount"\x3e' + me.getDelimiter() + '\x3c/tpl\x3e' + '\x3c/tpl\x3e');
+    displayTpl.auto = true;
+  } else {
+    if (!displayTpl.isTemplate) {
+      displayTpl = new Ext.XTemplate(displayTpl);
+    }
+  }
+  return displayTpl;
+}, applyFilters:function(filters, collection) {
+  var me = this;
+  if (filters === null || filters.isFilterCollection) {
+    return filters;
+  }
+  if (filters) {
+    if (!collection) {
+      collection = this.getFilters();
+    }
+    collection.beginUpdate();
+    collection.splice(0, collection.length, filters);
+    collection.each(function(filter) {
+      filter.ownerId = me.id;
+    });
+    collection.endUpdate();
+  }
+  return collection;
+}, applyValueNotFoundText:function(v) {
+  var me = this, valueNotFoundRecord = me.valueNotFoundRecord || (me.valueNotFoundRecord = new Ext.data.Model), displayField = me.getDisplayField(), valueField = me.valueField;
+  valueNotFoundRecord.set(displayField, v);
+  if (valueField && displayField !== valueField) {
+    valueNotFoundRecord.set(valueField, v);
+  }
+  return v;
+}, getFilters:function(autoCreate) {
+  var ret = this.filters;
+  if (!ret && autoCreate !== false) {
+    ret = new Ext.util.FilterCollection;
+    this.setFilters(ret);
+  }
+  return ret;
+}, updateFilters:function(newFilters, oldFilters) {
+  var me = this;
+  if (oldFilters) {
+    oldFilters.un('endupdate', 'onEndUpdateFilters', me);
+  }
+  if (newFilters) {
+    newFilters.on('endupdate', 'onEndUpdateFilters', me);
+  }
+  me.onEndUpdateFilters(newFilters);
+}, onEndUpdateFilters:function(filters) {
+  var me = this, was = me.filtered, is = !!filters && filters.length > 0, old, storeFilters;
+  if (was || is) {
+    me.filtered = is;
+    old = [];
+    storeFilters = me.store.getFilters();
+    storeFilters.each(function(filter) {
+      if (filter.ownerId === me.id && !filters.contains(filter)) {
+        old.push(filter);
+      }
+    });
+    storeFilters.splice(0, old, filters.items);
+  }
+}, clearLocalFilter:function() {
+  var me = this, filter = me.queryFilter;
+  if (filter) {
+    me.queryFilter = null;
+    me.changingFilters = true;
+    me.store.removeFilter(filter, true);
+    me.changingFilters = false;
+  }
+}, completeEdit:function(e) {
+  var me = this;
+  this.callParent([e]);
+  me.doQueryTask.cancel();
+  me.assertValue();
+  if (me.queryFilter && me.queryMode === 'local' && me.clearFilterOnBlur) {
+    me.clearLocalFilter();
+  }
+}, onFocus:function(e) {
+  var me = this;
+  me.callParent([e]);
+  if (me.triggerAction !== 'all' && me.queryFilter && me.queryMode === 'local' && me.clearFilterOnBlur) {
+    delete me.lastQuery;
+    me.doRawQuery();
+  }
+}, onAltDownArrow:function(e) {
+  e.stopEvent();
+  if (!this.isExpanded) {
+    this.onDownArrow(e);
+  }
+  return false;
+}, onAltUpArrow:function(e) {
+  e.stopEvent();
+  if (this.isExpanded) {
+    this.onEsc(e);
+  }
+  return false;
+}, assertValue:function() {
+  var me = this, rawValue = me.getRawValue(), displayValue = me.getDisplayValue(), lastRecords = me.lastSelectedRecords, preventChange = false, value, rec;
+  if (me.forceSelection) {
+    if (me.multiSelect) {
+      if (rawValue !== displayValue) {
+        me.setRawValue(displayValue);
+      }
+    } else {
+      rec = me.findRecordByDisplay(rawValue);
+      if (!rec) {
+        if (lastRecords && (!me.allowBlank || me.rawValue)) {
+          rec = lastRecords[0];
+        } else {
+          if (me.displayTplData && me.displayTplData.length) {
+            rec = me.findRecordByValue(me.displayTplData[0][me.valueField]);
+          }
+        }
+      } else {
+        if (me.getDisplayValue([me.getRecordDisplayData(rec)]) === displayValue) {
+          rec = null;
+          preventChange = true;
+        }
+      }
+      if (rec) {
+        me.select(rec, true);
+        me.fireEvent('select', me, rec);
+      } else {
+        if (!preventChange) {
+          if (lastRecords) {
+            delete me.lastSelectedRecords;
+          }
+          me.setRawValue('');
+        }
+      }
+    }
+  } else {
+    if ((value = me.getValue()) && value == rawValue) {
+      rec = me.findRecordByDisplay(value);
+      if (rec && (rec !== (lastRecords && lastRecords[0]) || me.displayField !== me.valueField)) {
+        me.select(rec, true);
+        me.fireEvent('select', me, rec);
+      }
+    }
+  }
+  me.collapse();
+}, onTypeAhead:function() {
+  var me = this, displayField = me.displayField, record = me.store.findRecord(displayField, me.getRawValue()), newValue, len, selStart;
+  if (record) {
+    newValue = record.get(displayField);
+    len = newValue.length;
+    selStart = me.getRawValue().length;
+    if (selStart !== 0 && selStart !== len) {
+      me.lastMutatedValue = newValue;
+      me.setRawValue(newValue);
+      me.selectText(selStart, newValue.length);
+    }
+  }
+}, resetToDefault:Ext.emptyFn, beforeReset:function() {
+  this.callParent();
+  this.clearLocalFilter();
+}, onUnbindStore:function() {
+  var me = this, picker = me.picker;
+  if (me.queryFilter && !me.store.destroyed) {
+    me.clearLocalFilter();
+  }
+  if (picker) {
+    picker.bindStore(null);
+  }
+  me.pickerSelectionModel.destroy();
+}, onBindStore:function(store, initial) {
+  var me = this, picker = me.picker, extraKeySpec, valueCollectionConfig;
+  if (store) {
+    if (store.autoCreated) {
+      me.queryMode = 'local';
+      me.valueField = me.displayField = 'field1';
+      if (!store.expanded) {
+        me.displayField = 'field2';
+      }
+      if (me.getDisplayTpl().auto) {
+        me.setDisplayTpl(null);
+      }
+    }
+    if (!Ext.isDefined(me.valueField)) {
+      me.valueField = me.displayField;
+    }
+    extraKeySpec = {byValue:{rootProperty:'data', unique:false}};
+    extraKeySpec.byValue.property = me.valueField;
+    store.setExtraKeys(extraKeySpec);
+    if (me.displayField === me.valueField) {
+      store.byText = store.byValue;
+    } else {
+      extraKeySpec.byText = {rootProperty:'data', unique:false};
+      extraKeySpec.byText.property = me.displayField;
+      store.setExtraKeys(extraKeySpec);
+    }
+    valueCollectionConfig = {rootProperty:'data', extraKeys:{byInternalId:{property:'internalId'}, byValue:{property:me.valueField, rootProperty:'data'}}, listeners:{beginupdate:me.onValueCollectionBeginUpdate, endupdate:me.onValueCollectionEndUpdate, scope:me}};
+    me.valueCollection = new Ext.util.Collection(valueCollectionConfig);
+    me.pickerSelectionModel = new Ext.selection.DataViewModel({mode:me.multiSelect ? 'SIMPLE' : 'SINGLE', ordered:true, deselectOnContainerClick:false, enableInitialSelection:false, pruneRemoved:false, selected:me.valueCollection, store:store, listeners:{scope:me, lastselectedchanged:me.updateBindSelection}});
+    if (!initial) {
+      me.resetToDefault();
+    }
+    if (picker) {
+      me.pickerSelectionModel.on({scope:me, beforeselect:me.onBeforeSelect, beforedeselect:me.onBeforeDeselect});
+      picker.setSelectionModel(me.pickerSelectionModel);
+      if (picker.getStore() !== store) {
+        picker.bindStore(store);
+      }
+    }
+  }
+}, bindStore:function(store, preventFilter, initial) {
+  var me = this, filter = me.queryFilter;
+  me.mixins.storeholder.bindStore.call(me, store, initial);
+  store = me.getStore();
+  if (store && filter && !preventFilter) {
+    store.getFilters().add(filter);
+  }
+  if (!initial && store && !store.isEmptyStore) {
+    me.setValueOnData();
+  }
+}, getStoreListeners:function(store) {
+  if (!store.isEmptyStore) {
+    var me = this, result = {datachanged:me.onDataChanged, load:me.onLoad, exception:me.onException, update:me.onStoreUpdate, remove:me.checkValueOnChange};
+    if (!store.getRemoteFilter()) {
+      result.filterchange = me.checkValueOnChange;
+    }
+    return result;
+  }
+}, onDataChanged:function() {
+  if (this.grow && this.growToLongestValue) {
+    this.autoSize();
+  }
+}, checkValueOnChange:function() {
+  var me = this;
+  if (!me.destroying && me.getStore().isLoaded()) {
+    if (me.multiSelect) {
+    } else {
+      if (me.forceSelection && !me.changingFilters && !me.findRecordByValue(me.value)) {
+        if (me.queryMode != 'local' && (me.hasFocus || me.isPaging)) {
+          return;
+        }
+        me.setValue(null);
+      }
+    }
+  }
+}, onStoreUpdate:function(store, record) {
+  this.updateValue();
+}, onException:function() {
+  this.isPaging = false;
+  this.collapse();
+}, onLoad:function(store, records, success) {
+  var me = this, needsValueUpdating = !me.valueCollection.byValue.get(me.value);
+  if (success && needsValueUpdating && !me.isPaging && !(store.lastOptions && 'rawQuery' in store.lastOptions)) {
+    me.setValueOnData();
+  }
+  me.checkValueOnChange();
+  me.isPaging = false;
+}, setValueOnData:function() {
+  var me = this;
+  me.setValue(me.value);
+  if (me.isExpanded && me.getStore().getCount()) {
+    me.doAutoSelect();
+  }
+}, doRawQuery:function() {
+  var me = this, rawValue = me.inputEl.dom.value;
+  if (me.multiSelect) {
+    rawValue = rawValue.split(me.delimiter).pop();
+  }
+  me.doQuery(rawValue, false, true);
+}, doQuery:function(queryString, forceAll, rawQuery) {
+  var me = this, store = me.getStore(), filters = store.getFilters(), queryPlan = me.beforeQuery({lastQuery:me.lastQuery || '', query:queryString || '', rawQuery:rawQuery, forceAll:forceAll, combo:me, cancel:false}), refreshFilters;
+  if (queryPlan !== false && !queryPlan.cancel) {
+    refreshFilters = !!queryString && (!me.queryFilter || me.queryFilter && filters.indexOf(me.queryFilter) < 0);
+    if (me.queryCaching && !refreshFilters && queryPlan.query === me.lastQuery) {
+      me.getPicker().refresh();
+      me.expand();
+      me.afterQuery(queryPlan);
+    } else {
+      me.lastQuery = queryPlan.query;
+      if (me.queryMode === 'local') {
+        me.doLocalQuery(queryPlan);
+      } else {
+        me.doRemoteQuery(queryPlan);
+      }
+    }
+    return true;
+  } else {
+    me.startCheckChangeTask();
+  }
+  return false;
+}, beforeQuery:function(queryPlan) {
+  var me = this;
+  if (me.fireEvent('beforequery', queryPlan) === false) {
+    queryPlan.cancel = true;
+  } else {
+    if (!queryPlan.cancel) {
+      if (queryPlan.query.length < me.minChars && !queryPlan.forceAll) {
+        queryPlan.cancel = true;
+      }
+    }
+  }
+  return queryPlan;
+}, doLocalQuery:function(queryPlan) {
+  var me = this, queryString = queryPlan.query, store = me.getStore(), value = queryString, filter;
+  me.clearLocalFilter();
+  if (queryString) {
+    if (me.enableRegEx) {
+      try {
+        value = new RegExp(value);
+      } catch (e$37) {
+        value = null;
+      }
+    }
+    if (value !== null) {
+      me.changingFilters = true;
+      filter = me.queryFilter = new Ext.util.Filter({id:me.id + '-filter', anyMatch:me.anyMatch, caseSensitive:me.caseSensitive, root:'data', property:me.displayField, value:value});
+      store.addFilter(filter, true);
+      me.changingFilters = false;
+    }
+  }
+  if (me.store.getCount() || me.getPicker().emptyText) {
+    me.getPicker().refresh();
+    me.expand();
+  } else {
+    me.collapse();
+  }
+  me.afterQuery(queryPlan);
+}, doRemoteQuery:function(queryPlan) {
+  var me = this, loadCallback = function() {
+    if (!me.destroyed) {
+      me.afterQuery(queryPlan);
+    }
+  };
+  me.expand();
+  if (me.pageSize) {
+    me.loadPage(1, {rawQuery:queryPlan.rawQuery, callback:loadCallback});
+  } else {
+    me.store.load({params:me.getParams(queryPlan.query), rawQuery:queryPlan.rawQuery, callback:loadCallback});
+  }
+}, afterQuery:function(queryPlan) {
+  var me = this;
+  if (me.store.getCount()) {
+    if (me.typeAhead) {
+      me.doTypeAhead(queryPlan);
+    }
+    if (queryPlan.rawQuery) {
+      if (me.picker && !me.picker.getSelectionModel().hasSelection()) {
+        me.doAutoSelect();
+      }
+    } else {
+      me.doAutoSelect();
+    }
+  }
+  me.startCheckChangeTask();
+}, loadPage:function(pageNum, options) {
+  this.isPaging = true;
+  this.store.loadPage(pageNum, Ext.apply({params:this.getParams(this.lastQuery)}, options));
+}, onPageChange:function(toolbar, newPage) {
+  this.loadPage(newPage);
+  return false;
+}, getParams:function(queryString) {
+  var params = {}, param = this.queryParam;
+  if (param) {
+    params[param] = queryString;
+  }
+  return params;
+}, doAutoSelect:function() {
+  var me = this, store = me.store, picker = me.picker, itemNode = 0, selectionModel, lastSelected;
+  if (picker && me.autoSelect && store.getCount() > 0) {
+    if (me.autoSelectLast) {
+      selectionModel = picker.getSelectionModel();
+      lastSelected = selectionModel.lastSelected;
+      if (lastSelected && selectionModel.selected.length && store.indexOf(lastSelected) > -1) {
+        itemNode = lastSelected;
+      }
+    }
+    picker.getNavigationModel().setPosition(itemNode);
+  }
+}, doTypeAhead:function(queryPlan) {
+  var me = this;
+  if (!me.typeAheadTask) {
+    me.typeAheadTask = new Ext.util.DelayedTask(me.onTypeAhead, me);
+  }
+  if (queryPlan.query.length > queryPlan.lastQuery.length || !Ext.String.startsWith(queryPlan.lastQuery, queryPlan.query)) {
+    me.typeAheadTask.delay(me.typeAheadDelay);
+  }
+}, onTriggerClick:function(comboBox, trigger, e) {
+  var me = this, oldAutoSelect;
+  if (!me.readOnly && !me.disabled) {
+    if (me.isExpanded) {
+      me.collapse();
+    } else {
+      if (e && e.type === 'keydown' && e.altKey) {
+        oldAutoSelect = me.autoSelect;
+        me.autoSelect = false;
+        me.expand();
+        me.autoSelect = oldAutoSelect;
+      } else {
+        if (me.triggerAction === 'all') {
+          me.doQuery(me.allQuery, true);
+        } else {
+          if (me.triggerAction === 'last') {
+            me.doQuery(me.lastQuery, true);
+          } else {
+            me.doQuery(me.getRawValue(), false, true);
+          }
+        }
+      }
+    }
+  }
+}, onFieldMutation:function(e) {
+  var me = this, key = e.getKey(), isDelete = key === e.BACKSPACE || key === e.DELETE, rawValue = me.inputEl.dom.value, len = rawValue.length;
+  if (!me.readOnly && (rawValue !== me.lastMutatedValue || isDelete) && key !== e.TAB) {
+    me.lastMutatedValue = rawValue;
+    me.refreshEmptyText();
+    if (len && (e.type !== 'keyup' || (!e.isSpecialKey() || isDelete))) {
+      me.doQueryTask.delay(me.queryDelay);
+    } else {
+      if (!len && (!key || isDelete)) {
+        ++me.suspendCheckChange;
+        if (!me.multiSelect) {
+          me.value = null;
+          me.displayTplData = undefined;
+        }
+        if (me.clearValueOnEmpty) {
+          me.valueCollection.beginUpdate();
+          me.pickerSelectionModel.deselectAll();
+          me.valueCollection.removeAll();
+          me.valueCollection.endUpdate();
+        }
+        me.collapse();
+        if (me.queryFilter) {
+          me.clearLocalFilter();
+        }
+        me.lastQuery = null;
+        --me.suspendCheckChange;
+      }
+      me.callParent([e]);
+    }
+  }
+}, doDestroy:function() {
+  var me = this;
+  me.doQueryTask.cancel();
+  if (me.typeAheadTask) {
+    me.typeAheadTask.cancel();
+    me.typeAheadTask = null;
+  }
+  me.bindStore(null);
+  Ext.destroy(me.altArrowKeyNav, me.valueCollection);
+  me.callParent();
+}, onAdded:function() {
+  var me = this;
+  me.callParent(arguments);
+  if (me.picker) {
+    me.picker.ownerCt = me.up('[floating]');
+    me.picker.registerWithOwnerCt();
+  }
+}, createPicker:function() {
+  var me = this, picker, pickerCfg = Ext.apply({xtype:'boundlist', id:me.id + '-picker', pickerField:me, selectionModel:me.pickerSelectionModel, floating:true, hidden:true, store:me.getPickerStore(), displayField:me.displayField, preserveScrollOnRefresh:true, pageSize:me.pageSize, tpl:me.tpl, ariaSelectable:me.ariaSelectable}, me.listConfig, me.defaultListConfig);
+  picker = me.picker = Ext.widget(pickerCfg);
+  if (me.pageSize) {
+    picker.pagingToolbar.on('beforechange', me.onPageChange, me);
+  }
+  if (!picker.initialConfig.maxHeight) {
+    picker.on({beforeshow:me.onBeforePickerShow, scope:me});
+  }
+  picker.getSelectionModel().on({beforeselect:me.onBeforeSelect, beforedeselect:me.onBeforeDeselect, focuschange:me.onFocusChange, scope:me});
+  picker.getNavigationModel().navigateOnSpace = false;
+  return picker;
+}, getPickerStore:function() {
+  return this.store;
+}, onBeforePickerShow:function(picker) {
+  var me = this, heightAbove = me.getPosition()[1] - Ext.getBody().getScroll().top, heightBelow = Ext.Element.getViewportHeight() - heightAbove - me.getHeight();
+  picker.maxHeight = Math.max(heightAbove, heightBelow) - 5;
+}, onBeforeSelect:function(list, record, recordIndex) {
+  return this.fireEvent('beforeselect', this, record, recordIndex);
+}, onBeforeDeselect:function(list, record, recordIndex) {
+  return this.fireEvent('beforedeselect', this, record, recordIndex);
+}, onFocusChange:function(selModel, prevRecord, newRecord) {
+  var picker = this.picker, inputEl = this.inputEl, el;
+  if (newRecord) {
+    el = picker.getNodeByRecord(newRecord);
+    if (!el.id) {
+    }
+    if (el) {
+      if (!el.id) {
+        el.id = Ext.id();
+      }
+      inputEl.dom.setAttribute('aria-activedescendant', el.id);
+    } else {
+      inputEl.dom.removeAttribute('aria-activedescendant');
+    }
+  }
+}, getSelection:function() {
+  var selModel = this.getPicker().getSelectionModel(), selection = selModel.getSelection();
+  return selection.length ? selModel.getLastSelected() : null;
+}, updateSelection:function(selection) {
+  var me = this, sm;
+  if (!me.ignoreNextSelection) {
+    me.ignoreNextSelection = true;
+    sm = me.getPicker().getSelectionModel();
+    if (selection) {
+      sm.select(selection);
+      me.hasHadSelection = true;
+    } else {
+      sm.deselectAll();
+    }
+    me.ignoreNextSelection = false;
+  }
+}, updateBindSelection:function(selModel, selection) {
+  var me = this, selected = null;
+  if (!me.ignoreNextSelection) {
+    me.ignoreNextSelection = true;
+    if (selection.length) {
+      selected = selModel.getLastSelected();
+      me.hasHadSelection = true;
+    }
+    if (me.hasHadSelection) {
+      me.setSelection(selected);
+    }
+    me.ignoreNextSelection = false;
+  }
+}, onValueCollectionBeginUpdate:Ext.emptyFn, onValueCollectionEndUpdate:function() {
+  var me = this, store = me.store, selectedRecords = me.valueCollection.getRange(), selectedRecord = selectedRecords[0], selectionCount = selectedRecords.length;
+  me.updateBindSelection(me.pickerSelectionModel, selectedRecords);
+  if (me.isSelectionUpdating()) {
+    return;
+  }
+  Ext.suspendLayouts();
+  me.lastSelection = selectedRecords;
+  if (selectionCount) {
+    me.lastSelectedRecords = selectedRecords;
+  }
+  me.updateValue();
+  if (selectionCount && (!me.multiSelect && store.contains(selectedRecord) || me.collapseOnSelect || !store.getCount())) {
+    me.updatingValue = true;
+    me.collapse();
+    me.updatingValue = false;
+  }
+  Ext.resumeLayouts(true);
+  if (!me.suspendCheckChange) {
+    if (!me.multiSelect) {
+      selectedRecords = selectedRecord;
+    }
+    me.fireEvent('select', me, selectedRecords);
+  }
+}, isSelectionUpdating:function() {
+  var selModel = this.pickerSelectionModel;
+  return selModel.deselectingDuringSelect || selModel.refreshing;
+}, onExpand:function() {
+  var me = this, picker = me.getPicker(), keyNav = picker.getNavigationModel(), node;
+  if (keyNav) {
+    keyNav.enable();
+  }
+  me.doAutoSelect();
+  node = picker.highlightedItem;
+  if (node) {
+    if (!node.id) {
+      node.id = Ext.id();
+    }
+    me.inputEl.dom.setAttribute('aria-activedescendant', node.id);
+  }
+}, onCollapse:function() {
+  var me = this, keyNav = me.getPicker().getNavigationModel();
+  if (keyNav) {
+    keyNav.disable();
+  }
+  if (me.updatingValue) {
+    me.doQueryTask.cancel();
+  }
+  me.inputEl.dom.removeAttribute('aria-activedescendant');
+}, select:function(r, assert) {
+  var me = this, picker = me.picker, fireSelect;
+  if (r && r.isModel && assert === true && picker) {
+    fireSelect = !picker.getSelectionModel().isSelected(r);
+  }
+  if (!fireSelect) {
+    me.suspendEvent('select');
+  }
+  me.setValue(r);
+  me.resumeEvent('select');
+}, findRecord:function(field, value) {
+  var ds = this.store, idx = ds.findExact(field, value);
+  return idx !== -1 ? ds.getAt(idx) : false;
+}, getSelectedRecord:function() {
+  return this.findRecordByValue(this.value) || null;
+}, findRecordByValue:function(value) {
+  var result = this.store.byValue.get(value), ret = false;
+  if (result) {
+    ret = result[0] || result;
+  }
+  return ret;
+}, findRecordByDisplay:function(value) {
+  var result = this.store.byText.get(value), ret = false;
+  if (result) {
+    ret = result[0] || result;
+  }
+  return ret;
+}, addValue:function(value) {
+  if (value != null) {
+    return this.doSetValue(value, true);
+  }
+}, setValue:function(value) {
+  var me = this, bind, valueBind;
+  if (me.hasFocus) {
+    bind = me.getBind();
+    valueBind = bind && bind.value;
+    if (valueBind && valueBind.syncing) {
+      if (Ext.isEmpty(value) && Ext.isEmpty(me.value) || value === me.value) {
+        return me;
+      } else {
+        if (Ext.isArray(value) && Ext.isArray(me.value) && Ext.Array.equals(value, me.value)) {
+          return me;
+        }
+      }
+    }
+  } else {
+    me.lastSelectedRecords = null;
+  }
+  if (value != null) {
+    me.doSetValue(value);
+  } else {
+    me.suspendEvent('select');
+    me.valueCollection.beginUpdate();
+    me.pickerSelectionModel.deselectAll();
+    me.valueCollection.endUpdate();
+    me.resumeEvent('select');
+  }
+  return me;
+}, setRawValue:function(rawValue) {
+  this.callParent([rawValue]);
+  this.lastMutatedValue = rawValue;
+}, doSetValue:function(value, add) {
+  var me = this, store = me.getStore(), Model = store.getModel(), matchedRecords = [], valueArray = [], autoLoadOnValue = me.autoLoadOnValue, isLoaded = store.getCount() > 0 || store.isLoaded(), pendingLoad = store.hasPendingLoad(), unloaded = autoLoadOnValue && !isLoaded && !pendingLoad, forceSelection = me.forceSelection, selModel = me.pickerSelectionModel, displayField = me.displayField, valueField = me.valueField, displayIsValue = displayField === valueField, isEmptyStore = store.isEmptyStore, 
+  lastSelection = me.lastSelection, i, len, record, dataObj, valueChanged, key, val;
+  if (add && !me.multiSelect) {
+    Ext.raise('Cannot add values to non multiSelect ComboBox');
+  }
+  if (pendingLoad || unloaded || !isLoaded || isEmptyStore) {
+    if (!value.isModel) {
+      if (add) {
+        me.value = Ext.Array.from(me.value).concat(value);
+      } else {
+        me.value = value;
+      }
+      me.setHiddenValue(me.value);
+      me.setRawValue(displayIsValue ? value : '');
+      if (displayIsValue && !Ext.isEmpty(value) && me.inputEl && me.emptyText) {
+        me.inputEl.removeCls(me.emptyUICls);
+      }
+    }
+    if (unloaded && !isEmptyStore) {
+      store.load();
+    }
+    if (!value.isModel || isEmptyStore) {
+      return me;
+    }
+  }
+  value = add ? Ext.Array.from(me.value).concat(value) : Ext.Array.from(value);
+  for (i = 0, len = value.length; i < len; i++) {
+    record = val = value[i];
+    if (!record || !record.isModel) {
+      record = me.findRecordByValue(key = record);
+      if (!record) {
+        record = me.valueCollection.find(valueField, key);
+      }
+    }
+    if (!record) {
+      if (!forceSelection) {
+        if (!record && val) {
+          dataObj = {};
+          if (Ext.isObject(val)) {
+            dataObj[displayField] = val[displayField];
+            dataObj[valueField] = val[valueField];
+          } else {
+            dataObj[displayField] = val;
+            if (valueField && displayField !== valueField) {
+              dataObj[valueField] = val;
+            }
+          }
+          record = new Model(dataObj);
+        }
+      } else {
+        if (me.valueNotFoundRecord) {
+          record = me.valueNotFoundRecord;
+        }
+      }
+    }
+    if (record) {
+      matchedRecords.push(record);
+      valueArray.push(record.get(valueField));
+    }
+  }
+  if (lastSelection) {
+    len = lastSelection.length;
+    if (len === matchedRecords.length) {
+      for (i = 0; !valueChanged && i < len; i++) {
+        if (Ext.Array.indexOf(me.lastSelection, matchedRecords[i]) === -1) {
+          valueChanged = true;
+        }
+      }
+    } else {
+      valueChanged = true;
+    }
+  } else {
+    valueChanged = matchedRecords.length;
+  }
+  if (valueChanged) {
+    me.suspendEvent('select');
+    me.valueCollection.beginUpdate();
+    if (matchedRecords.length) {
+      selModel.select(matchedRecords, false);
+    } else {
+      selModel.deselectAll();
+    }
+    me.valueCollection.endUpdate();
+    me.resumeEvent('select');
+  } else {
+    me.updateValue();
+  }
+  return me;
+}, updateValue:function() {
+  var me = this, selectedRecords = me.valueCollection.getRange(), len = selectedRecords.length, valueArray = [], displayTplData = me.displayTplData || (me.displayTplData = []), inputEl = me.inputEl, i, record, displayValue;
+  displayTplData.length = 0;
+  for (i = 0; i < len; i++) {
+    record = selectedRecords[i];
+    displayTplData.push(me.getRecordDisplayData(record));
+    if (record !== me.valueNotFoundRecord) {
+      valueArray.push(record.get(me.valueField));
+    }
+  }
+  me.setHiddenValue(valueArray);
+  me.value = me.multiSelect ? valueArray : valueArray[0];
+  if (!Ext.isDefined(me.value)) {
+    me.value = undefined;
+  }
+  me.displayTplData = displayTplData;
+  displayValue = me.getDisplayValue();
+  me.setRawValue(displayValue);
+  me.refreshEmptyText();
+  me.checkChange();
+  if (!me.lastSelectedRecords && selectedRecords.length) {
+    me.lastSelectedRecords = selectedRecords;
+  }
+  if (inputEl && me.typeAhead && me.hasFocus) {
+    me.selectText(displayValue.length);
+  }
+}, setHiddenValue:function(values) {
+  var me = this, name = me.hiddenName, i, dom, childNodes, input, valueCount, childrenCount;
+  if (!me.hiddenDataEl || !name) {
+    return;
+  }
+  values = Ext.Array.from(values);
+  dom = me.hiddenDataEl.dom;
+  childNodes = dom.childNodes;
+  input = childNodes[0];
+  valueCount = values.length;
+  childrenCount = childNodes.length;
+  if (!input && valueCount > 0) {
+    me.hiddenDataEl.setHtml(Ext.DomHelper.markup({tag:'input', type:'hidden', name:name}));
+    childrenCount = 1;
+    input = dom.firstChild;
+  }
+  while (childrenCount > valueCount) {
+    dom.removeChild(childNodes[0]);
+    --childrenCount;
+  }
+  while (childrenCount < valueCount) {
+    dom.appendChild(input.cloneNode(true));
+    ++childrenCount;
+  }
+  for (i = 0; i < valueCount; i++) {
+    childNodes[i].value = values[i];
+  }
+}, getDisplayValue:function(tplData) {
+  var s;
+  tplData = tplData || this.displayTplData;
+  s = this.getDisplayTpl().apply(tplData);
+  s = s == null ? '' : String(s);
+  return s.replace(this.newlineRe, '');
+}, getRecordDisplayData:function(record) {
+  return record.data;
+}, getValue:function() {
+  var me = this, store = me.getStore(), picker = me.picker, rawValue = me.getRawValue(), value = me.value;
+  if (!store.isEmptyStore && me.getDisplayValue() !== rawValue) {
+    me.displayTplData = undefined;
+    if (picker) {
+      me.valueCollection.suspendEvents();
+      picker.getSelectionModel().deselectAll();
+      me.valueCollection.resumeEvents();
+      me.lastSelection = null;
+    }
+    if (store.isLoaded() && (me.multiSelect || me.forceSelection)) {
+      value = me.value = undefined;
+    } else {
+      value = me.value = rawValue;
+    }
+  }
+  me.value = value == null ? null : value;
+  return me.value;
+}, getSubmitValue:function() {
+  var value = this.getValue();
+  if (Ext.isEmpty(value)) {
+    value = '';
+  }
+  return value;
+}, isEqual:function(v1, v2) {
+  var fromArray = Ext.Array.from, i, len;
+  v1 = fromArray(v1);
+  v2 = fromArray(v2);
+  len = v1.length;
+  if (len !== v2.length) {
+    return false;
+  }
+  for (i = 0; i < len; i++) {
+    if (v2[i] !== v1[i]) {
+      return false;
+    }
+  }
+  return true;
+}, clearValue:function() {
+  this.setValue(null);
 }});
 Ext.define('Ext.tip.Tip', {extend:Ext.panel.Panel, xtype:'tip', alternateClassName:'Ext.Tip', minWidth:40, maxWidth:500, shadow:'sides', constrainPosition:true, autoRender:true, hidden:true, baseCls:Ext.baseCSSPrefix + 'tip', focusOnToFront:false, maskOnDisable:false, closeAction:'hide', alwaysFramed:true, frameHeader:false, initComponent:function() {
   var me = this;
@@ -63768,6 +67980,205 @@ Ext.define('Ext.tip.QuickTipManager', {singleton:true, alternateClassName:'Ext.Q
   tip.register.apply(tip, arguments);
 }});
 Ext.define('Ext.toolbar.Separator', {extend:Ext.toolbar.Item, alias:'widget.tbseparator', alternateClassName:'Ext.Toolbar.Separator', baseCls:Ext.baseCSSPrefix + 'toolbar-separator', ariaRole:'separator'});
+Ext.define('Ext.grid.CellContext', {isCellContext:true, generation:0, constructor:function(view) {
+  this.view = view;
+}, setPosition:function(row, col) {
+  var me = this;
+  if (arguments.length === 1) {
+    if (row.length) {
+      col = row[0];
+      row = row[1];
+    } else {
+      if (row.isCellContext) {
+        return me.setAll(row.view, row.rowIdx, row.colIdx, row.record, row.column);
+      } else {
+        if (row.view) {
+          me.view = row.view;
+        }
+        col = row.column;
+        row = row.row;
+      }
+    }
+  }
+  me.setRow(row);
+  me.setColumn(col);
+  return me;
+}, setAll:function(view, recordIndex, columnIndex, record, columnHeader) {
+  var me = this;
+  me.view = view;
+  me.rowIdx = recordIndex;
+  me.colIdx = columnIndex;
+  me.record = record;
+  me.column = columnHeader;
+  me.generation++;
+  return me;
+}, setRow:function(row) {
+  var me = this, dataSource = me.view.dataSource, oldRecord = me.record, count;
+  if (row != undefined) {
+    if (typeof row === 'number') {
+      count = dataSource.getCount();
+      row = row < 0 ? Math.max(count + row, 0) : Math.max(Math.min(row, count - 1), 0);
+      me.rowIdx = row;
+      me.record = dataSource.getAt(row);
+    } else {
+      if (row.isModel) {
+        me.record = row;
+        me.rowIdx = dataSource.indexOf(row);
+      } else {
+        if (row.tagName || row.isElement) {
+          me.record = me.view.getRecord(row);
+          me.rowIdx = me.record ? me.record.isCollapsedPlaceholder ? dataSource.indexOfPlaceholder(me.record) : dataSource.indexOf(me.record) : -1;
+        }
+      }
+    }
+  }
+  if (me.record !== oldRecord) {
+    me.generation++;
+  }
+  return me;
+}, setColumn:function(col) {
+  var me = this, colMgr = me.view.getVisibleColumnManager(), oldColumn = me.column;
+  if (col != undefined) {
+    if (typeof col === 'number') {
+      me.colIdx = col;
+      me.column = colMgr.getHeaderAtIndex(col);
+    } else {
+      if (col.isHeader) {
+        me.column = col;
+        me.colIdx = colMgr.indexOf(col);
+      }
+    }
+  }
+  if (me.column !== oldColumn) {
+    me.generation++;
+  }
+  return me;
+}, setView:function(view) {
+  this.view = view;
+  this.refresh();
+}, getCell:function(returnDom) {
+  return this.view.getCellByPosition(this, returnDom);
+}, getRow:function(returnDom) {
+  var result = this.view.getRow(this.record);
+  return returnDom ? result : Ext.get(result);
+}, getNode:function(returnDom) {
+  var result = this.view.getNode(this.record);
+  return returnDom ? result : Ext.get(result);
+}, isEqual:function(other) {
+  return other && other.isCellContext && other.record === this.record && other.column === this.column;
+}, clone:function() {
+  var me = this, result = new me.self(me.view);
+  result.rowIdx = me.rowIdx;
+  result.colIdx = me.colIdx;
+  result.record = me.record;
+  result.column = me.column;
+  return result;
+}, privates:{isFirstColumn:function() {
+  var cell = this.getCell(true);
+  if (cell) {
+    return !cell.previousSibling;
+  }
+}, isLastColumn:function() {
+  var cell = this.getCell(true);
+  if (cell) {
+    return !cell.nextSibling;
+  }
+}, isLastRenderedRow:function() {
+  return this.view.all.endIndex === this.rowIdx;
+}, getLastColumnIndex:function() {
+  var row = this.getRow(true);
+  if (row) {
+    return row.lastChild.cellIndex;
+  }
+  return -1;
+}, refresh:function() {
+  var me = this, newRowIdx = me.view.dataSource.indexOf(me.record), newColIdx = me.view.getVisibleColumnManager().indexOf(me.column);
+  me.setRow(newRowIdx === -1 ? me.rowIdx : me.record);
+  me.setColumn(newColIdx === -1 ? me.colIdx : me.column);
+}, navigate:function(direction) {
+  var me = this, columns = me.view.getVisibleColumnManager().getColumns();
+  switch(direction) {
+    case -1:
+      do {
+        if (!me.colIdx) {
+          me.colIdx = columns.length - 1;
+        } else {
+          me.colIdx--;
+        }
+        me.setColumn(me.colIdx);
+      } while (!me.getCell(true));
+      break;
+    case 1:
+      do {
+        if (me.colIdx >= columns.length) {
+          me.colIdx = 0;
+        } else {
+          me.colIdx++;
+        }
+        me.setColumn(me.colIdx);
+      } while (!me.getCell(true));
+      break;
+  }
+}}, statics:{compare:function(c1, c2) {
+  return c1.rowIdx - c2.rowIdx || c1.colIdx - c2.colIdx;
+}}});
+Ext.define('Ext.grid.ColumnComponentLayout', {extend:Ext.layout.component.Auto, alias:'layout.columncomponent', type:'columncomponent', setWidthInDom:true, _paddingReset:{paddingTop:'', paddingBottom:''}, columnAutoCls:Ext.baseCSSPrefix + 'column-header-text-container-auto', beginLayout:function(ownerContext) {
+  this.callParent(arguments);
+  ownerContext.titleContext = ownerContext.getEl('titleEl');
+}, beginLayoutCycle:function(ownerContext) {
+  var me = this, owner = me.owner, shrinkWrap = ownerContext.widthModel.shrinkWrap;
+  me.callParent(arguments);
+  if (shrinkWrap) {
+    owner.el.setWidth('');
+  }
+  owner.textContainerEl[shrinkWrap && !owner.isGroupHeader ? 'addCls' : 'removeCls'](me.columnAutoCls);
+  owner.titleEl.setStyle(me._paddingReset);
+}, publishInnerHeight:function(ownerContext, outerHeight) {
+  var me = this, owner = me.owner, innerHeight;
+  if (owner.getRootHeaderCt().hiddenHeaders) {
+    ownerContext.setProp('innerHeight', 0);
+    return;
+  }
+  if (!ownerContext.hasRawContent) {
+    if (owner.headerWrap && !ownerContext.hasDomProp('width')) {
+      me.done = false;
+      return;
+    }
+    innerHeight = outerHeight - ownerContext.getBorderInfo().height;
+    ownerContext.setProp('innerHeight', innerHeight - owner.titleEl.getHeight(), false);
+  }
+}, measureContentHeight:function(ownerContext) {
+  return ownerContext.el.dom.offsetHeight;
+}, publishInnerWidth:function(ownerContext, outerWidth) {
+  if (!ownerContext.hasRawContent) {
+    ownerContext.setProp('innerWidth', outerWidth - ownerContext.getBorderInfo().width, false);
+  }
+}, calculateOwnerHeightFromContentHeight:function(ownerContext, contentHeight) {
+  var result = this.callParent(arguments), owner = this.owner;
+  if (!ownerContext.hasRawContent) {
+    if (!owner.headerWrap || ownerContext.hasDomProp('width')) {
+      return contentHeight + owner.titleEl.getHeight() + ownerContext.getBorderInfo().height;
+    }
+    return null;
+  }
+  return result;
+}, calculateOwnerWidthFromContentWidth:function(ownerContext, contentWidth) {
+  var owner = this.owner, padWidth = ownerContext.getPaddingInfo().width, triggerOffset = this.getTriggerOffset(owner, ownerContext), inner;
+  if (owner.isGroupHeader) {
+    inner = contentWidth;
+  } else {
+    inner = Math.max(contentWidth, owner.textEl.getWidth() + ownerContext.titleContext.getPaddingInfo().width);
+  }
+  return inner + padWidth + triggerOffset;
+}, getTriggerOffset:function(owner, ownerContext) {
+  var width = 0;
+  if (ownerContext.widthModel.shrinkWrap && !owner.menuDisabled) {
+    if (owner.query('\x3e:not([hidden])').length === 0) {
+      width = owner.getTriggerElWidth();
+    }
+  }
+  return width;
+}});
 Ext.define('Ext.layout.container.Fit', {extend:Ext.layout.container.Container, alternateClassName:['Ext.layout.FitLayout', 'Ext.layout.Fit'], alias:'layout.fit', itemCls:Ext.baseCSSPrefix + 'fit-item', type:'fit', manageMargins:true, sizePolicies:[{readsWidth:1, readsHeight:1, setsWidth:0, setsHeight:0}, {readsWidth:0, readsHeight:1, setsWidth:1, setsHeight:0}, {readsWidth:1, readsHeight:0, setsWidth:0, setsHeight:1}, {readsWidth:0, readsHeight:0, setsWidth:1, setsHeight:1}], getItemSizePolicy:function(item, 
 ownerSizeModel) {
   var sizeModel = ownerSizeModel || this.owner.getSizeModel(), mode = (sizeModel.width.shrinkWrap ? 0 : 1) | (sizeModel.height.shrinkWrap ? 0 : 2);
@@ -63945,6 +68356,6275 @@ ownerSizeModel) {
 }, setItemWidth:function(itemContext, info) {
   itemContext.setWidth(info.targetSize.width - info.margins.width);
 }});
+Ext.define('Ext.panel.Table', {extend:Ext.panel.Panel, xtype:'tablepanel', extraBaseCls:Ext.baseCSSPrefix + 'grid', extraBodyCls:Ext.baseCSSPrefix + 'grid-body', actionableModeCls:Ext.baseCSSPrefix + 'grid-actionable', noHeaderBordersCls:Ext.baseCSSPrefix + 'no-header-borders', defaultBindProperty:'store', layout:'fit', manageLayoutScroll:false, ariaRole:'presentation', config:{focused:null, headerBorders:true, hideHeaders:null}, publishes:['selection'], twoWayBindable:['selection'], selection:null, 
+autoLoad:false, variableRowHeight:false, numFromEdge:2, trailingBufferZone:10, leadingBufferZone:20, hasView:false, viewType:null, deferRowRender:false, sortableColumns:true, multiColumnSort:false, enableLocking:false, scrollerOwner:true, enableColumnMove:true, sealedColumns:false, enableColumnResize:true, columnLines:false, rowLines:true, bufferedRenderer:true, preciseHeight:false, ownerGrid:null, colLinesCls:Ext.baseCSSPrefix + 'grid-with-col-lines', rowLinesCls:Ext.baseCSSPrefix + 'grid-with-row-lines', 
+noRowLinesCls:Ext.baseCSSPrefix + 'grid-no-row-lines', hiddenHeaderCtCls:Ext.baseCSSPrefix + 'grid-header-ct-hidden', hiddenHeaderCls:Ext.baseCSSPrefix + 'grid-header-hidden', resizeMarkerCls:Ext.baseCSSPrefix + 'grid-resize-marker', emptyCls:Ext.baseCSSPrefix + 'grid-empty', focusable:true, constructor:function(config) {
+  var me = this, topGrid = config && config.ownerGrid, store;
+  me.ownerGrid = topGrid || me;
+  me.actionables = topGrid ? topGrid.actionables : [];
+  me.callParent([config]);
+  store = me.store;
+  store.trackStateChanges = true;
+  if (me.autoLoad) {
+    if (!store.isEmptyStore) {
+      store.load();
+    }
+  }
+}, registerActionable:function(actionable) {
+  Ext.Array.include(this.actionables, actionable);
+}, initComponent:function() {
+  if (this.verticalScroller) {
+    Ext.raise('The verticalScroller config is not supported.');
+  }
+  if (!this.viewType) {
+    Ext.raise('You must specify a viewType config.');
+  }
+  if (this.headers) {
+    Ext.raise('The headers config is not supported. Please specify columns instead.');
+  }
+  var me = this, columns = me.columns || me.colModel || [], selection = me.selection, store, view, i, len, bufferedRenderer, headerCtCfg, headerCt;
+  if (selection) {
+    me.selection = null;
+    me.setSelection(selection);
+  }
+  store = me.store;
+  if (store && Ext.isObject(store) && !store.isStore && !store.storeId) {
+    store = Ext.apply({autoDestroy:true}, store);
+  }
+  store = me.store = Ext.data.StoreManager.lookup(store || 'ext-empty-store');
+  me.enableLocking = me.enableLocking || me.hasLockedColumns(columns);
+  if (me.plugins) {
+    me.plugins = me.constructPlugins();
+  }
+  if (me.columnLines) {
+    me.addBodyCls(me.colLinesCls);
+  }
+  me.addBodyCls(me.rowLines ? me.rowLinesCls : me.noRowLinesCls);
+  me.addBodyCls(me.extraBodyCls);
+  if (me.enableLocking) {
+    if (!me.mixins.lockable) {
+      me.self.mixin('lockable', Ext.grid.locking.Lockable);
+    }
+    me.injectLockable();
+  } else {
+    if (columns.isRootHeader) {
+      me.headerCt = headerCt = columns;
+      headerCt.grid = me;
+      headerCt.forceFit = !!me.forceFit;
+      columns = [];
+      me.columnManager = headerCt.columnManager;
+      me.visibleColumnManager = headerCt.visibleColumnManager;
+    } else {
+      headerCtCfg = {grid:me, $initParent:me, forceFit:me.forceFit, sortable:me.sortableColumns, enableColumnMove:me.enableColumnMove, enableColumnResize:me.enableColumnResize, columnLines:me.columnLines, sealed:me.sealedColumns};
+      if (Ext.isObject(columns)) {
+        Ext.apply(headerCtCfg, columns);
+        columns = columns.items;
+        delete headerCtCfg.items;
+      }
+      me.headerCt = headerCt = new Ext.grid.header.Container(headerCtCfg);
+    }
+    if (Ext.isDefined(me.enableColumnHide)) {
+      headerCt.enableColumnHide = me.enableColumnHide;
+    }
+  }
+  me.scrollTask = new Ext.util.DelayedTask(me.syncHorizontalScroll, me);
+  me.cls = (me.cls || '') + (' ' + me.extraBaseCls);
+  delete me.autoScroll;
+  bufferedRenderer = me.plugins && Ext.Array.findBy(me.plugins, function(p) {
+    return p.isBufferedRenderer;
+  });
+  if (bufferedRenderer) {
+    me.bufferedRenderer = bufferedRenderer;
+  }
+  if (!me.hasView) {
+    if (store.isBufferedStore && !store.getRemoteSort()) {
+      for (i = 0, len = columns.length; i < len; i++) {
+        columns[i].sortable = false;
+      }
+    }
+    me.relayHeaderCtEvents(headerCt);
+    me.features = me.features || [];
+    if (!Ext.isArray(me.features)) {
+      me.features = [me.features];
+    }
+    me.viewConfig = me.viewConfig || {};
+    view = me.getView();
+    me.items = [view];
+    me.hasView = true;
+    me.bindStore(store, true);
+    me.mon(view, {viewready:me.onViewReady, refresh:me.onRestoreHorzScroll, scope:me});
+  }
+  me.selModel = me.view.getSelectionModel();
+  me.selModel.on({scope:me, lastselectedchanged:me.updateBindSelection, selectionchange:me.updateBindSelection});
+  me.relayEvents(me.view, ['beforeitemlongpress', 'beforeitemmousedown', 'beforeitemmouseup', 'beforeitemmouseenter', 'beforeitemmouseleave', 'beforeitemclick', 'beforeitemdblclick', 'beforeitemcontextmenu', 'itemlongpress', 'itemmousedown', 'itemmouseup', 'itemmouseenter', 'itemmouseleave', 'itemclick', 'itemdblclick', 'itemcontextmenu', 'beforecellclick', 'cellclick', 'beforecelldblclick', 'celldblclick', 'beforecellcontextmenu', 'cellcontextmenu', 'beforecellmousedown', 'cellmousedown', 'beforecellmouseup', 
+  'cellmouseup', 'beforecellkeydown', 'cellkeydown', 'rowclick', 'rowdblclick', 'rowcontextmenu', 'rowmousedown', 'rowmouseup', 'rowkeydown', 'beforeitemkeydown', 'itemkeydown', 'beforeitemkeyup', 'itemkeyup', 'beforeitemkeypress', 'itemkeypress', 'beforecontainermousedown', 'beforecontainermouseup', 'beforecontainermouseover', 'beforecontainermouseout', 'beforecontainerclick', 'beforecontainerdblclick', 'beforecontainercontextmenu', 'beforecontainerkeydown', 'beforecontainerkeyup', 'beforecontainerkeypress', 
+  'containermouseup', 'containermousedown', 'containermouseover', 'containermouseout', 'containerclick', 'containerdblclick', 'containercontextmenu', 'containerkeydown', 'containerkeyup', 'containerkeypress', 'beforeselect', 'select', 'beforedeselect', 'deselect', 'beforerowexit']);
+  if (!me.selModel.isSpreadsheetModel) {
+    me.relayEvents(me.view, ['selectionchange']);
+  }
+  if (headerCt) {
+    headerCt.view = me.view;
+    (me.dockedItems = Ext.Array.from(me.dockedItems, true)).unshift(headerCt);
+    headerCt.add(columns);
+  }
+  me.columns = me.headerCt.getGridColumns();
+  me.callParent();
+  me.syncHeaderVisibility();
+  if (me.enableLocking) {
+    me.afterInjectLockable();
+  }
+  me.addStateEvents(['columnresize', 'columnmove', 'columnhide', 'columnshow', 'sortchange', 'filteractivate', 'filterdeactivate', 'filterchange', 'groupchange']);
+}, updateHideHeaders:function(hideHeaders) {
+  if (!this.isConfiguring) {
+    this.syncHeaderVisibility();
+  }
+}, beforeRender:function() {
+  var me = this, bufferedRenderer = me.bufferedRenderer, ariaAttr;
+  if (me.lockable) {
+    me.getProtoBody().addCls(me.lockingBodyCls);
+  } else {
+    if (bufferedRenderer && me.getSizeModel().height.auto) {
+      if (bufferedRenderer.isBufferedRenderer) {
+        Ext.raise('Cannot use buffered rendering with auto height');
+      }
+      me.bufferedRenderer = bufferedRenderer = false;
+    }
+    if (bufferedRenderer && !bufferedRenderer.isBufferedRenderer) {
+      bufferedRenderer = {xclass:'Ext.grid.plugin.BufferedRenderer'};
+      Ext.copy(bufferedRenderer, me, 'variableRowHeight,numFromEdge,trailingBufferZone,leadingBufferZone,scrollToLoadBuffer', true);
+      me.bufferedRenderer = me.addPlugin(bufferedRenderer);
+    }
+    ariaAttr = me.ariaRenderAttributes || (me.ariaRenderAttributes = {});
+    ariaAttr['aria-readonly'] = !me.isEditable;
+    ariaAttr['aria-multiselectable'] = me.selModel.selectionMode !== 'SINGLE';
+  }
+  me.callParent(arguments);
+}, beforeLayout:function() {
+  var lockable = this.mixins.lockable;
+  if (lockable) {
+    lockable.beforeLayout.call(this);
+  }
+  this.callParent();
+}, onHide:function(animateTarget, cb, scope) {
+  this.getView().onOwnerGridHide();
+  this.callParent([animateTarget, cb, scope]);
+}, onShow:function() {
+  this.callParent();
+  this.getView().onOwnerGridShow();
+}, getHeaderContainer:function() {
+  return this.getView().getHeaderCt();
+}, getColumns:function() {
+  return this.getColumnManager().getColumns();
+}, getVisibleColumns:function() {
+  return this.getVisibleColumnManager().getColumns();
+}, getScrollable:function() {
+  return this.scrollable || this.view.getScrollable();
+}, focus:function() {
+  var view = this.getView();
+  if (!view.isVisible(true)) {
+    return false;
+  }
+  view.focus();
+}, disableColumnHeaders:function() {
+  this.headerCt.disable();
+}, enableColumnHeaders:function() {
+  this.headerCt.enable();
+}, hasLockedColumns:function(columns) {
+  var i, len, column;
+  if (columns.isRootHeader) {
+    columns = columns.items.items;
+  } else {
+    if (Ext.isObject(columns)) {
+      columns = columns.items;
+    }
+  }
+  for (i = 0, len = columns.length; i < len; i++) {
+    column = columns[i];
+    if (!column.processed && column.locked) {
+      return true;
+    }
+  }
+}, relayHeaderCtEvents:function(headerCt) {
+  this.relayEvents(headerCt, ['columnresize', 'columnmove', 'columnhide', 'columnshow', 'columnschanged', 'sortchange', 'headerclick', 'headercontextmenu', 'headertriggerclick']);
+}, getState:function() {
+  var me = this, state = me.callParent(), storeState = me.store.getState();
+  state = me.addPropertyToState(state, 'columns', me.headerCt.getColumnsState());
+  if (storeState) {
+    state.storeState = storeState;
+  }
+  return state;
+}, applyState:function(state) {
+  var me = this, sorter = state.sort, storeState = state.storeState, store = me.store, columns = state.columns = me.buildColumnHash(state.columns);
+  me.callParent([state]);
+  if (columns) {
+    me.headerCt.applyColumnsState(columns, storeState);
+  }
+  if (store.isEmptyStore) {
+    return;
+  }
+  if (sorter) {
+    if (store.getRemoteSort()) {
+      store.sort({property:sorter.property, direction:sorter.direction, root:sorter.root}, null, false);
+    } else {
+      store.sort(sorter.property, sorter.direction);
+    }
+  } else {
+    if (storeState) {
+      store.applyState(storeState);
+    }
+  }
+}, buildColumnHash:function(columns) {
+  var len, columnState, i, result;
+  if (columns) {
+    result = {};
+    for (i = 0, len = columns.length; i < len; i++) {
+      columnState = columns[i];
+      columnState.index = i;
+      if (columnState.columns) {
+        columnState.columns = this.buildColumnHash(columnState.columns);
+      }
+      result[columnState.id] = columnState;
+    }
+    return result;
+  }
+}, getStore:function() {
+  return this.store;
+}, onViewRefresh:function(view, records) {
+  this.onItemAdd(records, 0);
+}, onItemAdd:function(records, index, nodes, view) {
+  var me = this, recCount = records.length, freeRowContexts = me.freeRowContexts, liveRowContexts = me.liveRowContexts || (me.liveRowContexts = {}), rowContext, i, record;
+  for (i = 0; i < recCount; i++) {
+    record = records[i];
+    if (!liveRowContexts[record.internalId]) {
+      rowContext = freeRowContexts && freeRowContexts.shift();
+      if (!rowContext) {
+        rowContext = new Ext.grid.RowContext({ownerGrid:me});
+      }
+      me.liveRowContexts[record.internalId] = rowContext;
+      rowContext.setRecord(record, index++);
+    }
+  }
+}, onItemRemove:function(records, index, nodes, view) {
+  var me = this, freeRowContexts = me.freeRowContexts || (me.freeRowContexts = []), liveRowContexts = me.liveRowContexts, len = nodes.length, i, id, context;
+  for (i = 0; i < len; i++) {
+    id = nodes[i].getAttribute('data-recordId');
+    context = liveRowContexts[id];
+    if (context) {
+      context.free(view);
+      freeRowContexts.push(context);
+      delete liveRowContexts[id];
+    }
+  }
+}, createManagedWidget:function(view, ownerId, widgetConfig, record) {
+  return this.liveRowContexts[record.internalId].getWidget(view, ownerId, widgetConfig);
+}, destroyManagedWidgets:function(ownerId) {
+  var me = this, contexts = me.liveRowContexts, freeRowContexts = me.freeRowContexts, len = freeRowContexts && freeRowContexts.length, i, recInternalId, rowWidgets;
+  for (recInternalId in contexts) {
+    rowWidgets = contexts[recInternalId].widgets;
+    if (rowWidgets) {
+      Ext.destroy(rowWidgets[ownerId]);
+      delete rowWidgets[ownerId];
+    }
+  }
+  for (i = 0; i < len; i++) {
+    rowWidgets = freeRowContexts[i].widgets;
+    if (rowWidgets) {
+      Ext.destroy(rowWidgets[ownerId]);
+      delete rowWidgets[ownerId];
+    }
+  }
+}, getManagedWidgets:function(ownerId) {
+  var me = this, contexts = me.liveRowContexts, recInternalId, result = [];
+  for (recInternalId in contexts) {
+    result.push(contexts[recInternalId].widgets[ownerId]);
+  }
+  return result;
+}, getView:function() {
+  var me = this, scroll, scrollable, viewConfig;
+  if (!me.view) {
+    viewConfig = me.viewConfig;
+    scroll = viewConfig.scroll || me.scroll;
+    scrollable = me.scrollable;
+    if (scrollable == null && viewConfig.scrollable == null && scroll !== null) {
+      if (scroll === true || scroll === 'both') {
+        scrollable = true;
+      } else {
+        if (scroll === false || scroll === 'none') {
+          scrollable = false;
+        } else {
+          if (scroll === 'vertical') {
+            scrollable = {x:false, y:true};
+          } else {
+            if (scroll === 'horizontal') {
+              scrollable = {x:true, y:false};
+            }
+          }
+        }
+      }
+    }
+    viewConfig = Ext.apply({grid:me, ownerGrid:me.ownerGrid, deferInitialRefresh:me.deferRowRender, variableRowHeight:me.variableRowHeight, preserveScrollOnRefresh:true, trackOver:me.trackMouseOver !== false, throttledUpdate:me.throttledUpdate === true, xtype:me.viewType, store:me.store, headerCt:me.headerCt, columnLines:me.columnLines, rowLines:me.rowLines, navigationModel:'grid', features:me.features, panel:me, emptyText:me.emptyText || ''}, me.viewConfig);
+    if (!('scrollable' in viewConfig || 'scroll' in viewConfig || 'autoScroll' in viewConfig) && scrollable != null) {
+      viewConfig.scrollable = scrollable;
+    }
+    viewConfig.$initParent = me;
+    Ext.create(viewConfig);
+    delete viewConfig.$initParent;
+    if (me.view.emptyText) {
+      me.view.emptyText = '\x3cdiv class\x3d"' + me.emptyCls + '"\x3e' + me.view.emptyText + '\x3c/div\x3e';
+    }
+    me.view.getComponentLayout().headerCt = me.headerCt;
+    me.mon(me.view, {uievent:me.processEvent, scope:me});
+    if (me.hasListeners.viewcreated) {
+      me.fireEvent('viewcreated', me, me.view);
+    }
+  }
+  return me.view;
+}, getEmptyText:function() {
+  return this.view.emptyText;
+}, setEmptyText:function(emptyText) {
+  this.emptyText = emptyText;
+  this.view.setEmptyText('\x3cdiv class\x3d"' + this.emptyCls + '"\x3e' + emptyText + '\x3c/div\x3e');
+  return this;
+}, getColumnManager:function() {
+  return this.columnManager;
+}, getVisibleColumnManager:function() {
+  return this.visibleColumnManager;
+}, getTopLevelColumnManager:function() {
+  return this.ownerGrid.getColumnManager();
+}, getTopLevelVisibleColumnManager:function() {
+  return this.ownerGrid.getVisibleColumnManager();
+}, setAutoScroll:Ext.emptyFn, applyScrollable:function(scrollable) {
+  var view = this.view;
+  view = view && (view.normalView || view);
+  if (view) {
+    view.setScrollable(scrollable);
+  }
+  return scrollable;
+}, processEvent:function(type, view, cell, recordIndex, cellIndex, e, record, row) {
+  var header = e.position.column;
+  if (header) {
+    return header.processEvent.apply(header, arguments);
+  }
+}, ensureVisible:function(record, options) {
+  this.doEnsureVisible(record, options);
+}, scrollByDeltaY:function(yDelta, animate) {
+  this.getView().scrollBy(null, yDelta, animate);
+}, scrollByDeltaX:function(xDelta, animate) {
+  this.getView().scrollBy(xDelta, null, animate);
+}, afterCollapse:function() {
+  this.saveScrollPos();
+  this.callParent(arguments);
+}, afterExpand:function() {
+  this.callParent(arguments);
+  this.restoreScrollPos();
+}, saveScrollPos:Ext.emptyFn, restoreScrollPos:Ext.emptyFn, onHeaderResize:Ext.emptyFn, onHeaderMove:function(headerCt, header, colsToMove, fromIdx, toIdx) {
+  var me = this;
+  if (me.optimizedColumnMove === false) {
+    me.view.refreshView();
+  } else {
+    me.view.moveColumn(fromIdx, toIdx, colsToMove);
+  }
+  me.delayScroll();
+}, onHeaderHide:function(headerCt, header) {
+  var view = this.view;
+  if (!headerCt.childHideCount && view.refreshCounter) {
+    view.refreshView();
+  }
+}, onHeaderShow:function(headerCt, header) {
+  var view = this.view;
+  if (view.refreshCounter) {
+    view.refreshView();
+  }
+}, onHeadersChanged:function(headerCt, header) {
+  var me = this;
+  if (me.rendered && !me.reconfiguring) {
+    me.view.refreshView();
+    me.delayScroll();
+  }
+}, delayScroll:function() {
+  var target = this.view;
+  if (target) {
+    this.scrollTask.delay(10, null, null, [target]);
+  }
+}, onViewReady:function() {
+  this.fireEvent('viewready', this);
+}, onRestoreHorzScroll:function() {
+  var me = this, x = me.scrollXPos;
+  if (x) {
+    me.syncHorizontalScroll(me, true);
+  }
+}, getScrollerOwner:function() {
+  var rootCmp = this;
+  if (!this.scrollerOwner) {
+    rootCmp = this.up('[scrollerOwner]');
+  }
+  return rootCmp;
+}, getLhsMarker:function() {
+  var me = this;
+  return me.lhsMarker || (me.lhsMarker = Ext.DomHelper.append(me.el, {role:'presentation', cls:me.resizeMarkerCls}, true));
+}, getRhsMarker:function() {
+  var me = this;
+  return me.rhsMarker || (me.rhsMarker = Ext.DomHelper.append(me.el, {role:'presentation', cls:me.resizeMarkerCls}, true));
+}, getSelection:function() {
+  return this.getSelectionModel().getSelection();
+}, setSelection:function(selection) {
+  var current = this.selection;
+  if (selection !== current) {
+    this.selection = selection;
+    this.updateSelection(selection, current);
+  }
+}, updateSelection:function(selection) {
+  var me = this, sm;
+  if (!me.ignoreNextSelection) {
+    me.ignoreNextSelection = true;
+    sm = me.getSelectionModel();
+    if (selection) {
+      sm.select(selection);
+    } else {
+      sm.deselectAll();
+    }
+    me.ignoreNextSelection = false;
+  }
+  me.publishState('selection', selection);
+}, updateBindSelection:function(selModel, selection) {
+  var me = this, selected = null;
+  if (!me.ignoreNextSelection) {
+    me.ignoreNextSelection = true;
+    if (selection.length) {
+      selected = selModel.getLastSelected();
+      me.hasHadSelection = true;
+    }
+    if (me.hasHadSelection) {
+      me.setSelection(selected);
+    }
+    me.ignoreNextSelection = false;
+  }
+}, updateFocused:function(record) {
+  this.getNavigationModel().setPosition(record);
+}, updateHeaderBorders:function(headerBorders) {
+  this[headerBorders ? 'removeCls' : 'addCls'](this.noHeaderBordersCls);
+}, getNavigationModel:function() {
+  return this.getView().getNavigationModel();
+}, getSelectionModel:function() {
+  return this.getView().getSelectionModel();
+}, getScrollTarget:function() {
+  var items = this.getScrollerOwner().query('tableview');
+  return items[items.length - 1];
+}, syncHorizontalScroll:function(target, setBody) {
+  var me = this, x = me.view.getScrollX(), scrollTarget;
+  setBody = setBody === true;
+  if (me.rendered && (setBody || x !== me.scrollXPos)) {
+    if (setBody) {
+      scrollTarget = me.getScrollTarget();
+      scrollTarget.setScrollX(x);
+    }
+    me.headerCt.setScrollX(x);
+    me.scrollXPos = x;
+  }
+}, onStoreLoad:Ext.emptyFn, getEditorParent:function() {
+  return this.body;
+}, bindStore:function(store, initial) {
+  var me = this, view = me.getView(), oldStore = me.getStore();
+  if (store) {
+    me.store = store;
+    if (view.store !== store) {
+      view.bindStore(store, false);
+    }
+    me.mon(store, {load:me.onStoreLoad, scope:me});
+    me.storeRelayers = me.relayEvents(store, ['filterchange', 'groupchange']);
+    if (!me.reconfiguring && me.hasListeners.storechange && store !== oldStore) {
+      me.fireEvent('storechange', me, store, oldStore);
+    }
+  } else {
+    me.unbindStore();
+  }
+}, unbindStore:function() {
+  var me = this, store = me.store, view;
+  if (store) {
+    store.trackStateChanges = false;
+    me.store = null;
+    me.mun(store, {load:me.onStoreLoad, scope:me});
+    Ext.destroy(me.storeRelayers);
+    view = me.view;
+    if (view.store) {
+      view.bindStore(null);
+    } else {
+      if (!store.destroyed && store.autoDestroy) {
+        store.destroy();
+      }
+    }
+    if (!me.reconfiguring && me.hasListeners.storechange) {
+      me.fireEvent('storechange', me, null, store);
+    }
+  }
+}, setColumns:function(columns) {
+  if (columns.length || this.getColumnManager().getColumns().length) {
+    this.reconfigure(undefined, columns);
+  }
+}, setStore:function(store) {
+  var me = this;
+  me.reconfigure(store, undefined, true);
+  if (me.isVisible(true)) {
+    if (store && me.autoLoad && !store.isEmptyStore && !(store.loading || store.isLoaded())) {
+      store.load();
+    }
+  } else {
+    if (!me.globalShowListener) {
+      me.globalShowListener = Ext.GlobalEvents.on({show:me.onGlobalShow, scope:me, destroyable:true});
+    }
+  }
+}, onGlobalShow:function(comp) {
+  var me = this, store = me.store;
+  if (comp === me || comp.isAncestor(me) && me.isVisible(true)) {
+    if (store && me.autoLoad && !store.isEmptyStore && !(store.loading || store.isLoaded())) {
+      store.load();
+    }
+    Ext.destroy(me.globalShowListener);
+  }
+}, reconfigure:function(store, columns, allowUnbind) {
+  var me = this, oldStore = me.store, headerCt = me.headerCt, lockable = me.lockable, oldColumns = headerCt ? headerCt.items.getRange() : me.columns, view = me.getView(), scroller, block, refreshCounter, storeChanged, columnsChanged, state, stateId, restoreFocus;
+  if (arguments.length === 1 && Ext.isArray(store)) {
+    columns = store;
+    store = null;
+  }
+  if (columns) {
+    columns = Ext.Array.slice(columns);
+  }
+  me.reconfiguring = true;
+  if (store) {
+    store = Ext.StoreManager.lookup(store);
+    storeChanged = store && store !== oldStore;
+  } else {
+    if (allowUnbind) {
+      store = Ext.StoreManager.lookup('ext-empty-store');
+      storeChanged = store !== oldStore;
+    }
+  }
+  me.fireEvent('beforereconfigure', me, store, columns, oldStore, oldColumns);
+  Ext.suspendLayouts();
+  if (me.rendered && me.layoutCounter && (scroller = me.getScrollable())) {
+    scroller.scrollTo(0, 0);
+  }
+  if (lockable) {
+    me.reconfigureLockable(store, columns, allowUnbind);
+  } else {
+    block = view.blockRefresh;
+    view.blockRefresh = true;
+    restoreFocus = view.saveFocusState();
+    if (storeChanged) {
+      me.unbindStore();
+      me.bindStore(store);
+    }
+    if (columns) {
+      delete me.scrollXPos;
+      headerCt.removeAll();
+      headerCt.add(columns);
+      columnsChanged = true;
+    }
+    headerCt.onOwnerGridReconfigure(storeChanged, columnsChanged);
+    refreshCounter = view.refreshCounter;
+  }
+  if (me.stateful) {
+    stateId = me.getStateId();
+    state = stateId && Ext.state.Manager.get(stateId);
+    if (state) {
+      me.applyState(state);
+    }
+  }
+  Ext.resumeLayouts(true);
+  me.reconfiguring = false;
+  if (lockable) {
+    me.afterReconfigureLockable();
+  } else {
+    view.blockRefresh = block;
+    if (view.refreshCounter === refreshCounter) {
+      view.refreshView();
+      restoreFocus();
+    }
+  }
+  me.fireEvent('reconfigure', me, store, columns, oldStore, oldColumns);
+  delete me.reconfiguring;
+  if (storeChanged) {
+    me.fireEvent('storechange', me, store, oldStore);
+    if (!oldStore.destroyed && oldStore.autoDestroy) {
+      oldStore.destroy();
+    }
+  }
+}, doDestroy:function() {
+  var me = this, task = me.scrollTask, view = me.view;
+  if (view) {
+    view.destroying = true;
+  }
+  if (me.lockable) {
+    me.destroyLockable();
+  }
+  if (task) {
+    task.cancel();
+  }
+  Ext.destroy(me.rowContextParent, me.plugins, me.focusEnterLeaveListeners, me.freeRowContents, Ext.Object.getValues(me.liveRowContexts), me.lhsMarker, me.rhsMarker);
+  me.callParent();
+  me.unbindStore();
+}, getElementHeight:function(el) {
+  var rect = this.preciseHeight && el.getBoundingClientRect();
+  return rect ? rect.height || rect.bottom - rect.top : el.offsetHeight;
+}, getElementSize:function(el) {
+  var rect = this.preciseHeight && el.getBoundingClientRect();
+  return {width:rect ? rect.width || rect.right - rect.left : el.offsetWidth, height:rect ? rect.height || rect.bottom - rect.top : el.offsetHeight};
+}, privates:{initFocusableElement:function() {
+}, doEnsureVisible:function(record, options) {
+  if (this.lockable) {
+    return this.ensureLockedVisible(record, options);
+  }
+  if (typeof record !== 'number' && !record.isEntity) {
+    record = this.store.getById(record);
+  }
+  var me = this, view = me.getView(), domNode = view.getNode(record), isLocking = me.ownerGrid.lockable, callback, scope, animate, highlight, select, doFocus, verticalScroller, column, cell, targetContext, internalCallback, scrollPromise;
+  if (options) {
+    callback = options.callback;
+    scope = options.scope;
+    animate = options.animate;
+    highlight = options.highlight;
+    select = options.select;
+    doFocus = options.focus;
+    column = options.column;
+  }
+  if (me.deferredEnsureVisible) {
+    me.deferredEnsureVisible.destroy();
+  }
+  if (!view.componentLayoutCounter) {
+    me.deferredEnsureVisible = view.on({resize:me.doEnsureVisible, args:Ext.Array.slice(arguments), scope:me, single:true, destroyable:true});
+    return;
+  }
+  if (typeof column === 'number') {
+    column = me.ownerGrid.getVisibleColumnManager().getColumns()[column];
+  }
+  if (domNode) {
+    if (!record.isEntity) {
+      record = view.getRecord(domNode);
+    }
+    verticalScroller = isLocking ? me.ownerGrid.getScrollable() : view.getScrollable();
+    if (callback || select || doFocus) {
+      internalCallback = function() {
+        targetContext = (new Ext.grid.CellContext(view)).setPosition(record, column || 0);
+        if (select) {
+          view.getSelectionModel().selectByPosition(targetContext);
+        }
+        if (doFocus) {
+          view.getNavigationModel().setPosition(targetContext);
+        }
+        Ext.callback(callback, scope || me, [true, record, domNode]);
+      };
+    }
+    if (verticalScroller) {
+      if (column) {
+        cell = Ext.fly(domNode).selectNode(column.getCellSelector());
+      }
+      if (isLocking && column) {
+        verticalScroller.ensureVisible(domNode, {x:false});
+        scrollPromise = view.getScrollable().ensureVisible(cell || domNode, {animation:animate, highlight:highlight});
+      } else {
+        scrollPromise = verticalScroller.ensureVisible(cell || domNode, {animation:animate, highlight:highlight, x:!!column});
+      }
+      if (scrollPromise && internalCallback) {
+        scrollPromise.then(internalCallback);
+      }
+    }
+  } else {
+    if (view.bufferedRenderer) {
+      view.bufferedRenderer.scrollTo(record, {animate:animate, highlight:highlight, select:select, focus:doFocus, column:column, callback:function(recordIdx, record, domNode) {
+        Ext.callback(callback, scope || me, [true, record, domNode]);
+      }});
+    } else {
+      Ext.callback(callback, scope || me, [false, null]);
+    }
+  }
+}, getFocusEl:function() {
+  return this.getView().getFocusEl();
+}, getRowContextViewModelParent:function() {
+  var vm = this.lookupViewModel() || this.rowContextParent;
+  if (!vm) {
+    this.rowContextParent = vm = new Ext.app.ViewModel;
+  }
+  return vm;
+}, handleWidgetViewChange:function(view, ownerId) {
+  var contexts = this.liveRowContexts, freeRowContexts = this.freeRowContexts, len = freeRowContexts && freeRowContexts.length, i, recInternalId;
+  for (recInternalId in contexts) {
+    contexts[recInternalId].handleWidgetViewChange(view, ownerId);
+  }
+  for (i = 0; i < len; i++) {
+    freeRowContexts[i].handleWidgetViewChange(view, ownerId);
+  }
+}, initInheritedState:function(inheritedState, inheritedStateInner) {
+  inheritedState.inLockedGrid = !!this.isLocked;
+  this.callParent([inheritedState, inheritedStateInner]);
+}, setActionableMode:function(enabled, position) {
+  var me = this.ownerGrid;
+  if (!me.destroying && me.view.setActionableMode(enabled, position) !== false) {
+    me.fireEvent('actionablemodechange', enabled);
+    me[enabled ? 'addCls' : 'removeCls'](me.actionableModeCls);
+    return true;
+  }
+}, getOverflowStyle:function() {
+  this.scrollFlags = this._scrollFlags['false']['false'];
+  return {overflowX:'hidden', overflowY:'hidden'};
+}, getOverflowEl:function() {
+  return null;
+}, shouldAutoHideHeaders:function() {
+  var me = this, columns = me.headerCt.items.items, len = columns.length, autoHideHeaders = !!len, column, i;
+  for (i = 0; autoHideHeaders && i < len; i++) {
+    column = columns[i];
+    if (!column.isEmptyText(column.text, true) || column.columns || column.isGroupHeader && column.items.items.length) {
+      autoHideHeaders = false;
+    }
+  }
+  return autoHideHeaders;
+}, syncHeaderVisibility:function() {
+  var me = this, headerCt = me.headerCt, hideHeaders = me.hideHeaders, viewScroller, currentHideHeaderState;
+  if (me.lockable) {
+    me.syncLockableHeaderVisibility();
+    return;
+  }
+  if (hideHeaders == null) {
+    hideHeaders = me.shouldAutoHideHeaders();
+  }
+  currentHideHeaderState = headerCt.height === 0;
+  if (!headerCt.rendered || hideHeaders !== currentHideHeaderState) {
+    headerCt.setHeight(hideHeaders ? 0 : null);
+    headerCt.hiddenHeaders = hideHeaders;
+    headerCt.toggleCls(me.hiddenHeaderCtCls, hideHeaders);
+    me.toggleCls(me.hiddenHeaderCls, hideHeaders);
+    if (!hideHeaders) {
+      headerCt.setScrollable({x:false, y:false});
+      viewScroller = me.view.getScrollable();
+      if (viewScroller) {
+        headerCt.getScrollable().addPartner(viewScroller, 'x');
+      }
+    }
+  }
+}}});
+Ext.define('Ext.theme.neptune.panel.Table', {override:'Ext.panel.Table', lockableBodyBorder:true, initComponent:function() {
+  var me = this;
+  me.callParent();
+  if (!me.hasOwnProperty('bodyBorder') && !me.hideHeaders && (me.lockableBodyBorder || !me.lockable)) {
+    me.bodyBorder = true;
+  }
+}});
+Ext.define('Ext.grid.ColumnLayout', {extend:Ext.layout.container.HBox, alias:'layout.gridcolumn', type:'gridcolumn', firstHeaderCls:Ext.baseCSSPrefix + 'column-header-first', lastHeaderCls:Ext.baseCSSPrefix + 'column-header-last', initLayout:function() {
+  this.callParent();
+  if (this.scrollbarWidth === undefined) {
+    this.self.prototype.scrollbarWidth = Ext.getScrollbarSize().width;
+  }
+}, beginLayout:function(ownerContext) {
+  var me = this, owner = me.owner, firstCls = me.firstHeaderCls, lastCls = me.lastHeaderCls, bothCls = [firstCls, lastCls], items = me.getVisibleItems(), len = items.length, i, item;
+  me.callParent([ownerContext]);
+  for (i = 0; i < len; i++) {
+    item = items[i];
+    if (len === 1) {
+      item.addCls(bothCls);
+    } else {
+      if (i === 0) {
+        item.addCls(firstCls);
+        item.removeCls(lastCls);
+      } else {
+        if (i === len - 1) {
+          item.removeCls(firstCls);
+          item.addCls(lastCls);
+        } else {
+          item.removeCls(bothCls);
+        }
+      }
+    }
+  }
+  me.scrollbarWidth = 0;
+  if (owner.isRootHeader && !owner.grid.isLocked) {
+    me.determineScrollbarWidth(ownerContext);
+  }
+  if (!me.scrollbarWidth) {
+    ownerContext.manageScrollbar = false;
+  }
+}, moveItemBefore:function(item, before) {
+  var prevOwner = item.ownerCt, nextSibling = before && before.nextSibling();
+  if (item !== before && prevOwner) {
+    prevOwner.remove(item, {destroy:false, detach:false});
+    if (before && before.destroyed) {
+      before = nextSibling;
+    }
+  }
+  return this.callParent([item, before]);
+}, determineScrollbarWidth:function(ownerContext) {
+  var me = this, owner = me.owner, grid = owner.grid, reserveScrollbar = grid.reserveScrollbar, scrollable = grid.view.getScrollable(), manageScrollbar = !reserveScrollbar && scrollable && scrollable.getY();
+  ownerContext.manageScrollbar = manageScrollbar;
+  if (!grid.ownerGrid.collapsed && (reserveScrollbar || manageScrollbar)) {
+    delete me.scrollbarWidth;
+  }
+}, calculate:function(ownerContext) {
+  var me = this, owner = me.owner, grid = owner.grid, viewContext = ownerContext.viewContext, state = ownerContext.state, context = ownerContext.context, lockingPartnerContext, columnsChanged, columns, len, i, column, scrollbarAdjustment, viewOverflowY;
+  me.callParent([ownerContext]);
+  if (grid && owner.isRootHeader && state.parallelDone) {
+    lockingPartnerContext = viewContext.lockingPartnerContext;
+    if (grid.forceFit && !state.reflexed) {
+      if (me.convertWidthsToFlexes(ownerContext)) {
+        me.cacheFlexes(ownerContext);
+        me.done = false;
+        ownerContext.invalidate({state:{reflexed:true, scrollbarAdjustment:me.getScrollbarAdjustment(ownerContext)}});
+        return;
+      }
+    }
+    if ((columnsChanged = state.columnsChanged) === undefined) {
+      columns = ownerContext.target.getVisibleGridColumns();
+      columnsChanged = false;
+      for (i = 0, len = columns.length; i < len; i++) {
+        column = context.getCmp(columns[i]);
+        if (!column.lastBox || column.props.width !== column.lastBox.width) {
+          (columnsChanged || (columnsChanged = []))[i] = column;
+        }
+      }
+      state.columnsChanged = columnsChanged;
+      ownerContext.setProp('columnsChanged', columnsChanged);
+    }
+    if (ownerContext.manageScrollbar) {
+      scrollbarAdjustment = me.getScrollbarAdjustment(ownerContext);
+      if (scrollbarAdjustment) {
+        viewOverflowY = viewContext.getProp('viewOverflowY');
+        if (viewOverflowY === undefined) {
+          me.done = false;
+          return;
+        }
+        if (!viewOverflowY) {
+          if (lockingPartnerContext) {
+            lockingPartnerContext.invalidate();
+            lockingPartnerContext.headerContext.invalidate();
+          }
+          viewContext.invalidate();
+          ownerContext.invalidate({state:{scrollbarAdjustment:0}});
+        }
+      }
+    }
+  }
+}, finishedLayout:function(ownerContext) {
+  this.callParent([ownerContext]);
+  if (this.owner.ariaRole === 'rowgroup') {
+    this.innerCt.dom.setAttribute('role', 'row');
+  }
+  ownerContext.props.columnsChanged = null;
+}, convertWidthsToFlexes:function(ownerContext) {
+  var me = this, totalWidth = 0, calculated = me.sizeModels.calculated, childItems, len, i, childContext, item;
+  childItems = ownerContext.childItems;
+  len = childItems.length;
+  for (i = 0; i < len; i++) {
+    childContext = childItems[i];
+    item = childContext.target;
+    totalWidth += childContext.props.width;
+    if (!(item.fixed || item.resizable === false)) {
+      item.flex = ownerContext.childItems[i].flex = childContext.props.width;
+      item.width = null;
+      childContext.widthModel = calculated;
+    }
+  }
+  return totalWidth !== ownerContext.props.width;
+}, getScrollbarAdjustment:function(ownerContext) {
+  var me = this, state = ownerContext.state, grid = me.owner.grid, scrollbarAdjustment = state.scrollbarAdjustment;
+  if (scrollbarAdjustment === undefined) {
+    scrollbarAdjustment = 0;
+    if (grid.reserveScrollbar || ownerContext.manageScrollbar && !grid.ownerGrid.getSizeModel().height.shrinkWrap) {
+      scrollbarAdjustment = me.scrollbarWidth;
+    }
+    state.scrollbarAdjustment = scrollbarAdjustment;
+  }
+  return scrollbarAdjustment;
+}, getContainerSize:function(ownerContext) {
+  var me = this, got, needed, padding, gotWidth, gotHeight, width, height, result;
+  if (me.owner.isRootHeader) {
+    result = me.callParent([ownerContext]);
+    if (result.gotWidth) {
+      result.width -= me.getScrollbarAdjustment(ownerContext);
+    }
+  } else {
+    padding = ownerContext.paddingContext.getPaddingInfo();
+    got = needed = 0;
+    if (!ownerContext.widthModel.shrinkWrap) {
+      ++needed;
+      width = ownerContext.getProp('innerWidth');
+      gotWidth = typeof width === 'number';
+      if (gotWidth) {
+        ++got;
+        width -= padding.width;
+        if (width < 0) {
+          width = 0;
+        }
+      }
+    }
+    if (!ownerContext.heightModel.shrinkWrap) {
+      ++needed;
+      height = ownerContext.getProp('innerHeight');
+      gotHeight = typeof height === 'number';
+      if (gotHeight) {
+        ++got;
+        height -= padding.height;
+        if (height < 0) {
+          height = 0;
+        }
+      }
+    }
+    return {width:width, height:height, needed:needed, got:got, gotAll:got === needed, gotWidth:gotWidth, gotHeight:gotHeight};
+  }
+  return result;
+}, publishInnerCtSize:function(ownerContext) {
+  var me = this, owner = me.owner, cw = ownerContext.peek('contentWidth'), adjustment = 0;
+  if (cw != null && owner.isRootHeader) {
+    adjustment = -ownerContext.state.scrollbarAdjustment;
+  }
+  return me.callParent([ownerContext, adjustment]);
+}, roundFlex:function(width) {
+  return Math.round(width);
+}});
+Ext.define('Ext.grid.ColumnManager', {alternateClassName:['Ext.grid.ColumnModel'], columns:null, constructor:function(visibleOnly, headerCt, secondHeaderCt) {
+  if (!headerCt.isRootHeader && !headerCt.isGroupHeader) {
+    Ext.raise('ColumnManager must be passed an instantiated HeaderContainer or group header');
+  }
+  this.headerCt = headerCt;
+  if (secondHeaderCt) {
+    if (!headerCt.isRootHeader && !headerCt.isGroupHeader) {
+      Ext.raise('ColumnManager must be passed an instantiated HeaderContainer or group header');
+    }
+    this.secondHeaderCt = secondHeaderCt;
+  }
+  this.visibleOnly = !!visibleOnly;
+}, getColumns:function() {
+  if (!this.columns) {
+    this.cacheColumns();
+  }
+  return this.columns;
+}, hasVariableRowHeight:function() {
+  var me = this, columns = me.getColumns(), len = columns.length, i;
+  if (me.variableRowHeight == null) {
+    me.variableRowHeight = false;
+    for (i = 0; !me.variableRowHeight && i < len; i++) {
+      me.variableRowHeight = !!columns[i].variableRowHeight;
+    }
+  }
+  return me.variableRowHeight;
+}, getHeaderIndex:function(header) {
+  if (header.isGroupHeader) {
+    header = this.getHeaderColumns(header)[0];
+  }
+  return Ext.Array.indexOf(this.getColumns(), header);
+}, getHeaderAtIndex:function(index) {
+  var columns = this.getColumns(), col = columns[index];
+  return col || null;
+}, getPreviousSibling:function(header) {
+  var index = this.getHeaderIndex(header), col = null;
+  if (index > 0) {
+    col = this.getColumns()[index - 1];
+  }
+  return col;
+}, getNextSibling:function(header) {
+  var index = this.getHeaderIndex(header), col;
+  if (index !== -1) {
+    col = this.getColumns()[index + 1];
+  }
+  return col || null;
+}, getFirst:function() {
+  var columns = this.getColumns();
+  return columns.length > 0 ? columns[0] : null;
+}, getLast:function() {
+  var columns = this.getColumns(), len = columns.length;
+  return len > 0 ? columns[len - 1] : null;
+}, getHeaderByDataIndex:function(dataIndex) {
+  var columns = this.getColumns(), len = columns.length, i, header;
+  if (Ext.isEmpty(dataIndex)) {
+    return null;
+  }
+  for (i = 0; i < len; ++i) {
+    header = columns[i];
+    if (header.dataIndex === dataIndex) {
+      return header;
+    }
+  }
+  return null;
+}, getHeaderById:function(id) {
+  var columns = this.getColumns(), len = columns.length, i, header;
+  for (i = 0; i < len; ++i) {
+    header = columns[i];
+    if (header.getItemId() === id) {
+      return header;
+    }
+  }
+  return null;
+}, getVisibleHeaderClosestToIndex:function(index) {
+  var result = this.getHeaderAtIndex(index);
+  if (result && result.hidden) {
+    result = result.next(':not([hidden])') || result.prev(':not([hidden])');
+  }
+  return result;
+}, cacheColumns:function() {
+  var columns = this.getHeaderColumns(this.headerCt), second = this.secondHeaderCt;
+  if (second) {
+    columns = columns.concat(this.getHeaderColumns(second));
+  }
+  this.columns = columns;
+}, getHeaderColumns:function(header) {
+  var result = this.visibleOnly ? header.getVisibleGridColumns() : header.getGridColumns();
+  return Ext.Array.clone(result);
+}, invalidate:function() {
+  var root = this.rootColumns;
+  this.columns = this.variableRowHeight = null;
+  if (root) {
+    root.invalidate();
+  }
+}, destroy:function() {
+  this.columns = this.rootColumns = null;
+  this.callParent();
+}}, function() {
+  this.createAlias('indexOf', 'getHeaderIndex');
+});
+Ext.define('Ext.grid.NavigationModel', {extend:Ext.view.NavigationModel, alias:'view.navigation.grid', focusCls:Ext.baseCSSPrefix + 'grid-item-focused', getViewListeners:function() {
+  var me = this;
+  return {focusmove:{element:'el', fn:me.onFocusMove}, containermousedown:me.onContainerMouseDown, cellmousedown:me.onCellMouseDown, cellclick:me.onCellClick, itemmousedown:me.onItemMouseDown, itemclick:me.onItemClick, itemcontextmenu:me.onItemClick, scope:me};
+}, initKeyNav:function(view) {
+  var me = this, nav;
+  if (!me.keyNav) {
+    me.keyNav = [];
+    me.position = new Ext.grid.CellContext(view);
+  }
+  nav = new Ext.util.KeyNav({target:view, ignoreInputFields:true, eventName:Ext.supports.SpecialKeyDownRepeat ? 'itemkeydown' : 'itemkeypress', defaultEventAction:'stopEvent', processEvent:me.processViewEvent, up:me.onKeyUp, down:me.onKeyDown, right:me.onKeyRight, left:me.onKeyLeft, pageDown:me.onKeyPageDown, pageUp:me.onKeyPageUp, home:me.onKeyHome, end:me.onKeyEnd, space:me.onKeySpace, enter:me.onKeyEnter, esc:me.onKeyEsc, 113:{ctrl:false, shift:false, alt:false, handler:me.onKeyF2}, tab:me.onKeyTab, 
+  A:{ctrl:true, handler:me.onSelectAllKeyPress}, scope:me});
+  me.keyNav.push(nav);
+  me.onKeyNavCreate(nav);
+}, onKeyNavCreate:Ext.emptyFn, addKeyBindings:function(binding) {
+  var len = this.keyNav.length, i;
+  for (i = 0; i < len; i++) {
+    this.keyNav[i].addBindings(binding);
+  }
+}, enable:function() {
+  var len = this.keyNav.length, i;
+  for (i = 0; i < len; i++) {
+    this.keyNav[i].enable();
+  }
+  this.disabled = false;
+}, disable:function() {
+  var len = this.keyNav.length, i;
+  for (i = 0; i < len; i++) {
+    this.keyNav[i].disable();
+  }
+  this.disabled = true;
+}, processViewEvent:function(view, record, row, recordIndex, event) {
+  var key = event.getKey();
+  if (view.actionableMode) {
+    this.map.ignoreInputFields = false;
+    if (key === event.TAB || key === event.ESC || key === event.F2) {
+      return event;
+    }
+  } else {
+    this.map.ignoreInputFields = true;
+    return key === event.TAB ? null : event;
+  }
+}, onContainerMouseDown:function(view, mousedownEvent) {
+  var me = this, context = new Ext.grid.CellContext(view), lastFocused, position;
+  me.callParent([view, mousedownEvent]);
+  lastFocused = view.lastFocused;
+  position = view.actionableMode && view.actionPosition || lastFocused;
+  if (!position || lastFocused === 'scrollbar') {
+    return;
+  }
+  context.setPosition(position.record, position.column);
+  mousedownEvent.position = context;
+  me.attachClosestCell(mousedownEvent);
+  if (!me.position.isEqual(context)) {
+    me.setPosition(context, null, mousedownEvent);
+  }
+}, onCellMouseDown:function(view, cell, cellIndex, record, row, recordIndex, mousedownEvent) {
+  var targetComponent = Ext.Component.from(mousedownEvent, cell), actionableEl = mousedownEvent.getTarget(this.isFocusableEl, cell), ac;
+  if (view.actionableMode) {
+    if (!actionableEl) {
+      actionableEl = (ac = Ext.ComponentManager.getActiveComponent()) && ac !== view && ac.owns(mousedownEvent);
+    }
+    if (actionableEl) {
+      view.setActionableMode(true, mousedownEvent.position);
+    } else {
+      view.setActionableMode(false, mousedownEvent.position);
+    }
+    return;
+  }
+  if (mousedownEvent.pointerType !== 'touch') {
+    if (mousedownEvent.position.column.cellFocusable !== false) {
+      if (actionableEl) {
+        if (!view.containsFocus) {
+          view.containsFocus = true;
+          view.toggleChildrenTabbability(false);
+        }
+        if (view.setActionableMode(true, mousedownEvent.position) !== false) {
+          actionableEl.focus();
+        }
+      } else {
+        cell.focus();
+      }
+      if (mousedownEvent.button === 2) {
+        this.fireNavigateEvent(mousedownEvent);
+      }
+      if (targetComponent && targetComponent.isFocusable && targetComponent.isFocusable()) {
+        view.setActionableMode(true, mousedownEvent.position);
+        targetComponent.focus();
+      }
+    } else {
+      mousedownEvent.preventDefault(true);
+    }
+  }
+}, onCellClick:function(view, cell, cellIndex, record, row, recordIndex, clickEvent) {
+  var me = this, targetComponent = Ext.Component.from(clickEvent, cell), clickOnFocusable = targetComponent && targetComponent.isFocusable && targetComponent.isFocusable();
+  if (!Ext.isIE10m && !view.el.contains(Ext.Element.getActiveElement()) && clickEvent.pointerType !== 'touch') {
+    return;
+  }
+  if (view.actionableMode) {
+    if (!clickEvent.position.isEqual(view.actionPosition)) {
+      if (!clickOnFocusable) {
+        view.setActionableMode(false, clickEvent.position);
+      }
+    }
+    me.fireEvent('navigate', {view:view, navigationModel:me, keyEvent:clickEvent, previousPosition:me.previousPosition, previousRecordIndex:me.previousRecordIndex, previousRecord:me.previousRecord, previousItem:me.previousItem, previousCell:me.previousCell, previousColumnIndex:me.previousColumnIndex, previousColumn:me.previousColumn, position:clickEvent.position, recordIndex:clickEvent.position.rowIdx, record:clickEvent.position.record, selectionStart:me.selectionStart, item:clickEvent.item, cell:clickEvent.position.cellElement, 
+    columnIndex:clickEvent.position.colIdx, column:clickEvent.position.column});
+  } else {
+    if (me.position.isEqual(clickEvent.position) || clickOnFocusable) {
+      if (Ext.isIE10m && !me.record) {
+        return;
+      }
+      me.fireNavigateEvent(clickEvent);
+    } else {
+      if (clickEvent.position.column.cellFocusable !== false) {
+        me.setPosition(clickEvent.position, null, clickEvent);
+      } else {
+        clickEvent.preventDefault();
+      }
+    }
+  }
+}, onFocusMove:function(e) {
+  var view = Ext.Component.from(e.delegatedTarget, null, 'tableview'), cell = e.target, isCell = Ext.fly(cell).is(view.cellSelector), record, column, newPosition;
+  if (view) {
+    if (e.toElement === view.el.dom) {
+      view.actionableMode = false;
+      return view.onFocusEnter(e);
+    }
+    if (!view.actionableMode && isCell) {
+      record = view.getRecord(cell);
+      column = view.getHeaderByCell(cell);
+      if (record && column) {
+        newPosition = (new Ext.grid.CellContext(view)).setPosition(record, column);
+        if (!newPosition.isEqual(this.position)) {
+          this.setPosition(newPosition);
+        }
+      }
+    } else {
+      if ((view.actionableMode || view.activating) && !isCell && view.el.contains(e.target) && view.el.dom !== e.target) {
+        view.ownerGrid.fireEvent('cellactivate', view.ownerGrid, view.actionPosition);
+      }
+    }
+  }
+}, onItemMouseDown:function(view, record, item, index, mousedownEvent) {
+  var me = this, scroller;
+  if (!mousedownEvent.position.cellElement && mousedownEvent.pointerType !== 'touch') {
+    if (!view.enableTextSelection) {
+      mousedownEvent.preventDefault();
+    }
+    me.attachClosestCell(mousedownEvent);
+    if (!me.position.isEqual(mousedownEvent.position)) {
+      me.setPosition(mousedownEvent.position, null, mousedownEvent);
+    }
+    scroller = view.getScrollable();
+    if (scroller) {
+      scroller.restoreState();
+    }
+  }
+}, onItemClick:function(view, record, item, index, clickEvent) {
+  if (!clickEvent.position.cellElement) {
+    this.attachClosestCell(clickEvent);
+    if (clickEvent.pointerType === 'touch') {
+      this.setPosition(clickEvent.position, null, clickEvent);
+    } else {
+      this.fireNavigateEvent(clickEvent);
+    }
+  }
+}, attachClosestCell:function(event) {
+  var position = event.position, targetCell = position.cellElement, x, columns, len, i, column, b;
+  if (!targetCell) {
+    x = event.getX();
+    columns = position.view.getVisibleColumnManager().getColumns();
+    len = columns.length;
+    for (i = 0; i < len; i++) {
+      column = columns[i];
+      b = columns[i].getBox();
+      if (x >= b.left && x < b.right) {
+        position.setColumn(columns[i]);
+        position.rowElement = position.getRow(true);
+        position.cellElement = position.getCell(true);
+        return;
+      }
+    }
+  }
+}, deferSetPosition:function(delay, recordIndex, columnIndex, keyEvent, suppressEvent, preventNavigation) {
+  var setPositionTask = this.view.getFocusTask();
+  setPositionTask.delay(delay, this.setPosition, this, [recordIndex, columnIndex, keyEvent, suppressEvent, preventNavigation]);
+  return setPositionTask;
+}, setPosition:function(recordIndex, columnIndex, keyEvent, suppressEvent, preventNavigation) {
+  var me = this, clearing = recordIndex == null && columnIndex == null, isClear = me.record == null && me.recordIndex == null && me.item == null, view, scroller, selModel, dataSource, columnManager, newRecordIndex, newColumnIndex, newRecord, newColumn, columns;
+  if (recordIndex && recordIndex.isCellContext) {
+    view = recordIndex.view;
+  } else {
+    if (keyEvent && keyEvent.view) {
+      view = keyEvent.view;
+    } else {
+      if (me.lastFocused) {
+        view = me.lastFocused.view;
+      } else {
+        view = me.view;
+      }
+    }
+  }
+  view.cancelFocusTask();
+  if (view.destroyed || !view.refreshCounter || !view.ownerCt || clearing && isClear || !view.all.getCount()) {
+    return;
+  }
+  selModel = view.getSelectionModel();
+  dataSource = view.dataSource;
+  columnManager = view.getVisibleColumnManager();
+  columns = columnManager.getColumns();
+  if (recordIndex && recordIndex.isCellContext) {
+    newRecord = recordIndex.record;
+    newRecordIndex = recordIndex.rowIdx;
+    newColumnIndex = Math.min(recordIndex.colIdx, columns.length - 1);
+    newColumn = columns[newColumnIndex];
+    if (dataSource.indexOf(newRecord) === -1) {
+      scroller = view.getScrollable();
+      me.recordIndex = -1;
+      if (scroller && scroller.getPosition().y >= scroller.getMaxPosition().y - view.all.last(true).offsetHeight) {
+        recordIndex.rowIdx--;
+      }
+      newRecordIndex = Math.min(recordIndex.rowIdx, dataSource.getCount() - 1);
+      newRecord = dataSource.getAt(newRecordIndex);
+    }
+  } else {
+    if (clearing) {
+      newRecord = newRecordIndex = null;
+    } else {
+      if (columnIndex == null) {
+        columnIndex = me.lastFocused ? me.lastFocused.column : 0;
+      }
+      if (typeof recordIndex === 'number') {
+        newRecordIndex = Math.max(Math.min(recordIndex, dataSource.getCount() - 1), 0);
+        newRecord = dataSource.getAt(recordIndex);
+      } else {
+        if (recordIndex.isEntity) {
+          newRecord = recordIndex;
+          newRecordIndex = dataSource.indexOf(newRecord);
+        } else {
+          if (recordIndex.tagName) {
+            newRecord = view.getRecord(recordIndex);
+            newRecordIndex = dataSource.indexOf(newRecord);
+            if (newRecordIndex === -1) {
+              newRecord = null;
+            }
+          } else {
+            if (isClear) {
+              return;
+            }
+            clearing = true;
+            newRecord = newRecordIndex = null;
+          }
+        }
+      }
+    }
+    if (newRecord) {
+      if (newRecordIndex === -1) {
+        me.recordIndex = -1;
+        newRecord = dataSource.getAt(0);
+        newRecordIndex = 0;
+        columnIndex = null;
+      }
+      if (columnIndex == null) {
+        if (!(newColumn = me.column)) {
+          newColumnIndex = 0;
+          newColumn = columns[0];
+        }
+      } else {
+        if (typeof columnIndex === 'number') {
+          newColumn = columns[columnIndex];
+          newColumnIndex = columnIndex;
+        } else {
+          newColumn = columnIndex;
+          newColumnIndex = columnManager.indexOf(columnIndex);
+        }
+      }
+    } else {
+      clearing = true;
+      newColumn = newColumnIndex = null;
+    }
+  }
+  if (newColumn && columnManager.indexOf(newColumn) === -1) {
+    if (newColumnIndex === -1) {
+      newColumnIndex = 0;
+    } else {
+      newColumnIndex = Math.min(newColumnIndex, columns.length - 1);
+    }
+    newColumn = columns[newColumnIndex];
+  }
+  if (view.actionableMode && !clearing) {
+    return view.ownerGrid.setActionableMode(false, (new Ext.grid.CellContext(view)).setPosition(newRecord, newColumn));
+  }
+  if (newRecordIndex === me.recordIndex && newColumnIndex === me.columnIndex && view === me.position.view) {
+    return me.focusPosition(me.position);
+  }
+  if (me.cell) {
+    me.cell.removeCls(me.focusCls);
+  }
+  me.previousRecordIndex = me.recordIndex;
+  me.previousRecord = me.record;
+  me.previousItem = me.item;
+  me.previousCell = me.cell;
+  me.previousColumn = me.column;
+  me.previousColumnIndex = me.columnIndex;
+  me.previousPosition = me.position.clone();
+  me.selectionStart = selModel.selectionStart;
+  me.position.setAll(view, me.recordIndex = newRecordIndex, me.columnIndex = newColumnIndex, me.record = newRecord, me.column = newColumn);
+  if (clearing) {
+    me.item = me.cell = null;
+  } else {
+    me.focusPosition(me.position, preventNavigation);
+  }
+  if (!suppressEvent) {
+    selModel.fireEvent('focuschange', selModel, me.previousRecord, me.record);
+    view.fireEvent('rowfocus', me.record, me.item, me.recordIndex);
+    view.fireEvent('cellfocus', me.record, me.cell, me.position);
+  }
+  if (keyEvent && !preventNavigation && me.cell !== me.previousCell) {
+    me.fireNavigateEvent(keyEvent);
+  }
+}, focusPosition:function(position) {
+  var me = this, view, row, scroller;
+  me.item = me.cell = null;
+  if (position && position.record && position.column) {
+    view = position.view;
+    if (position.rowElement) {
+      row = me.item = position.rowElement;
+    } else {
+      row = view.getRowByRecord(position.record);
+    }
+    if (row) {
+      me.cell = position.cellElement || Ext.fly(row).down(position.column.getCellSelector(), true);
+      if (me.cell) {
+        me.cell = new Ext.dom.Fly(me.cell);
+        view.lastFocused = me.lastFocused = me.position.clone();
+        scroller = view.getScrollable();
+        if (scroller) {
+          scroller.ensureVisible(me.cell);
+        }
+        me.focusItem(me.cell);
+        view.focusEl = me.cell;
+      } else {
+        me.position.setAll();
+        me.record = me.column = me.recordIndex = me.columnIndex = null;
+      }
+    } else {
+      row = view.dataSource.indexOf(position.record);
+      me.position.setAll();
+      me.record = me.column = me.recordIndex = me.columnIndex = null;
+      if (row !== -1 && view.bufferedRenderer) {
+        me.lastKeyEvent = null;
+        view.bufferedRenderer.scrollTo(row, false, me.afterBufferedScrollTo, me);
+      }
+    }
+  }
+}, focusItem:function(item) {
+  item.addCls(this.focusCls);
+  item.focus();
+}, getCell:function() {
+  return this.cell;
+}, getPosition:function(skipChecks) {
+  var me = this, position = me.position, curIndex, view, dataSource;
+  if (position.record && position.column) {
+    if (skipChecks) {
+      return position;
+    }
+    view = position.view;
+    dataSource = view.dataSource;
+    curIndex = dataSource.indexOf(position.record);
+    if (curIndex === -1) {
+      curIndex = position.rowIdx;
+      if (!(position.record = dataSource.getAt(curIndex))) {
+        curIndex = -1;
+      }
+    }
+    if (curIndex === -1 || view.getVisibleColumnManager().indexOf(position.column) === -1) {
+      position.setAll();
+      me.record = me.column = me.recordIndex = me.columnIndex = null;
+    } else {
+      return position;
+    }
+  }
+  return null;
+}, getLastFocused:function() {
+  var me = this, view, lastFocused = me.lastFocused;
+  if (lastFocused && lastFocused.record && lastFocused.column) {
+    view = lastFocused.view;
+    if (view.dataSource.indexOf(lastFocused.record) !== -1 && view.getVisibleColumnManager().indexOf(lastFocused.column) !== -1) {
+      return lastFocused;
+    }
+  }
+}, onKeyTab:function(keyEvent) {
+  var forward = !keyEvent.shiftKey, view = keyEvent.position.view, ret, focusTarget, position;
+  ret = view.findFocusPosition(keyEvent.target, keyEvent.position, forward, keyEvent);
+  focusTarget = ret.target;
+  position = ret.position;
+  if (focusTarget) {
+    this.actionPosition = position.view.actionPosition = position;
+    Ext.fly(focusTarget).focus();
+  } else {
+    view.onRowExit(keyEvent, keyEvent.item, keyEvent.item[forward ? 'nextSibling' : 'previousSibling'], forward);
+  }
+  keyEvent.preventDefault();
+}, onKeyUp:function(keyEvent) {
+  var newRecord = keyEvent.view.walkRecs(keyEvent.record, -1), pos = this.getPosition();
+  if (newRecord) {
+    pos.setRow(newRecord);
+    if (!pos.getCell(true)) {
+      pos.navigate(-1);
+    }
+    this.setPosition(pos, null, keyEvent);
+  }
+}, onKeyDown:function(keyEvent) {
+  var newRecord = keyEvent.record.isExpandingOrCollapsing ? null : keyEvent.view.walkRecs(keyEvent.record, 1), pos = this.getPosition();
+  if (newRecord) {
+    pos.setRow(newRecord);
+    if (!pos.getCell(true)) {
+      pos.navigate(-1);
+    }
+    this.setPosition(pos, null, keyEvent);
+  }
+}, onKeyRight:function(keyEvent) {
+  var newPosition = this.move('right', keyEvent);
+  if (newPosition) {
+    this.setPosition(newPosition, null, keyEvent);
+  }
+}, onKeyLeft:function(keyEvent) {
+  var newPosition = this.move('left', keyEvent);
+  if (newPosition) {
+    this.setPosition(newPosition, null, keyEvent);
+  }
+}, onKeyEnter:function(keyEvent) {
+  var eventArgs = ['cellclick', keyEvent.view, keyEvent.position.cellElement, keyEvent.position.colIdx, keyEvent.record, keyEvent.position.rowElement, keyEvent.recordIndex, keyEvent], actionCell = keyEvent.position.getCell(true);
+  if (actionCell) {
+    if (!actionCell.querySelector('[tabIndex\x3d"-1"]')) {
+      keyEvent.stopEvent();
+      keyEvent.view.fireEvent.apply(keyEvent.view, eventArgs);
+      eventArgs[0] = 'celldblclick';
+      keyEvent.view.fireEvent.apply(keyEvent.view, eventArgs);
+    }
+    if (!this.view.actionableMode) {
+      this.view.ownerGrid.setActionableMode(true, this.getPosition());
+    }
+  }
+}, onKeyF2:function(keyEvent) {
+  var grid = this.view.ownerGrid, actionableMode = grid.actionableMode;
+  grid.setActionableMode(!actionableMode, actionableMode ? null : this.getPosition());
+}, onKeyEsc:function(keyEvent) {
+  var grid = this.view.ownerGrid;
+  if (grid.actionableMode) {
+    grid.setActionableMode(false);
+  } else {
+    return true;
+  }
+}, move:function(dir, keyEvent) {
+  var me = this, position = me.getPosition(), result = position, rowVeto = keyEvent.shiftKey && (dir === 'right' || dir === 'left');
+  if (position && position.record) {
+    while (result) {
+      result = result.view.walkCells(result, dir, rowVeto ? me.vetoRowChange : null, me);
+      if (result && result.getCell(true) && result.column.cellFocusable !== false) {
+        return result;
+      }
+    }
+  }
+  return null;
+}, vetoRowChange:function(newPosition) {
+  return this.getPosition().record === newPosition.record;
+}, onKeyPageDown:function(keyEvent) {
+  var me = this, view = keyEvent.view, rowsVisible = me.getRowsVisible(), newIdx, newRecord;
+  if (rowsVisible) {
+    if (view.bufferedRenderer) {
+      newIdx = Math.min(keyEvent.recordIndex + rowsVisible, view.dataSource.getCount() - 1);
+      me.lastKeyEvent = keyEvent;
+      view.bufferedRenderer.scrollTo(newIdx, false, me.afterBufferedScrollTo, me);
+    } else {
+      newRecord = view.walkRecs(keyEvent.record, rowsVisible);
+      me.setPosition(newRecord, null, keyEvent);
+    }
+  }
+}, onKeyPageUp:function(keyEvent) {
+  var me = this, view = keyEvent.view, rowsVisible = me.getRowsVisible(), newIdx, newRecord;
+  if (rowsVisible) {
+    if (view.bufferedRenderer) {
+      newIdx = Math.max(keyEvent.recordIndex - rowsVisible, 0);
+      me.lastKeyEvent = keyEvent;
+      view.bufferedRenderer.scrollTo(newIdx, false, me.afterBufferedScrollTo, me);
+    } else {
+      newRecord = view.walkRecs(keyEvent.record, -rowsVisible);
+      me.setPosition(newRecord, null, keyEvent);
+    }
+  }
+}, onKeyHome:function(keyEvent) {
+  var me = this, view = keyEvent.view;
+  if (keyEvent.altKey) {
+    if (view.bufferedRenderer) {
+      me.lastKeyEvent = keyEvent;
+      view.bufferedRenderer.scrollTo(0, false, me.afterBufferedScrollTo, me);
+    } else {
+      me.setPosition(view.walkRecs(keyEvent.record, -view.dataSource.indexOf(keyEvent.record)), null, keyEvent);
+    }
+  } else {
+    me.setPosition(keyEvent.record, 0, keyEvent);
+  }
+}, afterBufferedScrollTo:function(newIdx, newRecord) {
+  this.setPosition(newRecord, null, this.lastKeyEvent, null, !this.lastKeyEvent);
+}, onKeyEnd:function(keyEvent) {
+  var me = this, view = keyEvent.view;
+  if (keyEvent.altKey) {
+    if (view.bufferedRenderer) {
+      me.lastKeyEvent = keyEvent;
+      view.bufferedRenderer.scrollTo(view.store.getCount() - 1, false, me.afterBufferedScrollTo, me);
+    } else {
+      me.setPosition(view.walkRecs(keyEvent.record, view.dataSource.getCount() - 1 - view.dataSource.indexOf(keyEvent.record)), null, keyEvent);
+    }
+  } else {
+    me.setPosition(keyEvent.record, keyEvent.view.getVisibleColumnManager().getColumns().length - 1, keyEvent);
+  }
+}, getRowsVisible:function() {
+  var rowsVisible = false, view = this.view, firstRow = view.all.first(), rowHeight, gridViewHeight;
+  if (firstRow) {
+    rowHeight = firstRow.getHeight();
+    gridViewHeight = view.el.getHeight();
+    rowsVisible = Math.floor(gridViewHeight / rowHeight);
+  }
+  return rowsVisible;
+}, fireNavigateEvent:function(keyEvent) {
+  var me = this;
+  me.fireEvent('navigate', {view:me.position.view, navigationModel:me, keyEvent:keyEvent || new Ext.event.Event({}), previousPosition:me.previousPosition, previousRecordIndex:me.previousRecordIndex, previousRecord:me.previousRecord, previousItem:me.previousItem, previousCell:me.previousCell, previousColumnIndex:me.previousColumnIndex, previousColumn:me.previousColumn, position:me.position, recordIndex:me.recordIndex, record:me.record, selectionStart:me.selectionStart, item:me.item, cell:me.cell, 
+  columnIndex:me.columnIndex, column:me.column});
+}, isFocusableEl:function(el) {
+  return Ext.fly(el).isFocusable();
+}});
+Ext.define('Ext.view.TableLayout', {extend:Ext.layout.component.Auto, alias:'layout.tableview', type:'tableview', beginLayout:function(ownerContext) {
+  var me = this, owner = me.owner, ownerGrid = owner.ownerGrid, partner = owner.lockingPartner, partnerContext = ownerContext.lockingPartnerContext, partnerVisible = partner && partner.grid.isVisible() && !(partner.grid.collapsed || partner.grid.floatedFromCollapse), context = ownerContext.context, scrollable = ownerGrid.getScrollable();
+  ownerContext.doSyncRowHeights = partnerVisible && (ownerGrid.syncRowHeight || ownerGrid.syncRowHeightOnNextLayout);
+  ownerContext.allowScrollX = scrollable && scrollable.config && scrollable.config.x;
+  if (!me.columnFlusherId) {
+    me.columnFlusherId = me.id + '-columns';
+    me.rowHeightFlusherId = me.id + '-rows';
+  }
+  me.callParent([ownerContext]);
+  if (partnerVisible) {
+    if (!partnerContext && partner.componentLayout.isRunning()) {
+      (partnerContext = ownerContext.lockingPartnerContext = context.getCmp(partner)).lockingPartnerContext = ownerContext;
+      if (!partnerContext.lockingPartnerContext) {
+        partnerContext.lockingPartnerContext = ownerContext;
+      }
+    }
+    if (ownerContext.doSyncRowHeights) {
+      if (partnerContext && !partnerContext.rowHeightSynchronizer) {
+        partnerContext.rowHeightSynchronizer = partnerContext.target.syncRowHeightBegin();
+      }
+      ownerContext.rowHeightSynchronizer = me.owner.syncRowHeightBegin();
+    }
+  }
+  (ownerContext.headerContext = context.getCmp(me.headerCt)).viewContext = ownerContext;
+}, beginLayoutCycle:function(ownerContext, firstCycle) {
+  this.callParent([ownerContext, firstCycle]);
+  if (ownerContext.syncRowHeights) {
+    ownerContext.target.syncRowHeightClear(ownerContext.rowHeightSynchronizer);
+    ownerContext.syncRowHeights = false;
+  }
+}, calculate:function(ownerContext) {
+  var me = this, context = ownerContext.context, lockingPartnerContext = ownerContext.lockingPartnerContext, headerContext = ownerContext.headerContext, ownerCtContext = ownerContext.ownerCtContext, owner = me.owner, columnsChanged = headerContext.getProp('columnsChanged'), state = ownerContext.state, overflowable, columnFlusher, otherSynchronizer, synchronizer, rowHeightFlusher, bodyDom = owner.body.dom, bodyHeight, ctSize, overflowY, overflowX, scrollbarHeight;
+  if (!owner.all.getCount() && (!bodyDom || !owner.body.child('table', true))) {
+    ownerContext.setProp('viewOverflowY', false);
+    me.callParent([ownerContext]);
+    return;
+  }
+  if (me.calcCount === 1 && me.owner.bufferedRenderer) {
+    me.owner.bufferedRenderer.beforeTableLayout(ownerContext);
+  }
+  if (columnsChanged === undefined) {
+    me.done = false;
+    return;
+  }
+  if (columnsChanged) {
+    if (!(columnFlusher = state.columnFlusher)) {
+      context.queueFlush(state.columnFlusher = columnFlusher = {ownerContext:ownerContext, columnsChanged:columnsChanged, layout:me, id:me.columnFlusherId, flush:me.flushColumnWidths}, true);
+    }
+    if (!columnFlusher.flushed) {
+      me.done = false;
+      return;
+    }
+  }
+  if (ownerContext.doSyncRowHeights) {
+    if (!(rowHeightFlusher = state.rowHeightFlusher)) {
+      if (!(synchronizer = state.rowHeights)) {
+        state.rowHeights = synchronizer = ownerContext.rowHeightSynchronizer;
+        me.owner.syncRowHeightMeasure(synchronizer);
+        ownerContext.setProp('rowHeights', synchronizer);
+      }
+      if (!(otherSynchronizer = lockingPartnerContext.getProp('rowHeights'))) {
+        me.done = false;
+        return;
+      }
+      context.queueFlush(state.rowHeightFlusher = rowHeightFlusher = {ownerContext:ownerContext, synchronizer:synchronizer, otherSynchronizer:otherSynchronizer, layout:me, id:me.rowHeightFlusherId, flush:me.flushRowHeights}, true);
+    }
+    if (!rowHeightFlusher.flushed) {
+      me.done = false;
+      return;
+    }
+  }
+  me.callParent([ownerContext]);
+  if (!ownerContext.heightModel.shrinkWrap) {
+    if (!ownerCtContext.heightModel.shrinkWrap) {
+      overflowable = true;
+      ctSize = ownerCtContext.target.layout.getContainerSize(ownerCtContext);
+      if (!ctSize.gotHeight) {
+        me.done = false;
+        return;
+      }
+      bodyHeight = bodyDom.offsetHeight;
+      if (bodyHeight > ctSize.height) {
+        overflowY = true;
+      }
+    }
+  }
+  scrollbarHeight = Ext.getScrollbarSize().height;
+  if (me.done && ownerContext.allowScrollX && scrollbarHeight) {
+    if (!owner.lockingPartner) {
+      if (owner.isAutoTree) {
+        overflowX = true;
+      } else {
+        overflowX = !!ownerContext.headerContext.state.boxPlan.tooNarrow;
+      }
+      ownerContext.setProp('overflowX', overflowX);
+    }
+    if (overflowX && bodyHeight && overflowable) {
+      overflowY = bodyHeight + scrollbarHeight > ctSize.height;
+    }
+  }
+  if (me.done || overflowY != null) {
+    ownerContext.setProp('viewOverflowY', !!overflowY);
+  }
+}, measureContentHeight:function(ownerContext) {
+  var owner = this.owner, bodyDom = owner.body.dom, emptyEl = owner.emptyEl, bodyHeight = 0;
+  if (emptyEl) {
+    bodyHeight += emptyEl.offsetHeight;
+  }
+  if (bodyDom) {
+    bodyHeight += bodyDom.offsetHeight;
+  }
+  if (ownerContext.headerContext.state.boxPlan.tooNarrow) {
+    bodyHeight += Ext.getScrollbarSize().height;
+  }
+  return bodyHeight;
+}, flushColumnWidths:function() {
+  var flusher = this, me = flusher.layout, ownerContext = flusher.ownerContext, columnsChanged = flusher.columnsChanged, owner = ownerContext.target, len = columnsChanged.length, column, i, colWidth, lastBox;
+  if (ownerContext.state.columnFlusher !== flusher) {
+    return;
+  }
+  for (i = 0; i < len; i++) {
+    if (!(column = columnsChanged[i])) {
+      continue;
+    }
+    colWidth = column.props.width;
+    owner.body.select(owner.getColumnSizerSelector(column.target)).setWidth(colWidth);
+    if (column.target.onCellsResized) {
+      column.target.onCellsResized(colWidth);
+    }
+    lastBox = column.lastBox;
+    if (lastBox) {
+      lastBox.width = colWidth;
+    }
+  }
+  flusher.flushed = true;
+  if (!me.pending) {
+    ownerContext.context.queueLayout(me);
+  }
+}, flushRowHeights:function() {
+  var flusher = this, me = flusher.layout, ownerContext = flusher.ownerContext;
+  if (ownerContext.state.rowHeightFlusher !== flusher) {
+    return;
+  }
+  ownerContext.target.syncRowHeightFinish(flusher.synchronizer, flusher.otherSynchronizer);
+  flusher.flushed = true;
+  ownerContext.syncRowHeights = true;
+  if (!me.pending) {
+    ownerContext.context.queueLayout(me);
+  }
+}, finishedLayout:function(ownerContext) {
+  var me = this, ownerGrid = me.owner.ownerGrid, nodeContainer = Ext.fly(me.owner.getNodeContainer()), scroller = this.owner.getScrollable(), buffered;
+  me.callParent([ownerContext]);
+  if (nodeContainer) {
+    nodeContainer.setWidth(ownerContext.headerContext.props.contentWidth);
+  }
+  buffered = me.owner.bufferedRenderer;
+  if (buffered) {
+    buffered.afterTableLayout(ownerContext);
+  }
+  if (ownerGrid) {
+    ownerGrid.syncRowHeightOnNextLayout = false;
+  }
+  if (scroller && !scroller.isScrolling) {
+    if (buffered) {
+      if (buffered.nextRefreshStartIndex === 0 || me.owner.hasVariableRowHeight()) {
+        return;
+      }
+    }
+    scroller.restoreState();
+  }
+}, getLayoutItems:function() {
+  return this.owner.getRefItems();
+}, isValidParent:function() {
+  return true;
+}});
+Ext.define('Ext.grid.locking.RowSynchronizer', {constructor:function(view, rowEl) {
+  var me = this, rowTpl;
+  me.view = view;
+  me.rowEl = rowEl;
+  me.els = {};
+  me.add('data', view.rowSelector);
+  for (rowTpl = view.rowTpl; rowTpl; rowTpl = rowTpl.nextTpl) {
+    if (rowTpl.beginRowSync) {
+      rowTpl.beginRowSync(me);
+    }
+  }
+}, add:function(name, selector) {
+  var el = Ext.fly(this.rowEl).down(selector, true);
+  if (el) {
+    this.els[name] = {el:el};
+  }
+}, finish:function(other) {
+  var me = this, els = me.els, otherEls = other.els, otherEl, growth = 0, otherGrowth = 0, delta, name, otherHeight;
+  for (name in els) {
+    otherEl = otherEls[name];
+    otherHeight = otherEl ? otherEl.height : 0;
+    delta = otherHeight - els[name].height;
+    if (delta > 0) {
+      growth += delta;
+      Ext.fly(els[name].el).setHeight(otherHeight);
+    } else {
+      otherGrowth -= delta;
+    }
+  }
+  otherHeight = other.rowHeight + otherGrowth;
+  if (Ext.isIE9 && me.view.ownerGrid.rowLines) {
+    otherHeight--;
+  }
+  if (me.rowHeight + growth < otherHeight) {
+    Ext.fly(me.rowEl).setHeight(otherHeight);
+  }
+}, measure:function() {
+  var me = this, els = me.els, grid = me.view.ownerGrid, name;
+  me.rowHeight = grid.getElementHeight(me.rowEl);
+  for (name in els) {
+    els[name].height = grid.getElementHeight(els[name].el);
+  }
+}, reset:function() {
+  var els = this.els, name;
+  this.rowEl.style.height = '';
+  for (name in els) {
+    els[name].el.style.height = '';
+  }
+}});
+Ext.define('Ext.view.NodeCache', {statics:{range:document.createRange && document.createRange()}, constructor:function(view) {
+  this.view = view;
+  this.clear();
+  this.el = new Ext.dom.Fly;
+}, destroy:function() {
+  var me = this;
+  if (!me.destroyed) {
+    me.el.destroy();
+    me.el = me.view = null;
+    me.destroyed = true;
+  }
+  me.callParent();
+}, clear:function(removeDom) {
+  var me = this, elements = me.elements, range = me.statics().range, key;
+  if (me.count && removeDom) {
+    if (range && Ext.getBody().contains(elements[0])) {
+      range.setStartBefore(elements[me.startIndex]);
+      range.setEndAfter(elements[me.endIndex]);
+      range.deleteContents();
+    } else {
+      for (key in elements) {
+        Ext.removeNode(elements[key]);
+      }
+    }
+  }
+  me.elements = {};
+  me.count = me.startIndex = 0;
+  me.endIndex = -1;
+}, fill:function(newElements, startIndex, fixedNodes) {
+  fixedNodes = fixedNodes || 0;
+  var me = this, elements = me.elements = {}, i, len = newElements.length - fixedNodes;
+  if (!startIndex) {
+    startIndex = 0;
+  }
+  for (i = 0; i < len; i++) {
+    elements[startIndex + i] = newElements[i + fixedNodes];
+  }
+  me.startIndex = startIndex;
+  me.endIndex = startIndex + len - 1;
+  me.count = len;
+  return this;
+}, insert:function(insertPoint, nodes) {
+  var me = this, elements = me.elements, i, nodeCount = nodes.length;
+  if (me.count) {
+    if (insertPoint > me.endIndex + 1 || insertPoint + nodes.length < me.startIndex) {
+      Ext.raise('Discontiguous range would result from inserting ' + nodes.length + ' nodes at ' + insertPoint);
+    }
+    if (insertPoint < me.count) {
+      for (i = me.endIndex + nodeCount; i >= insertPoint + nodeCount; i--) {
+        elements[i] = elements[i - nodeCount];
+        elements[i].setAttribute('data-recordIndex', i);
+      }
+    }
+    me.endIndex = me.endIndex + nodeCount;
+  } else {
+    me.startIndex = insertPoint;
+    me.endIndex = insertPoint + nodeCount - 1;
+  }
+  for (i = 0; i < nodeCount; i++, insertPoint++) {
+    elements[insertPoint] = nodes[i];
+    elements[insertPoint].setAttribute('data-recordIndex', insertPoint);
+  }
+  me.count += nodeCount;
+}, invoke:function(fn, args) {
+  var me = this, element, i;
+  fn = Ext.dom.Element.prototype[fn];
+  for (i = me.startIndex; i <= me.endIndex; i++) {
+    element = me.item(i);
+    if (element) {
+      fn.apply(element, args);
+    }
+  }
+  return me;
+}, item:function(index, asDom) {
+  var el = this.elements[index], result = null;
+  if (el) {
+    result = asDom ? this.elements[index] : this.el.attach(this.elements[index]);
+  }
+  return result;
+}, first:function(asDom) {
+  return this.item(this.startIndex, asDom);
+}, last:function(asDom) {
+  return this.item(this.endIndex, asDom);
+}, moveBlock:function(increment) {
+  var me = this, elements = me.elements, node, end, step, i;
+  if (!increment) {
+    return;
+  }
+  if (increment < 0) {
+    i = me.startIndex - 1;
+    end = me.endIndex;
+    step = 1;
+  } else {
+    i = me.endIndex + 1;
+    end = me.startIndex;
+    step = -1;
+  }
+  me.startIndex += increment;
+  me.endIndex += increment;
+  do {
+    i += step;
+    node = elements[i + increment] = elements[i];
+    node.setAttribute('data-recordIndex', i + increment);
+    if (i < me.startIndex || i > me.endIndex) {
+      delete elements[i];
+    }
+  } while (i !== end);
+  delete elements[i];
+}, getCount:function() {
+  return this.count;
+}, slice:function(start, end) {
+  var elements = this.elements, result = [], i;
+  if (!end) {
+    end = this.endIndex;
+  } else {
+    end = Math.min(this.endIndex, end - 1);
+  }
+  for (i = start || this.startIndex; i <= end; i++) {
+    result.push(elements[i]);
+  }
+  return result;
+}, replaceElement:function(el, replacement, domReplace) {
+  var elements = this.elements, index = typeof el === 'number' ? el : this.indexOf(el);
+  if (index > -1) {
+    replacement = Ext.getDom(replacement);
+    if (domReplace) {
+      el = elements[index];
+      el.parentNode.insertBefore(replacement, el);
+      Ext.removeNode(el);
+      replacement.setAttribute('data-recordIndex', index);
+    }
+    this.elements[index] = replacement;
+  }
+  return this;
+}, indexOf:function(el) {
+  var elements = this.elements, index;
+  el = Ext.getDom(el);
+  for (index = this.startIndex; index <= this.endIndex; index++) {
+    if (elements[index] === el) {
+      return index;
+    }
+  }
+  return -1;
+}, clip:function(removeEnd, removeCount) {
+  var me = this, elements = me.elements, removed = [], start, end, el, i;
+  if (removeEnd === 1) {
+    start = me.startIndex;
+    me.startIndex += removeCount;
+  } else {
+    me.endIndex -= removeCount;
+    start = me.endIndex + 1;
+  }
+  for (i = start, end = start + removeCount - 1; i <= end; i++) {
+    el = elements[i];
+    removed.push(el);
+    Ext.removeNode(el);
+    delete elements[i];
+  }
+  me.count -= removeCount;
+  me.view.fireItemMutationEvent('itemremove', me.view.dataSource.getRange(start, end), start, removed, me.view);
+}, removeRange:function(start, end, removeDom) {
+  var me = this, elements = me.elements, removed = [], el, i, removeCount, fromPos;
+  if (end == null) {
+    end = me.endIndex + 1;
+  } else {
+    end = Math.min(me.endIndex + 1, end + 1);
+  }
+  if (start == null) {
+    start = me.startIndex;
+  }
+  removeCount = end - start;
+  for (i = start, fromPos = end; i <= me.endIndex; i++, fromPos++) {
+    el = elements[i];
+    if (i < end) {
+      removed.push(el);
+      if (removeDom) {
+        Ext.removeNode(el);
+      }
+    }
+    if (fromPos <= me.endIndex) {
+      el = elements[i] = elements[fromPos];
+      el.setAttribute('data-recordIndex', i);
+    } else {
+      delete elements[i];
+    }
+  }
+  me.count -= removeCount;
+  me.endIndex -= removeCount;
+  return removed;
+}, removeElement:function(keys, removeDom) {
+  var me = this, inKeys, key, elements = me.elements, el, deleteCount, keyIndex = 0, index, fromIndex;
+  if (Ext.isArray(keys)) {
+    inKeys = keys;
+    keys = [];
+    deleteCount = inKeys.length;
+    for (keyIndex = 0; keyIndex < deleteCount; keyIndex++) {
+      key = inKeys[keyIndex];
+      if (typeof key !== 'number') {
+        key = me.indexOf(key);
+      }
+      if (key >= me.startIndex && key <= me.endIndex) {
+        keys[keys.length] = key;
+      }
+    }
+    Ext.Array.sort(keys);
+    deleteCount = keys.length;
+  } else {
+    if (keys < me.startIndex || keys > me.endIndex) {
+      return;
+    }
+    deleteCount = 1;
+    keys = [keys];
+  }
+  for (index = fromIndex = keys[0], keyIndex = 0; index <= me.endIndex; index++, fromIndex++) {
+    if (keyIndex < deleteCount && index === keys[keyIndex]) {
+      fromIndex++;
+      keyIndex++;
+      if (removeDom) {
+        Ext.removeNode(elements[index]);
+      }
+    }
+    if (fromIndex <= me.endIndex && fromIndex >= me.startIndex) {
+      el = elements[index] = elements[fromIndex];
+      el.setAttribute('data-recordIndex', index);
+    } else {
+      delete elements[index];
+    }
+  }
+  me.endIndex -= deleteCount;
+  me.count -= deleteCount;
+}, scroll:function(newRecords, direction, removeCount) {
+  var me = this, view = me.view, store = view.store, elements = me.elements, recCount = newRecords.length, nodeContainer = view.getNodeContainer(), range = me.statics().range, i, el, removeEnd, children, result, removeStart, removedRecords, removedItems;
+  if (!(newRecords.length || removeCount)) {
+    return;
+  }
+  if (direction === -1) {
+    if (removeCount) {
+      removedRecords = [];
+      removedItems = [];
+      removeStart = me.endIndex - removeCount + 1;
+      if (range) {
+        range.setStartBefore(elements[removeStart]);
+        range.setEndAfter(elements[me.endIndex]);
+        range.deleteContents();
+        for (i = removeStart; i <= me.endIndex; i++) {
+          el = elements[i];
+          delete elements[i];
+          removedRecords.push(store.getByInternalId(el.getAttribute('data-recordId')));
+          removedItems.push(el);
+        }
+      } else {
+        for (i = removeStart; i <= me.endIndex; i++) {
+          el = elements[i];
+          delete elements[i];
+          Ext.removeNode(el);
+          removedRecords.push(store.getByInternalId(el.getAttribute('data-recordId')));
+          removedItems.push(el);
+        }
+      }
+      view.fireItemMutationEvent('itemremove', removedRecords, removeStart, removedItems, view);
+      me.endIndex -= removeCount;
+    }
+    if (newRecords.length) {
+      result = view.bufferRender(newRecords, me.startIndex -= recCount);
+      children = result.children;
+      for (i = 0; i < recCount; i++) {
+        elements[me.startIndex + i] = children[i];
+      }
+      nodeContainer.insertBefore(result.fragment, nodeContainer.firstChild);
+      view.fireItemMutationEvent('itemadd', newRecords, me.startIndex, children, view);
+    }
+  } else {
+    if (removeCount) {
+      removedRecords = [];
+      removedItems = [];
+      removeEnd = me.startIndex + removeCount;
+      if (range) {
+        range.setStartBefore(elements[me.startIndex]);
+        range.setEndAfter(elements[removeEnd - 1]);
+        range.deleteContents();
+        for (i = me.startIndex; i < removeEnd; i++) {
+          el = elements[i];
+          delete elements[i];
+          removedRecords.push(store.getByInternalId(el.getAttribute('data-recordId')));
+          removedItems.push(el);
+        }
+      } else {
+        for (i = me.startIndex; i < removeEnd; i++) {
+          el = elements[i];
+          delete elements[i];
+          Ext.removeNode(el);
+          removedRecords.push(store.getByInternalId(el.getAttribute('data-recordId')));
+          removedItems.push(el);
+        }
+      }
+      view.fireItemMutationEvent('itemremove', removedRecords, me.startIndex, removedItems, view);
+      me.startIndex = removeEnd;
+    }
+    result = view.bufferRender(newRecords, me.endIndex + 1);
+    children = result.children;
+    for (i = 0; i < recCount; i++) {
+      elements[me.endIndex += 1] = children[i];
+    }
+    nodeContainer.appendChild(result.fragment);
+    view.fireItemMutationEvent('itemadd', newRecords, me.endIndex + 1, children, view);
+  }
+  me.count = me.endIndex - me.startIndex + 1;
+  return children;
+}, sumHeights:function() {
+  var result = 0, elements = this.elements, i;
+  for (i = this.startIndex; i <= this.endIndex; i++) {
+    result += elements[i].offsetHeight;
+  }
+  return result;
+}}, function() {
+  Ext.dom.CompositeElementLite.importElementMethods.call(this);
+});
+Ext.define('Ext.scroll.TableScroller', {extend:Ext.scroll.Scroller, alias:'scroller.table', config:{lockingScroller:null}, privates:{getEnsureVisibleXY:function(el, options) {
+  var lockingScroller = this.getLockingScroller(), position = this.getPosition(), newPosition;
+  if (el && el.element && !el.isElement) {
+    options = el;
+    el = options.element;
+  }
+  options = options || {};
+  if (lockingScroller) {
+    position.y = lockingScroller.position.y;
+  }
+  newPosition = Ext.fly(el).getScrollIntoViewXY(this.getElement(), position.x, position.y);
+  newPosition.x = options.x === false ? position.x : newPosition.x;
+  if (lockingScroller) {
+    newPosition.y = options.y === false ? position.y : Ext.fly(el).getScrollIntoViewXY(lockingScroller.getElement(), position.x, position.y).y;
+  }
+  return newPosition;
+}, doScrollTo:function(x, y, animate) {
+  var lockingScroller, lockedPromise, ret;
+  if (y != null) {
+    lockingScroller = this.getLockingScroller();
+    if (lockingScroller) {
+      lockedPromise = lockingScroller.doScrollTo(null, y, animate);
+      y = null;
+    }
+  }
+  ret = this.callParent([x, y, animate]);
+  if (lockedPromise) {
+    ret = Ext.Promise.all([ret, lockedPromise]);
+  }
+  return ret;
+}, restoreState:function() {
+  var me = this, el = me.getScrollElement(), lockingScroller = me.getLockingScroller(), trackingScrollTop;
+  if (el) {
+    trackingScrollTop = lockingScroller ? lockingScroller.trackingScrollTop : me.trackingScrollTop;
+    if (trackingScrollTop !== undefined) {
+      if (!me.restoreTimer) {
+        me.restoreTimer = Ext.defer(function() {
+          me.restoreTimer = null;
+        }, 50);
+      }
+      me.doScrollTo(me.trackingScrollLeft, trackingScrollTop, false);
+    }
+  }
+}}});
+Ext.define('Ext.view.Table', {extend:Ext.view.View, xtype:['tableview', 'gridview'], alternateClassName:'Ext.grid.View', mixins:[Ext.mixin.Queryable], isTableView:true, config:{selectionModel:{type:'rowmodel'}}, inheritableStatics:{normalSideEvents:['deselect', 'select', 'beforedeselect', 'beforeselect', 'selectionchange'], events:['blur', 'focus', 'move', 'resize', 'destroy', 'beforedestroy', 'boxready', 'afterrender', 'render', 'beforerender', 'removed', 'hide', 'beforehide', 'show', 'beforeshow', 
+'enable', 'disable', 'added', 'deactivate', 'beforedeactivate', 'activate', 'beforeactivate', 'cellkeydown', 'beforecellkeydown', 'cellmouseup', 'beforecellmouseup', 'cellmousedown', 'beforecellmousedown', 'cellcontextmenu', 'beforecellcontextmenu', 'celldblclick', 'beforecelldblclick', 'cellclick', 'beforecellclick', 'refresh', 'itemremove', 'itemadd', 'beforeitemupdate', 'itemupdate', 'viewready', 'beforerefresh', 'unhighlightitem', 'highlightitem', 'focuschange', 'containerkeydown', 'containercontextmenu', 
+'containerdblclick', 'containerclick', 'containermouseout', 'containermouseover', 'containermouseup', 'containermousedown', 'beforecontainerkeydown', 'beforecontainercontextmenu', 'beforecontainerdblclick', 'beforecontainerclick', 'beforecontainermouseout', 'beforecontainermouseover', 'beforecontainermouseup', 'beforecontainermousedown', 'itemkeydown', 'itemcontextmenu', 'itemdblclick', 'itemclick', 'itemmouseleave', 'itemmouseenter', 'itemmouseup', 'itemmousedown', 'rowclick', 'rowcontextmenu', 
+'rowdblclick', 'rowkeydown', 'rowmouseup', 'rowmousedown', 'rowkeydown', 'beforeitemkeydown', 'beforeitemcontextmenu', 'beforeitemdblclick', 'beforeitemclick', 'beforeitemmouseleave', 'beforeitemmouseenter', 'beforeitemmouseup', 'beforeitemmousedown', 'statesave', 'beforestatesave', 'staterestore', 'beforestaterestore', 'uievent', 'groupcollapse', 'groupexpand', 'scroll']}, scrollable:true, componentLayout:'tableview', baseCls:Ext.baseCSSPrefix + 'grid-view', unselectableCls:Ext.baseCSSPrefix + 'unselectable', 
+firstCls:Ext.baseCSSPrefix + 'grid-cell-first', lastCls:Ext.baseCSSPrefix + 'grid-cell-last', itemCls:Ext.baseCSSPrefix + 'grid-item', selectedItemCls:Ext.baseCSSPrefix + 'grid-item-selected', selectedCellCls:Ext.baseCSSPrefix + 'grid-cell-selected', focusedItemCls:Ext.baseCSSPrefix + 'grid-item-focused', overItemCls:Ext.baseCSSPrefix + 'grid-item-over', altRowCls:Ext.baseCSSPrefix + 'grid-item-alt', dirtyCls:Ext.baseCSSPrefix + 'grid-dirty-cell', rowClsRe:new RegExp('(?:^|\\s*)' + Ext.baseCSSPrefix + 
+'grid-item-alt(?:\\s+|$)', 'g'), cellRe:new RegExp(Ext.baseCSSPrefix + 'grid-cell-([^\\s]+)(?:\\s|$)', ''), positionBody:true, positionCells:false, stripeOnUpdate:null, actionableMode:false, trackOver:true, getRowClass:null, stripeRows:true, markDirty:true, ariaRole:'rowgroup', rowAriaRole:'row', cellAriaRole:'gridcell', tpl:['{%', 'view \x3d values.view;', 'if (!(columns \x3d values.columns)) {', 'columns \x3d values.columns \x3d view.ownerCt.getVisibleColumnManager().getColumns();', '}', 'values.fullWidth \x3d 0;', 
+'for (i \x3d 0, len \x3d columns.length; i \x3c len; i++) {', 'column \x3d columns[i];', 'values.fullWidth +\x3d (column.cellWidth \x3d column.lastBox ? column.lastBox.width : column.width || column.minWidth);', '}', 'tableCls\x3dvalues.tableCls\x3d[];', '%}', '\x3cdiv class\x3d"' + Ext.baseCSSPrefix + 'grid-item-container" role\x3d"presentation" style\x3d"width:{fullWidth}px"\x3e', '{[view.renderTHead(values, out, parent)]}', '{%', 'view.renderRows(values.rows, values.columns, values.viewStartIndex, out);', 
+'%}', '{[view.renderTFoot(values, out, parent)]}', '\x3c/div\x3e', '{% ', 'view \x3d columns \x3d column \x3d null;', '%}', {definitions:'var view, tableCls, columns, i, len, column;', priority:0}], outerRowTpl:['\x3ctable id\x3d"{rowId}" role\x3d"presentation" ', 'data-boundView\x3d"{view.id}" ', 'data-recordId\x3d"{record.internalId}" ', 'data-recordIndex\x3d"{recordIndex}" ', 'class\x3d"{[values.itemClasses.join(" ")]}" cellpadding\x3d"0" cellspacing\x3d"0" style\x3d"{itemStyle};width:0"\x3e', 
+'{%', 'this.nextTpl.applyOut(values, out, parent)', '%}', '\x3c/table\x3e', {priority:9999}], rowTpl:['{%', 'var dataRowCls \x3d values.recordIndex \x3d\x3d\x3d -1 ? "" : " ' + Ext.baseCSSPrefix + 'grid-row";', '%}', '\x3ctr class\x3d"{[values.rowClasses.join(" ")]} {[dataRowCls]}"', ' role\x3d"{rowRole}" {rowAttr:attributes}\x3e', '\x3ctpl for\x3d"columns"\x3e' + '{%', 'parent.view.renderCell(values, parent.record, parent.recordIndex, parent.rowIndex, xindex - 1, out, parent)', '%}', '\x3c/tpl\x3e', 
+'\x3c/tr\x3e', {priority:0}], cellTpl:['\x3ctd class\x3d"{tdCls}" {tdAttr} {cellAttr:attributes}', ' style\x3d"width:{column.cellWidth}px;', '{% if(values.tdStyle){out.push(values.tdStyle);}%}"', '{% if (values.column.cellFocusable \x3d\x3d\x3d false) {%}', ' role\x3d"presentation"', '{% } else { %}', ' role\x3d"{cellRole}" tabindex\x3d"-1"', '{% } %}', '  data-columnid\x3d"{[values.column.getItemId()]}"\x3e', '\x3cdiv {unselectableAttr} class\x3d"' + Ext.baseCSSPrefix + 'grid-cell-inner {innerCls}" ', 
+'style\x3d"text-align:{align};', '{% if (values.style) {out.push(values.style);} %}" ', '{cellInnerAttr:attributes}\x3e{value}\x3c/div\x3e', '\x3c/td\x3e', {priority:0}], refreshSelmodelOnRefresh:false, scrollableType:'table', tableValues:{}, rowValues:{itemClasses:[], rowClasses:[]}, cellValues:{classes:[Ext.baseCSSPrefix + 'grid-cell ' + Ext.baseCSSPrefix + 'grid-td']}, constructor:function(config) {
+  if (config.grid.isTree) {
+    config.baseCls = Ext.baseCSSPrefix + 'tree-view';
+  }
+  this.callParent([config]);
+}, hasVariableRowHeight:function(fromLockingPartner) {
+  var me = this;
+  return me.variableRowHeight || me.store.isGrouped() || me.getVisibleColumnManager().hasVariableRowHeight() || !fromLockingPartner && me.lockingPartner && me.lockingPartner.hasVariableRowHeight(true);
+}, initComponent:function() {
+  var me = this;
+  if (me.columnLines) {
+    me.addCls(me.grid.colLinesCls);
+  }
+  if (me.rowLines) {
+    me.addCls(me.grid.rowLinesCls);
+  }
+  me.body = new Ext.dom.Fly;
+  me.body.id = me.id + 'gridBody';
+  if (!me.trackOver) {
+    me.overItemCls = null;
+  }
+  me.headerCt.view = me;
+  me.grid.view = me;
+  me.initFeatures(me.grid);
+  me.itemSelector = me.getItemSelector();
+  me.all = new Ext.view.NodeCache(me);
+  me.actionRowFly = new Ext.dom.Fly;
+  me.callParent();
+}, applySelectionModel:function(selModel, oldSelModel) {
+  var me = this, grid = me.ownerGrid, defaultType = selModel.type, disableSelection = me.disableSelection || grid.disableSelection;
+  if (!oldSelModel) {
+    if (!(selModel && selModel.isSelectionModel)) {
+      selModel = grid.selModel || selModel;
+    }
+  }
+  if (selModel) {
+    if (selModel.isSelectionModel) {
+      selModel.allowDeselect = grid.allowDeselect || selModel.selectionMode !== 'SINGLE';
+      selModel.locked = disableSelection;
+    } else {
+      if (typeof selModel === 'string') {
+        selModel = {type:selModel};
+      } else {
+        selModel.type = grid.selType || selModel.selType || selModel.type || defaultType;
+      }
+      if (!selModel.mode) {
+        if (grid.simpleSelect) {
+          selModel.mode = 'SIMPLE';
+        } else {
+          if (grid.multiSelect) {
+            selModel.mode = 'MULTI';
+          }
+        }
+      }
+      selModel = Ext.Factory.selection(Ext.apply({allowDeselect:grid.allowDeselect, locked:disableSelection}, selModel));
+    }
+  }
+  return selModel;
+}, updateSelectionModel:function(selModel, oldSelModel) {
+  var me = this;
+  if (oldSelModel) {
+    oldSelModel.un({scope:me, lastselectedchanged:me.updateBindSelection, selectionchange:me.updateBindSelection});
+    Ext.destroy(me.selModelRelayer);
+  }
+  me.selModelRelayer = me.relayEvents(selModel, ['selectionchange', 'beforeselect', 'beforedeselect', 'select', 'deselect', 'focuschange']);
+  selModel.on({scope:me, lastselectedchanged:me.updateBindSelection, selectionchange:me.updateBindSelection});
+  me.selModel = selModel;
+}, getVisibleColumnManager:function() {
+  return this.ownerCt.getVisibleColumnManager();
+}, getColumnManager:function() {
+  return this.ownerCt.getColumnManager();
+}, getTopLevelVisibleColumnManager:function() {
+  return this.ownerGrid.getVisibleColumnManager();
+}, moveColumn:function(fromIdx, toIdx, colsToMove) {
+  var me = this, multiMove = colsToMove > 1, range = multiMove && document.createRange ? document.createRange() : null, fragment = multiMove && !range ? document.createDocumentFragment() : null, destinationCellIdx = toIdx, colCount = me.getGridColumns().length, lastIndex = colCount - 1, doFirstLastClasses = (me.firstCls || me.lastCls) && (toIdx === 0 || toIdx === colCount || fromIdx === 0 || fromIdx === lastIndex), i, j, rows, len, tr, cells, colGroups;
+  if (me.rendered && toIdx !== fromIdx) {
+    rows = me.el.query(me.rowSelector);
+    for (i = 0, len = rows.length; i < len; i++) {
+      tr = rows[i];
+      cells = tr.childNodes;
+      if (doFirstLastClasses) {
+        if (cells.length === 1) {
+          Ext.fly(cells[0]).addCls(me.firstCls);
+          Ext.fly(cells[0]).addCls(me.lastCls);
+          continue;
+        }
+        if (fromIdx === 0) {
+          Ext.fly(cells[0]).removeCls(me.firstCls);
+          Ext.fly(cells[1]).addCls(me.firstCls);
+        } else {
+          if (fromIdx === lastIndex) {
+            Ext.fly(cells[lastIndex]).removeCls(me.lastCls);
+            Ext.fly(cells[lastIndex - 1]).addCls(me.lastCls);
+          }
+        }
+        if (toIdx === 0) {
+          Ext.fly(cells[0]).removeCls(me.firstCls);
+          Ext.fly(cells[fromIdx]).addCls(me.firstCls);
+        } else {
+          if (toIdx === colCount) {
+            Ext.fly(cells[lastIndex]).removeCls(me.lastCls);
+            Ext.fly(cells[fromIdx]).addCls(me.lastCls);
+          }
+        }
+      }
+      if (multiMove) {
+        if (range) {
+          range.setStartBefore(cells[fromIdx]);
+          range.setEndAfter(cells[fromIdx + colsToMove - 1]);
+          fragment = range.extractContents();
+        } else {
+          for (j = 0; j < colsToMove; j++) {
+            fragment.appendChild(cells[fromIdx]);
+          }
+        }
+        tr.insertBefore(fragment, cells[destinationCellIdx] || null);
+      } else {
+        tr.insertBefore(cells[fromIdx], cells[destinationCellIdx] || null);
+      }
+    }
+    colGroups = me.el.query('colgroup');
+    for (i = 0, len = colGroups.length; i < len; i++) {
+      tr = colGroups[i];
+      if (multiMove) {
+        if (range) {
+          range.setStartBefore(tr.childNodes[fromIdx]);
+          range.setEndAfter(tr.childNodes[fromIdx + colsToMove - 1]);
+          fragment = range.extractContents();
+        } else {
+          for (j = 0; j < colsToMove; j++) {
+            fragment.appendChild(tr.childNodes[fromIdx]);
+          }
+        }
+        tr.insertBefore(fragment, tr.childNodes[destinationCellIdx] || null);
+      } else {
+        tr.insertBefore(tr.childNodes[fromIdx], tr.childNodes[destinationCellIdx] || null);
+      }
+    }
+  }
+}, scrollToTop:Ext.emptyFn, addElListener:function(eventName, fn, scope) {
+  this.mon(this, eventName, fn, scope, {element:'el'});
+}, getGridColumns:function() {
+  return this.ownerCt.getVisibleColumnManager().getColumns();
+}, getHeaderAtIndex:function(index) {
+  return this.ownerCt.getVisibleColumnManager().getHeaderAtIndex(index);
+}, getCell:function(record, column, returnElement) {
+  var row = this.getRow(record), cell;
+  if (row) {
+    if (typeof column === 'number') {
+      column = this.getHeaderAtIndex(column);
+    }
+    cell = row.querySelector(column.getCellSelector());
+    return returnElement ? Ext.get(cell) : cell;
+  }
+}, getFeature:function(id) {
+  var features = this.featuresMC;
+  if (features) {
+    return features.get(id);
+  }
+}, findFeature:function(ftype) {
+  if (this.features) {
+    return Ext.Array.findBy(this.features, function(feature) {
+      if (feature.ftype === ftype) {
+        return true;
+      }
+    });
+  }
+}, initFeatures:function(grid) {
+  var me = this, i, features, feature, len;
+  me.tpl = this.lookupTpl('tpl');
+  me.rowTpl = me.lookupTpl('rowTpl');
+  me.addRowTpl(me.lookupTpl('outerRowTpl'));
+  me.cellTpl = me.lookupTpl('cellTpl');
+  me.featuresMC = new Ext.util.MixedCollection;
+  features = me.features = me.constructFeatures();
+  len = features ? features.length : 0;
+  for (i = 0; i < len; i++) {
+    feature = features[i];
+    feature.view = me;
+    feature.grid = grid;
+    me.featuresMC.add(feature);
+    feature.init(grid);
+  }
+}, renderTHead:function(values, out, parent) {
+  var headers = values.view.headerFns, len, i;
+  if (headers) {
+    for (i = 0, len = headers.length; i < len; ++i) {
+      headers[i].call(this, values, out, parent);
+    }
+  }
+}, addHeaderFn:function(fn) {
+  var headers = this.headerFns;
+  if (!headers) {
+    headers = this.headerFns = [];
+  }
+  headers.push(fn);
+}, renderTFoot:function(values, out, parent) {
+  var footers = values.view.footerFns, len, i;
+  if (footers) {
+    for (i = 0, len = footers.length; i < len; ++i) {
+      footers[i].call(this, values, out, parent);
+    }
+  }
+}, addFooterFn:function(fn) {
+  var footers = this.footerFns;
+  if (!footers) {
+    footers = this.footerFns = [];
+  }
+  footers.push(fn);
+}, addTpl:function(newTpl) {
+  return this.insertTpl('tpl', newTpl);
+}, addRowTpl:function(newTpl) {
+  return this.insertTpl('rowTpl', newTpl);
+}, addCellTpl:function(newTpl) {
+  return this.insertTpl('cellTpl', newTpl);
+}, insertTpl:function(which, newTpl) {
+  var me = this, tpl, prevTpl;
+  if (newTpl.isTemplate) {
+    newTpl = Ext.Object.chain(newTpl);
+  } else {
+    newTpl = new Ext.XTemplate('{%this.nextTpl.applyOut(values, out, parent);%}', newTpl);
+  }
+  for (tpl = me[which]; newTpl.priority < tpl.priority; tpl = tpl.nextTpl) {
+    prevTpl = tpl;
+  }
+  if (prevTpl) {
+    prevTpl.nextTpl = newTpl;
+  } else {
+    me[which] = newTpl;
+  }
+  newTpl.nextTpl = tpl;
+  return newTpl;
+}, tplApplyOut:function(values, out, parent) {
+  if (this.before) {
+    if (this.before(values, out, parent) === false) {
+      return;
+    }
+  }
+  this.nextTpl.applyOut(values, out, parent);
+  if (this.after) {
+    this.after(values, out, parent);
+  }
+}, constructFeatures:function() {
+  var me = this, features = me.features, feature, result, i = 0, len;
+  if (features) {
+    result = [];
+    len = features.length;
+    for (; i < len; i++) {
+      feature = features[i];
+      if (!feature.isFeature) {
+        feature = Ext.create('feature.' + feature.ftype, feature);
+      }
+      result[i] = feature;
+    }
+  }
+  return result;
+}, beforeRender:function() {
+  this.callParent();
+  if (!this.enableTextSelection) {
+    this.protoEl.unselectable();
+  }
+}, updateScrollable:function(scrollable) {
+  var me = this, ownerGrid = me.grid.ownerGrid;
+  if (!ownerGrid.lockable && scrollable.isScroller && scrollable !== ownerGrid.scrollable) {
+    ownerGrid.scrollable = scrollable;
+  }
+}, afterComponentLayout:function(width, height, oldWidth, oldHeight) {
+  var me = this, ownerGrid = me.grid.ownerGrid;
+  if (ownerGrid.mixins.lockable) {
+    ownerGrid.syncLockableLayout();
+  }
+  me.callParent([width, height, oldWidth, oldHeight]);
+}, getElConfig:function() {
+  var config = this.callParent();
+  delete config['aria-hidden'];
+  delete config['aria-disabled'];
+  return config;
+}, onBindStore:function(store) {
+  var me = this, bufferedRenderer = me.bufferedRenderer;
+  if (bufferedRenderer && bufferedRenderer.store !== store) {
+    bufferedRenderer.bindStore(store);
+  }
+  if (me.all && me.all.getCount() && !me.grid.reconfiguring) {
+    me.clearViewEl(true);
+  }
+  me.callParent(arguments);
+}, onOwnerGridHide:function() {
+  var scroller = this.getScrollable(), bufferedRenderer = this.bufferedRederer;
+  if (scroller) {
+    scroller.suspendPartnerSync();
+  }
+  if (bufferedRenderer) {
+    bufferedRenderer.disable();
+  }
+}, onOwnerGridShow:function() {
+  var scroller = this.getScrollable(), bufferedRenderer = this.bufferedRederer;
+  if (scroller) {
+    scroller.resumePartnerSync();
+  }
+  if (bufferedRenderer) {
+    bufferedRenderer.enable();
+  }
+}, getStoreListeners:function(store) {
+  var me = this, result = me.callParent([store]), dataSource = me.dataSource;
+  if (dataSource && dataSource.isFeatureStore) {
+    delete result.add;
+    delete result.remove;
+  }
+  if (me.bufferedRenderer) {
+    delete result.clear;
+  }
+  result.beforepageremove = me.beforePageRemove;
+  return result;
+}, beforePageRemove:function(pageMap, pageNumber) {
+  var rows = this.all, pageSize = pageMap.getPageSize();
+  if (rows.startIndex >= (pageNumber - 1) * pageSize && rows.endIndex <= pageNumber * pageSize - 1) {
+    pageMap.get(pageNumber);
+    return false;
+  }
+}, onViewScroll:function(scroller, x, y) {
+  if (!this.destroyed && !this.ignoreScroll) {
+    this.callParent([scroller, x, y]);
+  }
+}, createRowElement:function(record, index, updateColumns) {
+  var me = this, div = me.renderBuffer, tplData = me.collectData([record], index), result;
+  tplData.columns = updateColumns;
+  me.tpl.overwrite(div, tplData);
+  me.cleanupData();
+  result = div.dom.querySelector(me.getNodeContainerSelector()).firstChild;
+  Ext.fly(result).saveTabbableState(me.saveTabOptions);
+  return result;
+}, bufferRender:function(records, index) {
+  var me = this, div = me.renderBuffer, result, range = document.createRange ? document.createRange() : null;
+  me.tpl.overwrite(div, me.collectData(records, index));
+  me.cleanupData();
+  div.saveTabbableState(me.saveTabOptions);
+  div = div.dom.querySelector(me.getNodeContainerSelector());
+  if (range) {
+    range.selectNodeContents(div);
+    result = range.extractContents();
+  } else {
+    result = document.createDocumentFragment();
+    while (div.firstChild) {
+      result.appendChild(div.firstChild);
+    }
+  }
+  return {fragment:result, children:Ext.Array.toArray(result.childNodes)};
+}, collectData:function(records, startIndex) {
+  var me = this, tableValues = me.tableValues;
+  me.rowValues.view = me;
+  tableValues.view = me;
+  tableValues.rows = records;
+  tableValues.columns = null;
+  tableValues.viewStartIndex = startIndex;
+  tableValues.tableStyle = 'width:' + me.headerCt.getTableWidth() + 'px';
+  return tableValues;
+}, cleanupData:function() {
+  var tableValues = this.tableValues;
+  tableValues.view = tableValues.columns = tableValues.rows = this.rowValues.view = null;
+}, refreshSize:function(forceLayout) {
+  var me = this, bodySelector = me.getBodySelector(), lockingPartner = me.lockingPartner, restoreFocus;
+  if (!me.actionableMode) {
+    restoreFocus = me.saveFocusState();
+  }
+  if (bodySelector) {
+    me.body.attach(me.el.dom.querySelector(bodySelector));
+  }
+  if (!me.hasLoadingHeight) {
+    Ext.suspendLayouts();
+    me.callParent([forceLayout]);
+    if (forceLayout || me.hasVariableRowHeight() && me.dataSource.getCount()) {
+      me.grid.updateLayout();
+    }
+    Ext.resumeLayouts(!lockingPartner || !lockingPartner.grid.isVisible() || lockingPartner.all.getCount() === me.all.getCount());
+    if (restoreFocus) {
+      restoreFocus();
+    }
+  }
+}, isLayoutRoot:function() {
+  return false;
+}, clearViewEl:function(leaveNodeContainer) {
+  var me = this, nodeContainer;
+  if (me.rendered) {
+    me.callParent();
+    if (!leaveNodeContainer) {
+      nodeContainer = Ext.get(me.getNodeContainer());
+      if (nodeContainer && nodeContainer.dom !== me.getTargetEl().dom) {
+        nodeContainer.destroy();
+      }
+    }
+  }
+}, getRefItems:function(deep) {
+  var me = this, rowContexts = me.ownerGrid.liveRowContexts, isLocked = !!me.isLockedView, result = me.callParent([deep]), widgetCount, i, widgets, widget, recordId;
+  for (recordId in rowContexts) {
+    widgets = rowContexts[recordId].getWidgets();
+    widgetCount = widgets.length;
+    for (i = 0; i < widgetCount; i++) {
+      widget = widgets[i];
+      if (isLocked === widget.$fromLocked) {
+        result[result.length] = widget;
+        if (deep && widget.getRefItems) {
+          result.push.apply(result, widget.getRefItems(true));
+        }
+      }
+    }
+  }
+  return result;
+}, getMaskTarget:function() {
+  return this.ownerCt.body;
+}, statics:{getBoundView:function(node) {
+  return Ext.getCmp(node.getAttribute('data-boundView'));
+}}, getRecord:function(node) {
+  if (this.store.destroyed) {
+    return;
+  }
+  if (node.isModel) {
+    return node;
+  }
+  node = this.getNode(node);
+  if (node) {
+    return this.dataSource.getByInternalId(node.getAttribute('data-recordId'));
+  }
+}, indexOf:function(node) {
+  node = this.getNode(node);
+  if (!node && node !== 0) {
+    return -1;
+  }
+  return this.all.indexOf(node);
+}, indexInStore:function(node) {
+  return node ? this.dataSource.indexOf(this.getRecord(node)) : -1;
+}, indexOfRow:function(record) {
+  var dataSource = this.dataSource, idx;
+  if (record.isCollapsedPlaceholder) {
+    idx = dataSource.indexOfPlaceholder(record);
+  } else {
+    idx = dataSource.indexOf(record);
+  }
+  return idx;
+}, renderRows:function(rows, columns, viewStartIndex, out) {
+  var me = this, rowValues = me.rowValues, rowCount = rows.length, i;
+  rowValues.view = me;
+  rowValues.columns = columns;
+  rowValues.rowRole = me.rowAriaRole;
+  me.cellValues.cellRole = me.cellAriaRole;
+  for (i = 0; i < rowCount; i++, viewStartIndex++) {
+    rowValues.itemClasses.length = rowValues.rowClasses.length = 0;
+    me.renderRow(rows[i], viewStartIndex, out);
+  }
+  rowValues.view = rowValues.columns = rowValues.record = null;
+}, renderColumnSizer:function(values, out) {
+  var columns = values.columns || this.getGridColumns(), len = columns.length, i, column, width;
+  out.push('\x3ccolgroup role\x3d"presentation"\x3e');
+  for (i = 0; i < len; i++) {
+    column = columns[i];
+    width = column.cellWidth ? column.cellWidth : Ext.grid.header.Container.prototype.defaultWidth;
+    out.push('\x3ccol role\x3d"presentation" class\x3d"', Ext.baseCSSPrefix, 'grid-cell-', columns[i].getItemId(), '" style\x3d"width:' + width + 'px"\x3e');
+  }
+  out.push('\x3c/colgroup\x3e');
+}, renderRow:function(record, rowIdx, out) {
+  var me = this, isMetadataRecord = rowIdx === -1, selModel = me.selectionModel, rowValues = me.rowValues, itemClasses = rowValues.itemClasses, rowClasses = rowValues.rowClasses, itemCls = me.itemCls, cls, rowTpl = me.rowTpl;
+  rowValues.rowAttr = {};
+  rowValues.record = record;
+  rowValues.recordId = record.internalId;
+  rowValues.recordIndex = me.store.indexOf(record);
+  rowValues.rowIndex = rowIdx;
+  rowValues.rowId = me.getRowId(record);
+  rowValues.itemCls = rowValues.rowCls = '';
+  if (!rowValues.columns) {
+    rowValues.columns = me.ownerCt.getVisibleColumnManager().getColumns();
+  }
+  itemClasses.length = rowClasses.length = 0;
+  if (!isMetadataRecord) {
+    itemClasses[0] = itemCls;
+    if (!me.ownerCt.disableSelection && selModel.isRowSelected) {
+      if (selModel.isRowSelected(record)) {
+        itemClasses.push(me.selectedItemCls);
+      }
+    }
+    if (me.stripeRows && rowIdx % 2 !== 0) {
+      itemClasses.push(me.altRowCls);
+    }
+    if (me.getRowClass) {
+      cls = me.getRowClass(record, rowIdx, null, me.dataSource);
+      if (cls) {
+        rowClasses.push(cls);
+      }
+    }
+  }
+  if (out) {
+    rowTpl.applyOut(rowValues, out, me.tableValues);
+  } else {
+    return rowTpl.apply(rowValues, me.tableValues);
+  }
+}, renderCell:function(column, record, recordIndex, rowIndex, columnIndex, out) {
+  var me = this, renderer = column.renderer, fullIndex, selModel = me.selectionModel, cellValues = me.cellValues, classes = cellValues.classes, fieldValue = record.data[column.dataIndex], cellTpl = me.cellTpl, enableTextSelection = column.enableTextSelection, value, clsInsertPoint, lastFocused = me.navigationModel.getPosition();
+  if (enableTextSelection == null) {
+    enableTextSelection = me.enableTextSelection;
+  }
+  cellValues.record = record;
+  cellValues.column = column;
+  cellValues.recordIndex = recordIndex;
+  cellValues.rowIndex = rowIndex;
+  cellValues.columnIndex = cellValues.cellIndex = columnIndex;
+  cellValues.align = column.textAlign;
+  cellValues.innerCls = column.innerCls;
+  cellValues.tdCls = cellValues.tdStyle = cellValues.tdAttr = cellValues.style = '';
+  cellValues.unselectableAttr = enableTextSelection ? '' : 'unselectable\x3d"on"';
+  classes[1] = column.getCellId();
+  clsInsertPoint = 2;
+  if (renderer && renderer.call) {
+    fullIndex = renderer.length > 4 ? me.ownerCt.columnManager.getHeaderIndex(column) : columnIndex;
+    value = renderer.call(column.usingDefaultRenderer ? column : column.scope || me.ownerCt, fieldValue, cellValues, record, recordIndex, fullIndex, me.dataSource, me);
+    if (cellValues.css) {
+      record.cssWarning = true;
+      cellValues.tdCls += ' ' + cellValues.css;
+      cellValues.css = null;
+    }
+    if (cellValues.tdCls) {
+      classes[clsInsertPoint++] = cellValues.tdCls;
+    }
+  } else {
+    value = fieldValue;
+  }
+  cellValues.value = value == null || value.length === 0 ? column.emptyCellText : value;
+  if (column.tdCls) {
+    classes[clsInsertPoint++] = column.tdCls;
+  }
+  if (me.markDirty && record.dirty && record.isModified(column.dataIndex)) {
+    classes[clsInsertPoint++] = me.dirtyCls;
+    if (column.dirtyTextElementId) {
+      cellValues.tdAttr = (cellValues.tdAttr ? cellValues.tdAttr + ' ' : '') + 'aria-describedby\x3d"' + column.dirtyTextElementId + '"';
+    }
+  }
+  if (column.isFirstVisible) {
+    classes[clsInsertPoint++] = me.firstCls;
+  }
+  if (column.isLastVisible) {
+    classes[clsInsertPoint++] = me.lastCls;
+  }
+  if (!enableTextSelection) {
+    classes[clsInsertPoint++] = me.unselectableCls;
+  }
+  if (selModel && (selModel.isCellModel || selModel.isSpreadsheetModel) && selModel.isCellSelected(me, recordIndex, column)) {
+    classes[clsInsertPoint++] = me.selectedCellCls;
+  }
+  if (lastFocused && lastFocused.record.id === record.id && lastFocused.column === column) {
+    classes[clsInsertPoint++] = me.focusedItemCls;
+  }
+  classes.length = clsInsertPoint;
+  cellValues.tdCls = classes.join(' ');
+  cellTpl.applyOut(cellValues, out);
+  cellValues.column = cellValues.record = null;
+}, getRow:function(nodeInfo) {
+  var me = this, rowSelector = me.rowSelector;
+  if (!nodeInfo && nodeInfo !== 0 || !me.rendered) {
+    return null;
+  }
+  if (Ext.isString(nodeInfo)) {
+    nodeInfo = Ext.getDom(nodeInfo);
+    return nodeInfo && nodeInfo.querySelectorAll(rowSelector)[0];
+  }
+  if (Ext.isNumber(nodeInfo)) {
+    nodeInfo = me.all.item(nodeInfo, true);
+    return nodeInfo && nodeInfo.querySelectorAll(rowSelector)[0];
+  }
+  if (nodeInfo.isModel) {
+    return me.getRowByRecord(nodeInfo);
+  }
+  nodeInfo = Ext.fly(nodeInfo.target || nodeInfo);
+  if (nodeInfo.is(me.itemSelector)) {
+    return me.getRowFromItem(nodeInfo);
+  }
+  return nodeInfo.findParent(rowSelector, me.getTargetEl());
+}, getRowId:function(record) {
+  return this.id + '-record-' + record.internalId;
+}, constructRowId:function(internalId) {
+  return this.id + '-record-' + internalId;
+}, getNodeById:function(id) {
+  id = this.constructRowId(id);
+  return this.retrieveNode(id, false);
+}, getRowById:function(id) {
+  id = this.constructRowId(id);
+  return this.retrieveNode(id, true);
+}, getNodeByRecord:function(record) {
+  return this.retrieveNode(this.getRowId(record), false);
+}, getRowByRecord:function(record) {
+  return this.retrieveNode(this.getRowId(record), true);
+}, getRowFromItem:function(item) {
+  var rows = Ext.getDom(item).tBodies[0].childNodes, len = rows.length, i;
+  for (i = 0; i < len; i++) {
+    if (Ext.fly(rows[i]).is(this.rowSelector)) {
+      return rows[i];
+    }
+  }
+}, retrieveNode:function(id, dataRow) {
+  var result = this.el.getById(id, true);
+  if (dataRow && result) {
+    return result.querySelector(this.rowSelector, true);
+  }
+  return result;
+}, updateIndexes:Ext.emptyFn, bodySelector:'div.' + Ext.baseCSSPrefix + 'grid-item-container', nodeContainerSelector:'div.' + Ext.baseCSSPrefix + 'grid-item-container', itemSelector:'table.' + Ext.baseCSSPrefix + 'grid-item', rowSelector:'tr.' + Ext.baseCSSPrefix + 'grid-row', cellSelector:'td.' + Ext.baseCSSPrefix + 'grid-cell', sizerSelector:'.' + Ext.baseCSSPrefix + 'grid-cell', innerSelector:'div.' + Ext.baseCSSPrefix + 'grid-cell-inner', getBodySelector:function() {
+  return this.bodySelector;
+}, getColumnSizerSelector:function(header) {
+  var selector = this.sizerSelector + '-' + header.getItemId();
+  return 'td' + selector + ',col' + selector;
+}, getItemSelector:function() {
+  return this.itemSelector;
+}, getCellSelector:function(header) {
+  return header ? header.getCellSelector() : this.cellSelector;
+}, getCellInnerSelector:function(header) {
+  return this.getCellSelector(header) + ' ' + this.innerSelector;
+}, addRowCls:function(rowInfo, cls) {
+  var row = this.getRow(rowInfo);
+  if (row) {
+    Ext.fly(row).addCls(cls);
+  }
+}, removeRowCls:function(rowInfo, cls) {
+  var row = this.getRow(rowInfo);
+  if (row) {
+    Ext.fly(row).removeCls(cls);
+  }
+}, onRowSelect:function(rowIdx) {
+  var me = this, rowNode;
+  me.addItemCls(rowIdx, me.selectedItemCls);
+  rowNode = me.getRow(rowIdx);
+  if (rowNode) {
+    rowNode.setAttribute('aria-selected', true);
+  }
+  if (Ext.isIE8) {
+    me.repaintBorder(rowIdx + 1);
+  }
+}, onRowDeselect:function(rowIdx) {
+  var me = this, rowNode;
+  me.removeItemCls(rowIdx, me.selectedItemCls);
+  rowNode = me.getRow(rowIdx);
+  if (rowNode) {
+    rowNode.removeAttribute('aria-selected');
+  }
+  if (Ext.isIE8) {
+    me.repaintBorder(rowIdx + 1);
+  }
+}, onCellSelect:function(position) {
+  var cell = this.getCellByPosition(position, true);
+  if (cell) {
+    Ext.fly(cell).addCls(this.selectedCellCls);
+    cell.setAttribute('aria-selected', true);
+  }
+}, onCellDeselect:function(position) {
+  var cell = this.getCellByPosition(position, true);
+  if (cell) {
+    Ext.fly(cell).removeCls(this.selectedCellCls);
+    cell.removeAttribute('aria-selected');
+  }
+}, getCellInclusive:function(position, returnDom) {
+  if (position) {
+    var row = this.getRow(position.row), header = this.ownerCt.getColumnManager().getHeaderAtIndex(position.column), cell;
+    if (header && row) {
+      cell = row.querySelector(this.getCellSelector(header));
+      return returnDom ? cell : Ext.get(cell);
+    }
+  }
+  return false;
+}, getColumnByPosition:function(position) {
+  var view, column;
+  if (position) {
+    column = position.column;
+    if (column && !column.destroyed && column.isColumn) {
+      return column;
+    } else {
+      view = position.view || this;
+      column = typeof column === 'number' ? column : position.colIdx;
+      return view.getVisibleColumnManager().getHeaderAtIndex(column);
+    }
+  }
+  return false;
+}, getCellByPosition:function(position, returnDom) {
+  if (position) {
+    var view = position.view || this, row = view.getRow(position.record || position.row), header, cell;
+    header = view.getColumnByPosition(position);
+    if (header && row) {
+      cell = row.querySelector(view.getCellSelector(header));
+      return returnDom ? cell : Ext.get(cell);
+    }
+  }
+  return false;
+}, onFocusEnter:function(e) {
+  var me = this, fromComponent = e.fromComponent, navigationModel = me.getNavigationModel(), focusPosition, cell, focusTarget;
+  if (me.containsFocus) {
+    return Ext.Component.prototype.onFocusEnter.call(me, e);
+  }
+  if (me.actionableMode) {
+    if (me.actionPosition) {
+      me.el.dom.setAttribute('tabIndex', '-1');
+      me.cellFocused = true;
+      return;
+    }
+    me.ownerGrid.setActionableMode(false);
+  }
+  e = e.event;
+  if (!me.cellFocused && me.all.getCount() && me.dataSource.getCount()) {
+    focusTarget = e.getTarget();
+    if (focusTarget === me.el.dom) {
+      if (me.lastFocused === 'scrollbar') {
+        if (e.relatedTarget) {
+          e.relatedTarget.focus();
+        }
+        return;
+      }
+      focusPosition = me.getDefaultFocusPosition(fromComponent);
+      if (!focusPosition) {
+        e.stopEvent();
+        me.el.focus();
+        return;
+      }
+      focusTarget = null;
+    } else {
+      if (focusTarget === me.tabGuardEl) {
+        focusPosition = (new Ext.grid.CellContext(me)).setPosition(me.all.endIndex, me.getVisibleColumnManager().getColumns().length - 1);
+        focusTarget = null;
+      } else {
+        if (cell = e.getTarget(me.getCellSelector())) {
+          if (focusTarget === cell) {
+            focusPosition = (new Ext.grid.CellContext(me)).setPosition(me.getRecord(focusTarget), me.getHeaderByCell(cell));
+            focusTarget = null;
+          } else {
+            if (focusTarget && Ext.fly(focusTarget).isFocusable() && me.el.contains(focusTarget)) {
+              focusPosition = (new Ext.grid.CellContext(me)).setPosition(me.getRecord(focusTarget), me.getHeaderByCell(cell));
+            }
+          }
+        }
+      }
+    }
+  }
+  if (focusPosition) {
+    me.toggleChildrenTabbability(false);
+    if (focusTarget) {
+      focusPosition.target = focusTarget;
+      if (me.ownerGrid.setActionableMode(true, focusPosition)) {
+        focusPosition = null;
+      }
+    }
+    if (focusPosition) {
+      navigationModel.setPosition(focusPosition, null, e, null, true);
+    }
+    me.cellFocused = me.el.contains(Ext.Element.getActiveElement());
+    if (me.cellFocused) {
+      me.el.dom.setAttribute('tabIndex', '-1');
+    }
+  }
+  Ext.Component.prototype.onFocusEnter.call(me, e);
+}, onFocusLeave:function(e) {
+  var me = this, isLeavingGrid;
+  if (!me.destroying && !me.refreshing) {
+    isLeavingGrid = !me.lockingPartner || !e.toComponent || e.toComponent !== me.lockingPartner && !me.lockingPartner.isAncestor(e.toComponent);
+    if (me.cellFocused) {
+      if (isLeavingGrid) {
+        me.getNavigationModel().setPosition(null, null, e.event, null, true);
+      }
+      me.cellFocused = false;
+      me.focusEl = me.el;
+      me.focusEl.dom.setAttribute('tabIndex', 0);
+    }
+    if (isLeavingGrid) {
+      if (me.ownerGrid.actionableMode) {
+        me.lastFocused = me.actionPosition;
+        me.ownerGrid.setActionableMode(false);
+      }
+    } else {
+      me.actionPosition = null;
+    }
+    Ext.Component.prototype.onFocusLeave.call(me, e);
+  }
+}, onRowFocus:function(rowIdx, highlight, suppressFocus) {
+  var me = this;
+  if (highlight) {
+    me.addItemCls(rowIdx, me.focusedItemCls);
+    if (!suppressFocus) {
+      me.focusRow(rowIdx);
+    }
+  } else {
+    me.removeItemCls(rowIdx, me.focusedItemCls);
+  }
+  if (Ext.isIE8) {
+    me.repaintBorder(rowIdx + 1);
+  }
+}, focusRow:function(row, delay) {
+  var me = this, focusTask = me.getFocusTask();
+  if (delay) {
+    focusTask.delay(Ext.isNumber(delay) ? delay : 10, me.focusRow, me, [row, false]);
+    return;
+  }
+  focusTask.cancel();
+  if (me.isVisible(true)) {
+    me.getNavigationModel().setPosition(me.getRecord(row));
+  }
+}, focusNode:function(row, delay) {
+  this.focusRow(row, delay);
+}, scrollRowIntoView:function(row, animate) {
+  row = this.getRow(row);
+  if (row) {
+    this.scrollElIntoView(row, false, animate);
+  }
+}, focusCell:function(position, delay) {
+  var me = this, cell, focusTask = me.getFocusTask();
+  if (delay) {
+    focusTask.delay(Ext.isNumber(delay) ? delay : 10, me.focusCell, me, [position, false]);
+    return;
+  }
+  focusTask.cancel();
+  if (me.isVisible(true) && (cell = me.getCellByPosition(position))) {
+    me.getNavigationModel().setPosition(position);
+  }
+}, findFocusPosition:function(from, currentPosition, forward, keyEvent) {
+  var me = this, cell = currentPosition.cellElement, actionables = me.ownerGrid.actionables, len = actionables.length, position, tabbableChildren, focusTarget, i;
+  position = currentPosition.clone();
+  tabbableChildren = Ext.fly(cell).findTabbableElements();
+  focusTarget = tabbableChildren[Ext.Array.indexOf(tabbableChildren, from) + (forward ? 1 : -1)];
+  while (!focusTarget && (cell = cell[forward ? 'nextSibling' : 'previousSibling'])) {
+    position.setColumn(me.getHeaderByCell(cell));
+    for (i = 0; i < len; i++) {
+      actionables[i].activateCell(position);
+    }
+    cell = position.getCell(true);
+    if (cell && (tabbableChildren = Ext.fly(cell).findTabbableElements()).length) {
+      focusTarget = tabbableChildren[forward ? 0 : tabbableChildren.length - 1];
+    }
+  }
+  return {target:focusTarget, position:position};
+}, getDefaultFocusPosition:function(fromComponent) {
+  var me = this, store = me.dataSource, focusPosition = me.lastFocused, newPosition = (new Ext.grid.CellContext(me)).setPosition(0, 0), targetCell, scroller;
+  if (fromComponent) {
+    if (fromComponent.isColumn && fromComponent.cellFocusable !== false) {
+      if (!focusPosition) {
+        focusPosition = newPosition;
+      }
+      focusPosition.setColumn(fromComponent);
+      focusPosition.setView(fromComponent.getView());
+    } else {
+      if (fromComponent.isTableView && fromComponent.lastFocused && fromComponent.ownerGrid === me.ownerGrid) {
+        focusPosition = (new Ext.grid.CellContext(me)).setPosition(fromComponent.lastFocused.record, 0);
+      }
+    }
+  }
+  if (focusPosition) {
+    scroller = me.getScrollable();
+    if (!store.contains(focusPosition.record) || scroller && !scroller.isInView(focusPosition.getRow(true)).y) {
+      focusPosition.setRow(store.getAt(Math.min(focusPosition.rowIdx, store.getCount() - 1)));
+    }
+  } else {
+    focusPosition = newPosition;
+    targetCell = me.el.dom.querySelector(me.getCellSelector() + '[tabIndex\x3d"-1"]');
+    if (targetCell) {
+      focusPosition.setPosition(me.getRecord(targetCell), me.getHeaderByCell(targetCell));
+    } else {
+      focusPosition = null;
+    }
+  }
+  return focusPosition;
+}, getLastFocused:function() {
+  var me = this, lastFocused = me.lastFocused;
+  if (lastFocused && lastFocused.record && lastFocused.column) {
+    if (me.dataSource.indexOf(lastFocused.record) !== -1 && me.getVisibleColumnManager().indexOf(lastFocused.column) !== -1 && me.getNode(lastFocused.record)) {
+      return lastFocused;
+    }
+  }
+}, scrollCellIntoView:function(cell, animate) {
+  if (cell.isCellContext) {
+    cell = this.getCellByPosition(cell);
+  }
+  if (cell) {
+    this.scrollElIntoView(cell, null, animate);
+  }
+}, scrollElIntoView:function(el, hscroll, animate) {
+  var scroller = this.getScrollable();
+  if (scroller) {
+    scroller.ensureVisible(el, {animation:animate, x:hscroll});
+  }
+}, syncRowHeightBegin:function() {
+  var me = this, itemEls = me.all, ln = itemEls.count, synchronizer = [], RowSynchronizer = Ext.grid.locking.RowSynchronizer, i, j, rowSync;
+  for (i = 0, j = itemEls.startIndex; i < ln; i++, j++) {
+    synchronizer[i] = rowSync = new RowSynchronizer(me, itemEls.elements[j]);
+    rowSync.reset();
+  }
+  return synchronizer;
+}, syncRowHeightClear:function(synchronizer) {
+  var me = this, itemEls = me.all, ln = itemEls.count, i;
+  for (i = 0; i < ln; i++) {
+    synchronizer[i].reset();
+  }
+}, syncRowHeightMeasure:function(synchronizer) {
+  var ln = synchronizer.length, i;
+  for (i = 0; i < ln; i++) {
+    synchronizer[i].measure();
+  }
+}, syncRowHeightFinish:function(synchronizer, otherSynchronizer) {
+  var ln = synchronizer.length, bufferedRenderer = this.bufferedRenderer, i;
+  for (i = 0; i < ln; i++) {
+    synchronizer[i].finish(otherSynchronizer[i]);
+  }
+  if (bufferedRenderer) {
+    bufferedRenderer.syncRowHeightsFinish();
+  }
+}, refreshNode:function(record) {
+  if (Ext.isNumber(record)) {
+    record = this.store.getAt(record);
+  }
+  this.handleUpdate(this.dataSource, record, null, null, null, true);
+}, handleUpdate:function(store, record, operation, changedFieldNames, info, allColumns) {
+  var me = this, recordIndex = me.store.indexOf(record), rowTpl = me.rowTpl, markDirty = me.markDirty, dirtyCls = me.dirtyCls, columnsToUpdate = [], hasVariableRowHeight = me.variableRowHeight, updateTypeFlags = 0, ownerCt = me.ownerCt, cellFly = me.cellFly || (me.self.prototype.cellFly = new Ext.dom.Fly), oldItemDom, oldDataRow, newItemDom, newAttrs, attLen, attName, attrIndex, overItemCls, columns, column, len, i, cellUpdateFlag, cell, fieldName, value, clearDirty, defaultRenderer, scope, elData, 
+  emptyValue;
+  operation = operation || Ext.data.Model.EDIT;
+  clearDirty = operation !== Ext.data.Model.EDIT;
+  if (me.viewReady) {
+    me.updatingRows = true;
+    oldItemDom = me.getNodeByRecord(record);
+    if (oldItemDom) {
+      if (record.isCollapsedPlaceholder) {
+        Ext.fly(oldItemDom).syncContent(me.createRowElement(record, me.indexOfRow(record)));
+        return;
+      }
+      overItemCls = me.overItemCls;
+      columns = me.ownerCt.getVisibleColumnManager().getColumns();
+      if (allColumns) {
+        columnsToUpdate = columns;
+        updateTypeFlags = 1;
+      } else {
+        for (i = 0, len = columns.length; i < len; i++) {
+          column = columns[i];
+          if (column.preventUpdate) {
+            cell = oldItemDom.querySelector(column.getCellSelector());
+            if (cell && !clearDirty && markDirty) {
+              cellFly.attach(cell);
+              if (record.isModified(column.dataIndex)) {
+                cellFly.addCls(dirtyCls);
+                if (column.dirtyTextElementId) {
+                  cell.setAttribute('aria-describedby', column.dirtyTextElementId);
+                }
+              } else {
+                cellFly.removeCls(dirtyCls);
+                cell.removeAttribute('aria-describedby');
+              }
+            }
+          } else {
+            cellUpdateFlag = me.shouldUpdateCell(record, column, changedFieldNames);
+            if (cellUpdateFlag) {
+              updateTypeFlags = updateTypeFlags | cellUpdateFlag;
+              columnsToUpdate[columnsToUpdate.length] = column;
+              hasVariableRowHeight = hasVariableRowHeight || column.variableRowHeight;
+            }
+          }
+        }
+      }
+      if (me.hasListeners.beforeitemupdate) {
+        me.fireEvent('beforeitemupdate', record, recordIndex, oldItemDom, columnsToUpdate);
+      }
+      if (me.getRowClass || !me.getRowFromItem(oldItemDom) || updateTypeFlags & 1 || oldItemDom.tBodies[0].childNodes.length > 1) {
+        elData = oldItemDom._extData;
+        newItemDom = me.createRowElement(record, me.indexOfRow(record), columnsToUpdate);
+        if (Ext.fly(oldItemDom, '_internal').hasCls(overItemCls)) {
+          Ext.fly(newItemDom).addCls(overItemCls);
+        }
+        if (Ext.isIE9m && oldItemDom.mergeAttributes) {
+          oldItemDom.mergeAttributes(newItemDom, true);
+        } else {
+          newAttrs = newItemDom.attributes;
+          attLen = newAttrs.length;
+          for (attrIndex = 0; attrIndex < attLen; attrIndex++) {
+            attName = newAttrs[attrIndex].name;
+            value = newAttrs[attrIndex].value;
+            if (attName !== 'id' && oldItemDom.getAttribute(attName) !== value) {
+              oldItemDom.setAttribute(attName, value);
+            }
+          }
+        }
+        if (elData) {
+          elData.isSynchronized = false;
+        }
+        if (columns.length && (oldDataRow = me.getRow(oldItemDom))) {
+          me.updateColumns(oldDataRow, newItemDom.querySelector(me.rowSelector), columnsToUpdate, record);
+        }
+        while (rowTpl) {
+          if (rowTpl.syncContent) {
+            if (rowTpl.syncContent(oldItemDom, newItemDom, changedFieldNames ? columnsToUpdate : null) === false) {
+              break;
+            }
+          }
+          rowTpl = rowTpl.nextTpl;
+        }
+      } else {
+        for (i = 0, len = columnsToUpdate.length; i < len; i++) {
+          column = columnsToUpdate[i];
+          fieldName = column.dataIndex;
+          value = record.get(fieldName);
+          cell = oldItemDom.querySelector(column.getCellSelector());
+          cellFly.attach(cell);
+          if (!clearDirty && markDirty) {
+            if (record.isModified(column.dataIndex)) {
+              cellFly.addCls(dirtyCls);
+              if (column.dirtyTextElementId) {
+                cell.setAttribute('aria-describedby', column.dirtyTextElementId);
+              }
+            } else {
+              cellFly.removeCls(dirtyCls);
+              cell.removeAttribute('aria-describedby');
+            }
+          }
+          defaultRenderer = column.usingDefaultRenderer;
+          scope = defaultRenderer ? column : column.scope;
+          if (column.updater) {
+            Ext.callback(column.updater, scope, [cell, value, record, me, me.dataSource], 0, column, ownerCt);
+          } else {
+            if (column.renderer) {
+              value = Ext.callback(column.renderer, scope, [value, null, record, 0, 0, me.dataSource, me], 0, column, ownerCt);
+            }
+            emptyValue = value == null || value.length === 0;
+            value = emptyValue ? column.emptyCellText : value;
+            if (column.producesHTML || emptyValue) {
+              cell.querySelector(me.innerSelector).innerHTML = value;
+            } else {
+              cell.querySelector(me.innerSelector).childNodes[0].data = value;
+            }
+          }
+          if (me.highlightClass) {
+            Ext.fly(cell).addCls(me.highlightClass);
+            if (!me.changedCells) {
+              me.self.prototype.changedCells = [];
+              me.prototype.clearChangedTask = new Ext.util.DelayedTask(me.clearChangedCells, me.prototype);
+              me.clearChangedTask.delay(me.unhighlightDelay);
+            }
+            me.changedCells.push({cell:cell, cls:me.highlightClass, expires:Ext.Date.now() + 1000});
+          }
+        }
+      }
+      if (clearDirty && markDirty && !record.dirty) {
+        Ext.fly(oldItemDom, '_internal').select('.' + dirtyCls).removeCls(dirtyCls).set({'aria-describedby':undefined});
+      }
+      if (hasVariableRowHeight) {
+        Ext.suspendLayouts();
+      }
+      if (me.hasListeners.itemupdate) {
+        me.fireEvent('itemupdate', record, recordIndex, oldItemDom, me);
+      }
+      if (hasVariableRowHeight) {
+        me.ownerGrid.updateLayout();
+        Ext.resumeLayouts(true);
+      }
+    }
+    me.updatingRows = false;
+  }
+}, clearChangedCells:function() {
+  var me = this, now = Ext.Date.now(), changedCell;
+  for (var i = 0, len = me.changedCells.length; i < len;) {
+    changedCell = me.changedCells[i];
+    if (changedCell.expires <= now) {
+      Ext.fly(changedCell.cell).removeCls(changedCell.highlightClass);
+      Ext.Array.erase(me.changedCells, i, 1);
+      len--;
+    } else {
+      break;
+    }
+  }
+  if (len) {
+    me.clearChangedTask.delay(me.unhighlightDelay);
+  }
+}, updateColumns:function(oldRow, newRow, columnsToUpdate, record) {
+  var me = this, newAttrs, attLen, attName, attrIndex, colCount = columnsToUpdate.length, colIndex, column, oldCell, newCell, cellSelector = me.getCellSelector(), elData, value;
+  if (oldRow.mergeAttributes) {
+    oldRow.mergeAttributes(newRow, true);
+  } else {
+    newAttrs = newRow.attributes;
+    attLen = newAttrs.length;
+    for (attrIndex = 0; attrIndex < attLen; attrIndex++) {
+      attName = newAttrs[attrIndex].name;
+      value = newAttrs[attrIndex].value;
+      if (attName !== 'id' && oldRow.getAttribute(attName) !== value) {
+        oldRow.setAttribute(attName, value);
+      }
+    }
+  }
+  elData = oldRow._extData;
+  if (elData) {
+    elData.isSynchronized = false;
+  }
+  for (colIndex = 0; colIndex < colCount; colIndex++) {
+    column = columnsToUpdate[colIndex];
+    cellSelector = me.getCellSelector(column);
+    oldCell = oldRow.querySelector(cellSelector);
+    newCell = newRow.querySelector(cellSelector);
+    newAttrs = newCell.attributes;
+    attLen = newAttrs.length;
+    for (attrIndex = 0; attrIndex < attLen; attrIndex++) {
+      attName = newAttrs[attrIndex].name;
+      value = newAttrs[attrIndex].value;
+      if (attName !== 'id' && oldCell.getAttribute(attName) !== value) {
+        oldCell.setAttribute(attName, value);
+      }
+    }
+    elData = oldCell._extData;
+    if (elData) {
+      elData.isSynchronized = false;
+    }
+    me.oldCellFly.attach(oldCell.querySelector(me.innerSelector)).syncContent(newCell.querySelector(me.innerSelector));
+    if (record && column.onItemAdd) {
+      column.onItemAdd([record]);
+    }
+  }
+}, shouldUpdateCell:function(record, column, changedFieldNames) {
+  return column.shouldUpdateCell(record, changedFieldNames);
+}, refresh:function() {
+  var me = this;
+  if (me.destroying) {
+    return;
+  }
+  if (me.getVisibleColumnManager().getColumns().length) {
+    me.callParent(arguments);
+    me.headerCt.setSortState();
+  } else {
+    if (me.refreshCounter) {
+      me.clearViewEl(true);
+    }
+    me.addEmptyText();
+  }
+}, processContainerEvent:function(e) {
+  var cmp = Ext.Component.from(e.target.parentNode);
+  if (cmp && cmp.up(this.ownerCt)) {
+    return false;
+  }
+}, processItemEvent:function(record, item, rowIndex, e) {
+  var me = this, self = me.self, map = self.EventMap, type = e.type, features = me.features, len = features.length, i, cellIndex, result, feature, column, eventPosition = e.position = me.eventPosition || (me.eventPosition = new Ext.grid.CellContext), row, cell;
+  if (Ext.isIE && type === 'mouseup' && !e.within(me.el)) {
+    return false;
+  }
+  if (me.indexInStore(item) !== -1) {
+    row = eventPosition.rowElement = item.querySelector(me.rowSelector);
+    cell = e.getTarget(me.getCellSelector(), row);
+    type = self.TouchEventMap[type] || type;
+    if (cell) {
+      if (!cell.parentNode) {
+        return false;
+      }
+      column = me.getHeaderByCell(cell);
+      if (column) {
+        cellIndex = me.ownerCt.getColumnManager().getHeaderIndex(column);
+      } else {
+        column = cell = null;
+        cellIndex = -1;
+      }
+    } else {
+      cellIndex = -1;
+    }
+    eventPosition.setAll(me, rowIndex, column ? me.getVisibleColumnManager().getHeaderIndex(column) : -1, record, column);
+    eventPosition.cellElement = cell;
+    result = me.fireEvent('uievent', type, me, cell, rowIndex, cellIndex, e, record, row);
+    if (result === false || me.callParent(arguments) === false) {
+      return false;
+    }
+    for (i = 0; i < len; ++i) {
+      feature = features[i];
+      if (feature.wrapsItem) {
+        if (feature.vetoEvent(record, row, rowIndex, e) === false) {
+          me.processSpecialEvent(e);
+          return false;
+        }
+      }
+    }
+    if (cell && type !== 'mouseover' && type !== 'mouseout') {
+      result = !(me['onBeforeCell' + map[type]](cell, cellIndex, record, row, rowIndex, e) === false || me.fireEvent('beforecell' + type, me, cell, cellIndex, record, row, rowIndex, e) === false || me['onCell' + map[type]](cell, cellIndex, record, row, rowIndex, e) === false || me.fireEvent('cell' + type, me, cell, cellIndex, record, row, rowIndex, e) === false);
+    }
+    if (result !== false) {
+      result = me.fireEvent('row' + type, me, record, row, rowIndex, e);
+    }
+    return result;
+  } else {
+    me.processSpecialEvent(e);
+    if (e.pointerType === 'mouse') {
+      e.preventDefault();
+    }
+    return false;
+  }
+}, processSpecialEvent:function(e) {
+  var me = this, features = me.features, ln = features.length, type = e.type, i, feature, prefix, featureTarget, beforeArgs, args, panel = me.ownerCt;
+  me.callParent(arguments);
+  if (type === 'mouseover' || type === 'mouseout') {
+    return;
+  }
+  type = me.self.TouchEventMap[type] || type;
+  for (i = 0; i < ln; i++) {
+    feature = features[i];
+    if (feature.hasFeatureEvent) {
+      featureTarget = e.getTarget(feature.eventSelector, me.getTargetEl());
+      if (featureTarget) {
+        prefix = feature.eventPrefix;
+        beforeArgs = feature.getFireEventArgs('before' + prefix + type, me, featureTarget, e);
+        args = feature.getFireEventArgs(prefix + type, me, featureTarget, e);
+        if (me.fireEvent.apply(me, beforeArgs) === false || panel.fireEvent.apply(panel, beforeArgs) === false || me.fireEvent.apply(me, args) === false || panel.fireEvent.apply(panel, args) === false) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}, onCellMouseDown:Ext.emptyFn, onCellLongPress:Ext.emptyFn, onCellMouseUp:Ext.emptyFn, onCellClick:Ext.emptyFn, onCellDblClick:Ext.emptyFn, onCellContextMenu:Ext.emptyFn, onCellKeyDown:Ext.emptyFn, onCellKeyUp:Ext.emptyFn, onCellKeyPress:Ext.emptyFn, onBeforeCellMouseDown:Ext.emptyFn, onBeforeCellLongPress:Ext.emptyFn, onBeforeCellMouseUp:Ext.emptyFn, onBeforeCellClick:Ext.emptyFn, onBeforeCellDblClick:Ext.emptyFn, onBeforeCellContextMenu:Ext.emptyFn, onBeforeCellKeyDown:Ext.emptyFn, onBeforeCellKeyUp:Ext.emptyFn, 
+onBeforeCellKeyPress:Ext.emptyFn, expandToFit:function(header) {
+  this.autoSizeColumn(header);
+}, autoSizeColumn:function(header) {
+  if (Ext.isNumber(header)) {
+    header = this.getGridColumns()[header];
+  }
+  if (header) {
+    if (header.isGroupHeader) {
+      header.autoSize();
+      return;
+    }
+    delete header.flex;
+    header.setWidth(this.getMaxContentWidth(header));
+  }
+}, getMaxContentWidth:function(header) {
+  var me = this, cells = me.getHeaderCells(header), originalWidth = header.getWidth(), columnSizers = me.getColumnResizers(header), ln = cells.length, max = Math.max, widthAdjust = 0, i, maxWidth;
+  if (ln > 0) {
+    if (Ext.supports.ScrollWidthInlinePaddingBug) {
+      widthAdjust += me.getCellPaddingAfter(cells[0]);
+    }
+    if (me.columnLines) {
+      widthAdjust += Ext.fly(cells[0].parentNode).getBorderWidth('lr');
+    }
+  }
+  for (i = 0; i < columnSizers.length; i++) {
+    columnSizers[i].setWidth(1);
+  }
+  header.textEl.setStyle({'text-overflow':'clip', display:'table-cell'});
+  maxWidth = header.textEl.dom.offsetWidth + header.titleEl.getPadding('lr');
+  header.textEl.setStyle({'text-overflow':'', display:''});
+  for (i = 0; i < ln; i++) {
+    maxWidth = max(maxWidth, cells[i].scrollWidth);
+  }
+  maxWidth += widthAdjust;
+  maxWidth = max(maxWidth + 1, 40);
+  for (i = 0; i < columnSizers.length; i++) {
+    columnSizers[i].setWidth(originalWidth);
+  }
+  return maxWidth;
+}, getColumnResizers:function(header) {
+  var me = this, features = me.features || [], resizers = [me.body.select(me.getColumnSizerSelector(header))], featureSizer, i;
+  for (i = 0; i < features.length; i++) {
+    featureSizer = features[i].columnSizer;
+    if (featureSizer) {
+      resizers.push(featureSizer.select(me.getColumnSizerSelector(header)));
+    }
+  }
+  return resizers;
+}, getHeaderCells:function(header) {
+  var me = this, features = me.features || [], headerCells = me.el.query(header.getCellInnerSelector()), featureSizer, i;
+  for (i = 0; i < features.length; i++) {
+    featureSizer = features[i].columnSizer;
+    if (featureSizer) {
+      headerCells = headerCells.concat(featureSizer.query(header.getCellInnerSelector()));
+    }
+  }
+  return headerCells;
+}, getPositionByEvent:function(e) {
+  var me = this, cellNode = e.getTarget(me.cellSelector), rowNode = e.getTarget(me.itemSelector), record = me.getRecord(rowNode), header = me.getHeaderByCell(cellNode);
+  return me.getPosition(record, header);
+}, getHeaderByCell:function(cell) {
+  if (cell) {
+    return this.ownerGrid.getVisibleColumnManager().getHeaderById(Ext.getDom(cell).getAttribute('data-columnId'));
+  }
+  return false;
+}, walkCells:function(pos, direction, verifierFn, scope) {
+  var me = this, result = pos.clone(), lockingPartner = me.lockingPartner && me.lockingPartner.grid.isVisible() ? me.lockingPartner : null, rowIdx = pos.rowIdx, maxRowIdx = me.dataSource.getCount() - 1, columns = me.ownerCt.getVisibleColumnManager().getColumns();
+  switch(direction.toLowerCase()) {
+    case 'right':
+      if (pos.isLastColumn()) {
+        rowIdx = lockingPartner && me.isLockedView ? rowIdx : rowIdx + 1;
+        if (rowIdx > maxRowIdx) {
+          return false;
+        }
+        if (lockingPartner) {
+          result.view = lockingPartner;
+        }
+        result.setPosition(rowIdx, 0);
+      } else {
+        result.navigate(+1);
+      }
+      break;
+    case 'left':
+      if (pos.isFirstColumn()) {
+        rowIdx = lockingPartner && me.isNormalView ? rowIdx : rowIdx - 1;
+        if (rowIdx < 0) {
+          return false;
+        }
+        if (lockingPartner) {
+          result.view = lockingPartner;
+          columns = lockingPartner.getVisibleColumnManager().getColumns();
+        }
+        result.setPosition(rowIdx, columns[columns.length - 1]);
+      } else {
+        result.navigate(-1);
+      }
+      break;
+    case 'up':
+      if (rowIdx === 0) {
+        return false;
+      } else {
+        result.setRow(rowIdx - 1);
+      }
+      break;
+    case 'down':
+      if (rowIdx === maxRowIdx) {
+        return false;
+      } else {
+        result.setRow(rowIdx + 1);
+      }
+      break;
+  }
+  if (verifierFn && verifierFn.call(scope || me, result) !== true) {
+    return false;
+  }
+  return result;
+}, walkRows:function(startRow, distance) {
+  var me = this, store = me.dataSource, moved = 0, lastValid = startRow, node, limit = distance < 0 ? 0 : store.getCount() - 1, increment = limit ? 1 : -1, result = startRow;
+  do {
+    if (limit ? result >= limit : result <= limit) {
+      return lastValid || limit;
+    }
+    result += increment;
+    if ((node = Ext.fly(me.getRow(result))) && node.isVisible(true)) {
+      moved += increment;
+      lastValid = result;
+    }
+  } while (moved !== distance);
+  return result;
+}, walkRecs:function(startRec, distance) {
+  var me = this, store = me.dataSource, moved = 0, lastValid = startRec, node, limit = distance < 0 ? 0 : (store.isBufferedStore ? store.getTotalCount() : store.getCount()) - 1, increment = limit ? 1 : -1, testIndex = store.indexOf(startRec), rec;
+  do {
+    if (limit ? testIndex >= limit : testIndex <= limit) {
+      return lastValid;
+    }
+    testIndex += increment;
+    rec = store.getAt(testIndex);
+    if (!rec.isCollapsedPlaceholder && (node = Ext.fly(me.getNodeByRecord(rec))) && node.isVisible(true)) {
+      moved += increment;
+      lastValid = rec;
+    }
+  } while (moved !== distance);
+  return lastValid;
+}, getFirstVisibleRowIndex:function() {
+  var me = this, count = me.dataSource.isBufferedStore ? me.dataSource.getTotalCount() : me.dataSource.getCount(), result = me.indexOf(me.all.first()) - 1;
+  do {
+    result += 1;
+    if (result === count) {
+      return;
+    }
+  } while (!Ext.fly(me.getRow(result)).isVisible(true));
+  return result;
+}, getLastVisibleRowIndex:function() {
+  var me = this, result = me.indexOf(me.all.last());
+  do {
+    result -= 1;
+    if (result === -1) {
+      return;
+    }
+  } while (!Ext.fly(me.getRow(result)).isVisible(true));
+  return result;
+}, getHeaderCt:function() {
+  return this.headerCt;
+}, getPosition:function(record, header) {
+  return (new Ext.grid.CellContext(this)).setPosition(record, header);
+}, doDestroy:function() {
+  var me = this, features = me.featuresMC, feature, i, len;
+  me.bindStore(null);
+  if (features) {
+    for (i = 0, len = features.getCount(); i < len; ++i) {
+      feature = features.getAt(i);
+      if (feature && !feature.destroyed) {
+        feature.destroy();
+      }
+    }
+  }
+  me.all.destroy();
+  me.body.destroy();
+  me.actionRowFly.destroy();
+  me.callParent();
+}, onReplace:function(store, startIndex, oldRecords, newRecords) {
+  var me = this, bufferedRenderer = me.bufferedRenderer, restoreFocus;
+  if (me.rendered && bufferedRenderer) {
+    restoreFocus = me.saveFocusState();
+    bufferedRenderer.onReplace(store, startIndex, oldRecords, newRecords);
+    restoreFocus();
+  } else {
+    me.callParent(arguments);
+  }
+  me.setPendingStripe(startIndex);
+}, onResize:function(width, height, oldWidth, oldHeight) {
+  var me = this, bufferedRenderer = me.bufferedRenderer;
+  if (bufferedRenderer) {
+    bufferedRenderer.onViewResize(me, width, height, oldWidth, oldHeight);
+  }
+  me.callParent([width, height, oldWidth, oldHeight]);
+}, onAdd:function(store, records, index) {
+  var me = this, bufferedRenderer = me.bufferedRenderer;
+  me.addingRows = true;
+  if (me.rendered && bufferedRenderer && (bufferedRenderer.bodyTop || me.dataSource.getCount() + records.length >= bufferedRenderer.viewSize)) {
+    bufferedRenderer.onReplace(store, index, [], records);
+  } else {
+    me.callParent(arguments);
+  }
+  me.setPendingStripe(index);
+  me.addingRows = false;
+}, onRemove:function(store, records, index) {
+  var me = this, bufferedRenderer = me.bufferedRenderer, restoreFocus;
+  if (me.rendered && bufferedRenderer && me.dataSource.getCount() + records.length >= bufferedRenderer.viewSize) {
+    restoreFocus = me.saveFocusState();
+    bufferedRenderer.onReplace(store, index, records, []);
+    restoreFocus();
+  } else {
+    me.callParent(arguments);
+  }
+  if (me.actionPosition && Ext.Array.indexOf(records, me.actionPosition.record) !== -1) {
+    me.actionPosition = null;
+  }
+  me.setPendingStripe(index);
+}, saveFocusState:function() {
+  var me = this, store = me.dataSource, actionableMode = me.actionableMode, navModel = me.getNavigationModel(), focusPosition = actionableMode ? me.actionPosition : navModel.getPosition(true), activeElement = Ext.fly(Ext.Element.getActiveElement()), focusCell = focusPosition && focusPosition.view === me && Ext.fly(focusPosition.getCell(true)), refocusRow, refocusCol, record;
+  if (!me.skipSaveFocusState && focusCell && focusCell.contains(activeElement)) {
+    focusPosition = focusPosition.clone();
+    activeElement.suspendFocusEvents();
+    if (actionableMode && focusCell.dom !== activeElement.dom) {
+      me.suspendActionableMode();
+    } else {
+      actionableMode = false;
+      navModel.setPosition();
+    }
+    activeElement.resumeFocusEvents();
+    if (store.isExpandingOrCollapsing) {
+      return Ext.emptyFn;
+    }
+    return function() {
+      var all;
+      store = me.dataSource;
+      if (store.getCount()) {
+        all = me.all;
+        refocusRow = Math.min(Math.max(focusPosition.rowIdx, all.startIndex), all.endIndex);
+        refocusCol = Math.min(focusPosition.colIdx, me.getVisibleColumnManager().getColumns().length - 1);
+        record = focusPosition.record;
+        focusPosition = (new Ext.grid.CellContext(me)).setPosition(record && store.contains(record) && !record.isCollapsedPlaceholder ? record : refocusRow, refocusCol);
+        if (focusPosition.getCell(true)) {
+          if (actionableMode) {
+            me.resumeActionableMode(focusPosition);
+          } else {
+            navModel.setPosition(focusPosition, null, null, null, true);
+            if (!navModel.getPosition()) {
+              focusPosition.column.focus();
+            }
+          }
+        }
+      } else {
+        focusPosition.column.focus();
+      }
+    };
+  }
+  return Ext.emptyFn;
+}, onDataRefresh:function(store) {
+  var me = this, owner = me.ownerCt;
+  if (owner && owner.isCollapsingOrExpanding === 2) {
+    owner.on('expand', me.onDataRefresh, me, {single:true});
+    return;
+  }
+  me.callParent([store]);
+}, getViewRange:function() {
+  var me = this;
+  if (me.bufferedRenderer) {
+    return me.bufferedRenderer.getViewRange();
+  }
+  return me.callParent();
+}, setPendingStripe:function(index) {
+  var current = this.stripeOnUpdate;
+  if (current === null) {
+    current = index;
+  } else {
+    current = Math.min(current, index);
+  }
+  this.stripeOnUpdate = current;
+}, onEndUpdate:function() {
+  var me = this, stripeOnUpdate = me.stripeOnUpdate, startIndex = me.all.startIndex;
+  if (me.rendered && (stripeOnUpdate || stripeOnUpdate === 0)) {
+    if (stripeOnUpdate < startIndex) {
+      stripeOnUpdate = startIndex;
+    }
+    me.doStripeRows(stripeOnUpdate);
+    me.stripeOnUpdate = null;
+  }
+  me.callParent(arguments);
+}, doStripeRows:function(startRow, endRow) {
+  var me = this, rows, rowsLn, i, row;
+  if (me.rendered && me.stripeRows) {
+    rows = me.getNodes(startRow, endRow);
+    for (i = 0, rowsLn = rows.length; i < rowsLn; i++) {
+      row = rows[i];
+      row.className = row.className.replace(me.rowClsRe, ' ');
+      startRow++;
+      if (startRow % 2 === 0) {
+        row.className += ' ' + me.altRowCls;
+      }
+    }
+  }
+}, hasActiveFeature:function() {
+  return this.isGrouping && this.store.isGrouped() || this.isRowWrapped;
+}, getCellPaddingAfter:function(cell) {
+  return Ext.fly(cell).getPadding('r');
+}, privates:{saveTabOptions:{skipSelf:true, includeHidden:true}, collectNodes:function(targetEl) {
+  this.all.fill(this.getNodeContainer().childNodes, this.all.startIndex);
+}, setActionableMode:function(enabled, position) {
+  var me = this, navModel = me.getNavigationModel(), activeEl, actionables = me.grid.actionables, len = actionables.length, i, record, column, isActionable = false, lockingPartner, cell;
+  if (me.actionableMode === enabled) {
+    if (!enabled || position.isEqual(me.actionPosition)) {
+      return false;
+    }
+  }
+  if (enabled) {
+    if (position && (position.view === me || position.view === (lockingPartner = me.lockingPartner) && lockingPartner.actionableMode)) {
+      isActionable = me.activateCell(position);
+    }
+    return isActionable;
+  } else {
+    activeEl = Ext.fly(Ext.Element.getActiveElement());
+    if (me.el.contains(activeEl) && !Ext.fly(activeEl).is(me.getCellSelector())) {
+      record = me.actionPosition && me.actionPosition.record || me.getRecord(activeEl);
+      column = me.getHeaderByCell(activeEl.findParent(me.getCellSelector()));
+      cell = position && position.getCell(true);
+      if (!position || !cell) {
+        position = (new Ext.grid.CellContext(me)).setPosition(record || 0, column || 0);
+        cell = position.getCell(true);
+      }
+      Ext.fly(cell).focus();
+      activeEl = Ext.fly(Ext.Element.getActiveElement());
+      if (!(me.el.contains(activeEl) && activeEl.is(me.getCellSelector()))) {
+        position = null;
+      }
+    }
+    for (i = 0; i < len; i++) {
+      if (actionables[i].deactivate) {
+        actionables[i].deactivate();
+      }
+    }
+    if (me.actionRow) {
+      me.actionRow.saveTabbableState({skipSelf:true, includeSaved:false});
+    }
+    if (me.destroyed) {
+      return false;
+    }
+    me.actionableMode = me.ownerGrid.actionableMode = false;
+    me.actionPosition = navModel.actionPosition = me.actionRow = null;
+    if (position) {
+      navModel.setPosition(position);
+    }
+  }
+}, activateCell:function(position) {
+  var me = this, lockingPartner = position.view !== me ? me.lockingPartner : null, actionables = me.grid.actionables, len = actionables.length, navModel = me.getNavigationModel(), focusTarget = position.target, record, prevRow, focusRow, focusCell, i, isActionable, tabbableChildren;
+  position = position.clone();
+  record = position.record;
+  position.view.grid.ensureVisible(record, {column:position.column});
+  focusRow = me.all.item(position.rowIdx, true);
+  if (me.actionPosition) {
+    prevRow = me.all.item(me.actionPosition.rowIdx, true);
+    if (prevRow && focusRow !== prevRow) {
+      Ext.fly(prevRow).saveTabbableState({skipSelf:true, includeSaved:false});
+    }
+  }
+  me.activating = true;
+  if (!lockingPartner) {
+    focusCell = Ext.fly(position.getCell(true));
+    me.actionPosition = position;
+    for (i = 0; i < len; i++) {
+      isActionable = isActionable || actionables[i].activateCell(position, null, true);
+    }
+    focusCell = Ext.fly(position.getCell(true));
+  }
+  if (lockingPartner || focusCell && focusCell.restoreTabbableState({skipSelf:true}).length | (tabbableChildren = focusCell.findTabbableElements()).length || isActionable) {
+    for (i = 0; i < len; i++) {
+      if (actionables[i].activateRow) {
+        actionables[i].activateRow(focusRow);
+      }
+    }
+    if (lockingPartner || tabbableChildren.length) {
+      Ext.fly(focusRow).restoreTabbableState({skipSelf:true});
+      if (lockingPartner) {
+        me.actionableMode = true;
+        me.actionPosition = null;
+        me.activating = false;
+        return true;
+      }
+      if (tabbableChildren) {
+        me.actionRow = me.actionRowFly.attach(focusRow);
+        me.actionableMode = me.ownerGrid.actionableMode = true;
+        navModel.setPosition();
+        navModel.actionPosition = me.actionPosition = position;
+        if (focusTarget && Ext.Array.contains(tabbableChildren, focusTarget)) {
+          Ext.fly(focusTarget).focus();
+        } else {
+          Ext.fly(tabbableChildren[0]).focus();
+        }
+        me.activating = false;
+        return true;
+      }
+    }
+  }
+  me.activating = false;
+}, suspendActionableMode:function() {
+  var me = this, actionables = me.grid.actionables, len = actionables.length, i;
+  for (i = 0; i < len; i++) {
+    actionables[i].suspend();
+  }
+}, resumeActionableMode:function(position) {
+  var me = this, actionables = me.grid.actionables, len = actionables.length, i, activated;
+  me.toggleChildrenTabbability(false);
+  for (i = 0; i < len; i++) {
+    activated = activated || actionables[i].resume(position);
+  }
+  if (!activated) {
+    me.activateCell(position);
+  }
+}, onRowExit:function(keyEvent, prevRow, newRow, forward, wrapDone) {
+  var me = this, direction = forward ? 'nextSibling' : 'previousSibling', lockingPartner = me.lockingPartner, rowIdx;
+  if (lockingPartner && lockingPartner.grid.isVisible()) {
+    rowIdx = me.all.indexOf(prevRow);
+    if (forward) {
+      if (me.isNormalView) {
+        rowIdx++;
+      }
+    } else {
+      if (me.isLockedView) {
+        rowIdx--;
+      }
+    }
+    me.actionPosition = null;
+    me = lockingPartner;
+    newRow = me.all.item(rowIdx, true);
+  }
+  if (!me.hasListeners.beforerowexit || me.fireEvent('beforerowexit', me, keyEvent, prevRow, newRow, forward) !== false) {
+    me.findFirstActionableElement(keyEvent, newRow, direction, forward, wrapDone);
+  } else {
+    return false;
+  }
+}, findFirstActionableElement:function(keyEvent, focusRow, direction, forward, wrapDone) {
+  var me = this, columns = me.getVisibleColumnManager().getColumns(), columnCount = columns.length, actionables = me.grid.actionables, actionableCount = actionables.length, position = new Ext.grid.CellContext(me), focusCell, focusTarget, i, j, column, isActionable, tabbableChildren, prevRow;
+  if (focusRow) {
+    position.setRow(focusRow);
+    for (i = 0; i < actionableCount; i++) {
+      if (actionables[i].activateRow) {
+        actionables[i].activateRow(focusRow);
+      }
+    }
+    for (i = forward ? 0 : columnCount - 1; (forward ? i < columnCount : i > -1) && !focusTarget; i = i + (forward ? 1 : -1)) {
+      column = columns[i];
+      position.setColumn(column);
+      focusCell = (focusRow.dom || focusRow).querySelector(position.column.getCellSelector());
+      for (j = 0; j < actionableCount; j++) {
+        isActionable = isActionable || actionables[j].activateCell(position);
+      }
+      focusCell = Ext.fly(position.getCell(true));
+      if (focusCell) {
+        focusRow = position.getNode(true);
+        focusCell.restoreTabbableState({skipSelf:true});
+        if ((tabbableChildren = focusCell.findTabbableElements()).length || isActionable) {
+          prevRow = me.actionRow && me.actionRow.dom;
+          me.actionRow = me.actionRowFly.attach(focusRow);
+          me.actionRow.restoreTabbableState({skipSelf:true});
+          focusTarget = tabbableChildren[forward ? 0 : tabbableChildren.length - 1];
+        }
+      }
+    }
+    if (focusTarget) {
+      me.actionPosition = me.getNavigationModel().actionPosition = position;
+      Ext.fly(focusTarget).focus(Ext.asyncFocus ? 1 : 0);
+      if (prevRow && focusRow !== prevRow) {
+        Ext.fly(prevRow).saveTabbableState({skipSelf:true, includeSaved:false});
+      }
+    } else {
+      me.onRowExit(keyEvent, focusRow, me.all.item(position.rowIdx + (forward ? 1 : -1)), forward, wrapDone);
+    }
+  } else {
+    if (!wrapDone) {
+      me.grid.ensureVisible(forward ? 0 : me.dataSource.getCount() - 1, {callback:function(success, record, row) {
+        if (success) {
+          me.findFirstActionableElement(keyEvent, row, direction, forward, true);
+        } else {
+          me.ownerGrid.setActionableMode(false);
+        }
+      }});
+    } else {
+      me.ownerGrid.setActionableMode(false);
+    }
+  }
+}, stretchHeight:function(height) {
+  var me = this, scroller = me.getScrollable(), stretchers = me.stretchers, shortfall;
+  if (height && me.tabGuardEl) {
+    if (stretchers) {
+      stretchers[0].style.marginTop = stretchers[1].style.marginTop = me.el.dom.style.height = 0;
+    }
+    me.el.dom.style.height = scroller.constrainScrollRange(height) + 'px';
+    shortfall = height - me.el.dom.offsetHeight;
+    if (shortfall > 0) {
+      me.el.dom.style.height = '';
+      stretchers = me.getStretchers();
+      shortfall = height - me.el.dom.offsetHeight;
+      if (shortfall > 0) {
+        stretchers[0].style.marginTop = scroller.constrainScrollRange(shortfall) + 'px';
+        shortfall = height - me.el.dom.offsetHeight;
+        if (shortfall > 0) {
+          stretchers[1].style.marginTop = Math.min(shortfall, scroller.maxSpacerMargin || 0) + 'px';
+        }
+      }
+    }
+  }
+}, getStretchers:function() {
+  var me = this, stretchers = me.stretchers, stretchCfg;
+  if (stretchers) {
+    me.el.appendChild(stretchers);
+  } else {
+    stretchCfg = {cls:'x-scroller-spacer', style:'position:relative'};
+    stretchers = me.stretchers = me.el.appendChild([stretchCfg, stretchCfg], true);
+  }
+  return stretchers;
+}}}, function(Table) {
+  Table.prototype.oldCellFly = new Ext.dom.Fly;
+});
+Ext.define('Ext.grid.Panel', {extend:Ext.panel.Table, alias:['widget.gridpanel', 'widget.grid'], alternateClassName:['Ext.list.ListView', 'Ext.ListView', 'Ext.grid.GridPanel'], viewType:'tableview', ariaRole:'grid', lockable:false, rowLines:true});
+Ext.define('Ext.grid.RowContext', {constructor:function(config) {
+  Ext.apply(this, config);
+  this.widgets = {};
+}, setRecord:function(record, recordIndex) {
+  var viewModel = this.viewModel;
+  this.record = record;
+  this.recordIndex = recordIndex;
+  if (viewModel) {
+    viewModel.set('record', record);
+    viewModel.set('recordIndex', recordIndex);
+  }
+}, free:function(view) {
+  var me = this, widgets = me.widgets, widgetId, widget, focusEl, viewModel = me.viewModel;
+  me.record = null;
+  if (viewModel) {
+    viewModel.set('record');
+    viewModel.set('recordIndex');
+  }
+  for (widgetId in widgets) {
+    widget = widgets[widgetId];
+    if (view && view.refreshing && !view.el.contains(widget.el)) {
+      continue;
+    }
+    focusEl = widget.getFocusEl();
+    if (focusEl) {
+      if (focusEl.isTabbable(true)) {
+        focusEl.saveTabbableState({includeHidden:true});
+      }
+      focusEl.blur();
+    }
+    widget.detachFromBody();
+  }
+}, getWidget:function(view, ownerId, widgetCfg) {
+  var me = this, widgets = me.widgets || (me.widgets = {}), ownerGrid = me.ownerGrid, rowViewModel = ownerGrid.rowViewModel, rowVM = me.viewModel, result;
+  if ((widgetCfg.bind || rowViewModel) && !rowVM) {
+    if (typeof rowViewModel === 'string') {
+      rowViewModel = {type:rowViewModel};
+    }
+    me.viewModel = rowVM = Ext.Factory.viewModel(Ext.merge({parent:ownerGrid.getRowContextViewModelParent(), data:{record:me.record, recordIndex:me.recordIndex}}, rowViewModel));
+  }
+  if (!(result = widgets[ownerId])) {
+    result = widgets[ownerId] = Ext.widget(Ext.apply({ownerCmp:view, _rowContext:me, $vmParent:rowVM || ownerGrid.getRowContextViewModelParent(), initInheritedState:me.initInheritedStateHook, lookupViewModel:me.lookupViewModelHook}, widgetCfg));
+    result.$fromLocked = !!view.isLockedView;
+    if (result.isWidget) {
+      result.initBindable();
+    } else {
+      result.collectContainerElement = true;
+    }
+  }
+  return result;
+}, getWidgets:function() {
+  var widgets = this.widgets, id, result = [];
+  for (id in widgets) {
+    result.push(widgets[id]);
+  }
+  return result;
+}, handleWidgetViewChange:function(view, ownerId) {
+  var widget = this.widgets[ownerId];
+  if (widget) {
+    widget.ownerCmp = view;
+    widget.$fromLocked = !!view.isLockedView;
+  }
+}, destroy:function() {
+  var me = this, widgets = me.widgets, widgetId, widget;
+  for (widgetId in widgets) {
+    widget = widgets[widgetId];
+    widget._rowContext = null;
+    widget.destroy();
+  }
+  Ext.destroy(me.viewModel);
+  me.callParent();
+}, privates:{initInheritedStateHook:function(inheritedState, inheritedStateInner) {
+  var vmParent = this.$vmParent;
+  this.self.prototype.initInheritedState.call(this, inheritedState, inheritedStateInner);
+  if (!inheritedState.hasOwnProperty('viewModel') && vmParent) {
+    inheritedState.viewModel = vmParent;
+  }
+}, lookupViewModelHook:function(skipThis) {
+  var ret = skipThis ? null : this.getViewModel();
+  if (!ret) {
+    ret = this.$vmParent || null;
+  }
+  return ret;
+}}});
+Ext.define('Ext.grid.plugin.HeaderResizer', {extend:Ext.plugin.Abstract, alias:'plugin.gridheaderresizer', disabled:false, config:{dynamic:false}, colHeaderCls:Ext.baseCSSPrefix + 'column-header', minColWidth:40, maxColWidth:1000, eResizeCursor:'col-resize', init:function(headerCt) {
+  var me = this;
+  me.headerCt = headerCt;
+  headerCt.on('render', me.afterHeaderRender, me, {single:me});
+  if (!me.minColWidth) {
+    me.self.prototype.minColWidth = Ext.grid.column.Column.prototype.minWidth;
+  }
+}, destroy:function() {
+  var me = this, tracker = me.tracker;
+  if (tracker) {
+    tracker.destroy();
+    me.tracker = null;
+  }
+  me.headerCt.un('render', me.afterHeaderRender, me);
+  me.headerCt = null;
+  me.callParent();
+}, afterHeaderRender:function() {
+  var me = this, headerCt = me.headerCt, el = headerCt.el;
+  headerCt.mon(el, 'mousemove', me.onHeaderCtMouseMove, me);
+  me.markerOwner = me.ownerGrid = me.headerCt.up('tablepanel').ownerGrid;
+  me.tracker = new Ext.dd.DragTracker({disabled:me.disabled, onBeforeStart:me.onBeforeStart.bind(me), onStart:me.onStart.bind(me), onDrag:me.onDrag.bind(me), onEnd:me.onEnd.bind(me), onCancel:me.onCancel.bind(me), tolerance:3, autoStart:300, el:el});
+  headerCt.setTouchAction({panX:false});
+}, onHeaderCtMouseMove:function(e) {
+  var me = this;
+  if (me.headerCt.dragging || me.disabled) {
+    if (me.activeHd) {
+      me.activeHd.el.dom.style.cursor = '';
+      delete me.activeHd;
+    }
+  } else {
+    if (e.pointerType !== 'touch') {
+      me.findActiveHeader(e);
+    }
+  }
+}, findActiveHeader:function(e) {
+  var me = this, headerCt = me.headerCt, headerEl = e.getTarget('.' + me.colHeaderCls, headerCt.el, true), ownerGrid = me.ownerGrid, ownerLockable = ownerGrid.ownerLockable, overHeader, resizeHeader, headers, header;
+  me.activeHd = null;
+  if (headerEl) {
+    overHeader = Ext.getCmp(headerEl.id);
+    if (overHeader.isAtEndEdge(e)) {
+      if (headerCt.visibleColumnManager.getColumns().length === 1 && headerCt.forceFit) {
+        return;
+      }
+      resizeHeader = overHeader;
+    } else {
+      if (overHeader.isAtStartEdge(e)) {
+        headers = headerCt.visibleColumnManager.getColumns();
+        header = overHeader.isGroupHeader ? overHeader.getGridColumns()[0] : overHeader;
+        resizeHeader = headers[Ext.Array.indexOf(headers, header) - 1];
+        if (!resizeHeader && ownerLockable && !ownerGrid.isLocked) {
+          headers = ownerLockable.lockedGrid.headerCt.visibleColumnManager.getColumns();
+          resizeHeader = headers[headers.length - 1];
+        }
+      }
+    }
+    if (resizeHeader) {
+      if (resizeHeader.isGroupHeader) {
+        headers = resizeHeader.getGridColumns();
+        resizeHeader = headers[headers.length - 1];
+      }
+      if (resizeHeader && !(resizeHeader.fixed || resizeHeader.resizable === false)) {
+        me.activeHd = resizeHeader;
+        overHeader.el.dom.style.cursor = me.eResizeCursor;
+        if (overHeader.triggerEl) {
+          overHeader.triggerEl.dom.style.cursor = me.eResizeCursor;
+        }
+      }
+    } else {
+      overHeader.el.dom.style.cursor = '';
+      if (overHeader.triggerEl) {
+        overHeader.triggerEl.dom.style.cursor = '';
+      }
+    }
+  }
+  return me.activeHd;
+}, onBeforeStart:function(e) {
+  var me = this;
+  me.dragHd = me.activeHd || e.pointerType === 'touch' && me.findActiveHeader(e);
+  if (me.dragHd && !me.headerCt.dragging) {
+    e.claimGesture();
+    me.xDelta = me.dragHd.getX() + me.dragHd.getWidth() - me.tracker.getXY()[0];
+    me.tracker.constrainTo = me.getConstrainRegion();
+    return true;
+  } else {
+    me.headerCt.dragging = false;
+    return false;
+  }
+}, onCancel:function(e) {
+  this.dragHd = this.activeHd = null;
+  this.headerCt.dragging = false;
+}, getConstrainRegion:function() {
+  var me = this, dragHdEl = me.dragHd.el, nextHd, ownerGrid = me.ownerGrid, widthModel = ownerGrid.getSizeModel().width, maxColWidth = widthModel.shrinkWrap ? me.headerCt.getWidth() - me.headerCt.visibleColumnManager.getColumns().length * me.minColWidth : me.maxColWidth, result;
+  if (me.headerCt.forceFit) {
+    nextHd = me.dragHd.nextNode('gridcolumn:not([hidden]):not([isGroupHeader])');
+    if (nextHd && me.headerInSameGrid(nextHd)) {
+      maxColWidth = dragHdEl.getWidth() + (nextHd.getWidth() - me.minColWidth);
+    }
+  } else {
+    if (ownerGrid.isLocked && widthModel.shrinkWrap) {
+      maxColWidth = me.dragHd.up('[scrollerOwner]').getTargetEl().getWidth(true) - ownerGrid.getWidth() - (ownerGrid.ownerLockable.normalGrid.visibleColumnManager.getColumns().length * me.minColWidth + Ext.getScrollbarSize().width);
+    }
+  }
+  result = me.adjustConstrainRegion(dragHdEl.getRegion(), 0, 0, 0, me.minColWidth);
+  result.right = dragHdEl.getX() + maxColWidth;
+  return result;
+}, onStart:function(e) {
+  var me = this, dragHd = me.dragHd, width = dragHd.el.getWidth(), headerCt = dragHd.getRootHeaderCt(), x, y, markerOwner, lhsMarker, rhsMarker, markerHeight;
+  me.headerCt.dragging = true;
+  me.origWidth = width;
+  if (!me.dynamic) {
+    markerOwner = me.markerOwner;
+    if (markerOwner.frame && markerOwner.resizable) {
+      me.gridOverflowSetting = markerOwner.el.dom.style.overflow;
+      markerOwner.el.dom.style.overflow = 'hidden';
+    }
+    x = me.getLeftMarkerX(markerOwner);
+    lhsMarker = markerOwner.getLhsMarker();
+    rhsMarker = markerOwner.getRhsMarker();
+    markerHeight = me.ownerGrid.body.getHeight() + headerCt.getHeight();
+    y = headerCt.getOffsetsTo(markerOwner)[1] - markerOwner.el.getBorderWidth('t');
+    lhsMarker.dom.style.cursor = me.eResizeCursor;
+    rhsMarker.dom.style.cursor = me.eResizeCursor;
+    lhsMarker.setLocalY(y);
+    rhsMarker.setLocalY(y);
+    lhsMarker.setHeight(markerHeight);
+    rhsMarker.setHeight(markerHeight);
+    me.setMarkerX(lhsMarker, x);
+    me.setMarkerX(rhsMarker, x + width);
+  }
+}, onDrag:function(e) {
+  var me = this;
+  if (me.dynamic) {
+    me.doResize();
+  } else {
+    me.setMarkerX(me.getMovingMarker(me.markerOwner), me.calculateDragX(me.markerOwner));
+  }
+}, getMovingMarker:function(markerOwner) {
+  return markerOwner.getRhsMarker();
+}, onEnd:function(e) {
+  var me = this, markerOwner = me.markerOwner;
+  me.headerCt.dragging = false;
+  if (me.dragHd) {
+    if (!me.dynamic) {
+      if ('gridOverflowSetting' in me) {
+        markerOwner.el.dom.style.overflow = me.gridOverflowSetting;
+      }
+      me.setMarkerX(markerOwner.getLhsMarker(), -9999);
+      me.setMarkerX(markerOwner.getRhsMarker(), -9999);
+    }
+    me.doResize();
+    if (e.pointerType !== 'touch') {
+      me.dragHd = null;
+      me.activeHd.el.dom.style.cursor = me.eResizeCursor;
+    } else {
+      me.dragHd = me.activeHd = null;
+    }
+  }
+  me.headerCt.blockNextEvent();
+}, doResize:function() {
+  var me = this, dragHd = me.dragHd, nextHd, offset = me.tracker.getOffset('point');
+  if (dragHd && offset[0]) {
+    if (dragHd.flex) {
+      delete dragHd.flex;
+    }
+    Ext.suspendLayouts();
+    me.adjustColumnWidth(offset[0] - me.xDelta);
+    if (me.headerCt.forceFit) {
+      nextHd = dragHd.nextNode('gridcolumn:not([hidden]):not([isGroupHeader])');
+      if (nextHd && !me.headerInSameGrid(nextHd)) {
+        nextHd = null;
+      }
+      if (nextHd) {
+        delete nextHd.flex;
+        nextHd.setWidth(nextHd.getWidth() - offset[0]);
+      }
+    }
+    Ext.resumeLayouts(true);
+  }
+}, headerInSameGrid:function(header) {
+  var grid = this.dragHd.up('tablepanel');
+  return !!header.up(grid);
+}, disable:function() {
+  var tracker = this.tracker;
+  this.disabled = true;
+  if (tracker) {
+    tracker.disable();
+  }
+}, enable:function() {
+  var tracker = this.tracker;
+  this.disabled = false;
+  if (tracker) {
+    tracker.enable();
+  }
+}, calculateDragX:function(markerOwner) {
+  return this.tracker.getXY('point')[0] + this.xDelta - markerOwner.getX() - markerOwner.el.getBorderWidth('l');
+}, getLeftMarkerX:function(markerOwner) {
+  return this.dragHd.getX() - markerOwner.getX() - markerOwner.el.getBorderWidth('l') - 1;
+}, setMarkerX:function(marker, x) {
+  marker.setLocalX(x);
+}, adjustConstrainRegion:function(region, t, r, b, l) {
+  return region.adjust(t, r, b, l);
+}, adjustColumnWidth:function(offsetX) {
+  this.dragHd.setWidth(this.origWidth + offsetX);
+}});
+Ext.define('Ext.grid.header.DragZone', {extend:Ext.dd.DragZone, colHeaderSelector:'.' + Ext.baseCSSPrefix + 'column-header', colInnerSelector:'.' + Ext.baseCSSPrefix + 'column-header-inner', maxProxyWidth:120, constructor:function(headerCt) {
+  var me = this;
+  me.headerCt = headerCt;
+  me.ddGroup = me.getDDGroup();
+  me.autoGroup = true;
+  me.callParent([headerCt.el]);
+  me.proxy.el.addCls(Ext.baseCSSPrefix + 'grid-col-dd');
+}, getDDGroup:function() {
+  return 'header-dd-zone-' + this.headerCt.up('[scrollerOwner]').id;
+}, getDragData:function(e) {
+  if (e.getTarget(this.colInnerSelector)) {
+    var header = e.getTarget(this.colHeaderSelector), headerCmp, ddel;
+    if (header) {
+      headerCmp = Ext.getCmp(header.id);
+      if (!this.headerCt.dragging && headerCmp.draggable && !(headerCmp.isAtStartEdge(e) || headerCmp.isAtEndEdge(e))) {
+        ddel = document.createElement('div');
+        ddel.role = 'presentation';
+        ddel.innerHTML = headerCmp.text;
+        return {ddel:ddel, header:headerCmp};
+      }
+    }
+  }
+  return false;
+}, onBeforeDrag:function() {
+  return !(this.headerCt.dragging || this.disabled);
+}, onInitDrag:function() {
+  this.headerCt.dragging = true;
+  this.headerCt.hideMenu();
+  this.callParent(arguments);
+}, onDragDrop:function() {
+  this.headerCt.dragging = false;
+  this.callParent(arguments);
+}, afterRepair:function() {
+  this.callParent();
+  this.headerCt.dragging = false;
+}, getRepairXY:function() {
+  return this.dragData.header.el.getXY();
+}, disable:function() {
+  this.disabled = true;
+}, enable:function() {
+  this.disabled = false;
+}});
+Ext.define('Ext.grid.header.DropZone', {extend:Ext.dd.DropZone, colHeaderCls:Ext.baseCSSPrefix + 'column-header', proxyOffsets:[-4, -9], constructor:function(headerCt) {
+  var me = this;
+  me.headerCt = headerCt;
+  me.ddGroup = me.getDDGroup();
+  me.autoGroup = true;
+  me.callParent([headerCt.el]);
+}, destroy:function() {
+  Ext.destroy(this.topIndicator, this.bottomIndicator);
+  this.callParent();
+}, getDDGroup:function() {
+  return 'header-dd-zone-' + this.headerCt.up('[scrollerOwner]').id;
+}, getTargetFromEvent:function(e) {
+  return e.getTarget('.' + this.colHeaderCls);
+}, getTopIndicator:function() {
+  if (!this.topIndicator) {
+    this.topIndicator = Ext.getBody().createChild({role:'presentation', cls:Ext.baseCSSPrefix + 'col-move-top', 'data-sticky':true, html:'\x26#160;'});
+    this.indicatorXOffset = Math.floor((this.topIndicator.dom.offsetWidth + 1) / 2);
+  }
+  return this.topIndicator;
+}, getBottomIndicator:function() {
+  if (!this.bottomIndicator) {
+    this.bottomIndicator = Ext.getBody().createChild({role:'presentation', cls:Ext.baseCSSPrefix + 'col-move-bottom', 'data-sticky':true, html:'\x26#160;'});
+  }
+  return this.bottomIndicator;
+}, getLocation:function(e, t) {
+  var x = e.getXY()[0], region = Ext.fly(t).getRegion(), pos;
+  if (region.right - x <= (region.right - region.left) / 2) {
+    pos = 'after';
+  } else {
+    pos = 'before';
+  }
+  return {pos:pos, header:Ext.getCmp(t.id), node:t};
+}, positionIndicator:function(data, node, e) {
+  var me = this, dragHeader = data.header, dropLocation = me.getLocation(e, node), targetHeader = dropLocation.header, pos = dropLocation.pos, nextHd, prevHd, topIndicator, bottomIndicator, topAnchor, bottomAnchor, topXY, bottomXY, headerCtEl, minX, maxX, allDropZones, ln, i, dropZone;
+  if (targetHeader === me.lastTargetHeader && pos === me.lastDropPos) {
+    return;
+  }
+  nextHd = dragHeader.nextSibling('gridcolumn:not([hidden])');
+  prevHd = dragHeader.previousSibling('gridcolumn:not([hidden])');
+  me.lastTargetHeader = targetHeader;
+  me.lastDropPos = pos;
+  if (!targetHeader.draggable && pos === 'before' && targetHeader.getIndex() === 0) {
+    return false;
+  }
+  data.dropLocation = dropLocation;
+  if (dragHeader !== targetHeader && (pos === 'before' && nextHd !== targetHeader || pos === 'after' && prevHd !== targetHeader) && !targetHeader.isDescendantOf(dragHeader)) {
+    allDropZones = Ext.dd.DragDropManager.getRelated(me);
+    ln = allDropZones.length;
+    i = 0;
+    for (; i < ln; i++) {
+      dropZone = allDropZones[i];
+      if (dropZone !== me && dropZone.invalidateDrop) {
+        dropZone.invalidateDrop();
+      }
+    }
+    me.valid = true;
+    topIndicator = me.getTopIndicator();
+    bottomIndicator = me.getBottomIndicator();
+    if (pos === 'before') {
+      topAnchor = 'bc-tl';
+      bottomAnchor = 'tc-bl';
+    } else {
+      topAnchor = 'bc-tr';
+      bottomAnchor = 'tc-br';
+    }
+    topXY = topIndicator.getAlignToXY(targetHeader.el, topAnchor);
+    bottomXY = bottomIndicator.getAlignToXY(targetHeader.el, bottomAnchor);
+    headerCtEl = me.headerCt.el;
+    minX = headerCtEl.getX() - me.indicatorXOffset;
+    maxX = headerCtEl.getX() + headerCtEl.getWidth();
+    topXY[0] = Ext.Number.constrain(topXY[0], minX, maxX);
+    bottomXY[0] = Ext.Number.constrain(bottomXY[0], minX, maxX);
+    topIndicator.setXY(topXY);
+    bottomIndicator.setXY(bottomXY);
+    topIndicator.show();
+    bottomIndicator.show();
+  } else {
+    me.invalidateDrop();
+  }
+}, invalidateDrop:function() {
+  this.valid = false;
+  this.hideIndicators();
+}, onNodeOver:function(node, dragZone, e, data) {
+  var me = this, from = data.header, doPosition, fromPanel, to, toPanel;
+  if (data.header.el.dom === node) {
+    doPosition = false;
+  } else {
+    data.isLock = data.isUnlock = data.crossPanel = false;
+    to = me.getLocation(e, node).header;
+    doPosition = from.ownerCt === to.ownerCt;
+    if (!doPosition && (!from.ownerCt.isSealed() && !to.ownerCt.isSealed())) {
+      doPosition = true;
+      fromPanel = from.up('tablepanel');
+      toPanel = to.up('tablepanel');
+      if (fromPanel !== toPanel) {
+        data.crossPanel = true;
+        data.isLock = toPanel.isLocked && !fromPanel.isLocked;
+        data.isUnlock = !toPanel.isLocked && fromPanel.isLocked;
+        if (data.isUnlock && from.lockable === false || data.isLock && !from.isLockable()) {
+          doPosition = false;
+        }
+      }
+    }
+  }
+  if (doPosition) {
+    me.positionIndicator(data, node, e);
+  } else {
+    me.valid = false;
+  }
+  return me.valid ? me.dropAllowed : me.dropNotAllowed;
+}, hideIndicators:function() {
+  var me = this;
+  me.getTopIndicator().hide();
+  me.getBottomIndicator().hide();
+  me.lastTargetHeader = me.lastDropPos = null;
+}, onNodeOut:function() {
+  this.hideIndicators();
+}, getNestedHeader:function(header, first) {
+  var items = header.items, pos;
+  if (header.isGroupHeader && items.length) {
+    pos = !first ? 'first' : 'last';
+    header = this.getNestedHeader(items[pos](), first);
+  }
+  return header;
+}, onNodeDrop:function(node, dragZone, e, data) {
+  this.headerCt.blockNextEvent();
+  if (!this.valid) {
+    return;
+  }
+  var me = this, dragHeader = data.header, dropLocation = data.dropLocation, dropPosition = dropLocation.pos, targetHeader = dropLocation.header, fromCt = dragHeader.ownerCt, fromCtRoot = fromCt.getRootHeaderCt(), toCt = targetHeader.ownerCt, visibleColumnManager = me.headerCt.visibleColumnManager, visibleFromIdx = visibleColumnManager.getHeaderIndex(dragHeader), visibleToIdx, colsToMove, scrollerOwner, savedWidth;
+  if (data.isLock || data.isUnlock) {
+    scrollerOwner = fromCt.up('[scrollerOwner]');
+    visibleToIdx = toCt.items.indexOf(targetHeader);
+    if (dropPosition === 'after') {
+      visibleToIdx++;
+    }
+    if (data.isLock) {
+      scrollerOwner.lock(dragHeader, visibleToIdx, toCt);
+    } else {
+      scrollerOwner.unlock(dragHeader, visibleToIdx, toCt);
+    }
+  } else {
+    visibleToIdx = dropPosition === 'after' ? visibleColumnManager.getHeaderIndex(me.getNestedHeader(targetHeader, 1)) + 1 : visibleColumnManager.getHeaderIndex(me.getNestedHeader(targetHeader, 0));
+    me.invalidateDrop();
+    savedWidth = dragHeader.getWidth();
+    Ext.suspendLayouts();
+    fromCtRoot.isDDMoveInGrid = !data.crossPanel;
+    if (dragHeader.isGroupHeader && targetHeader.isGroupHeader) {
+      dragHeader.setNestedParent(targetHeader);
+    }
+    if (dropPosition === 'before') {
+      toCt.moveBefore(dragHeader, targetHeader);
+    } else {
+      toCt.moveAfter(dragHeader, targetHeader);
+    }
+    if (visibleToIdx >= 0 && !(targetHeader.isGroupHeader && (!targetHeader.items || !targetHeader.items.length)) && visibleFromIdx !== visibleToIdx) {
+      colsToMove = dragHeader.isGroupHeader ? dragHeader.query('gridcolumn:not([hidden]):not([isGroupHeader])').length : 1;
+      if (visibleFromIdx <= visibleToIdx && colsToMove > 1) {
+        visibleToIdx -= colsToMove;
+      }
+      toCt.getRootHeaderCt().grid.view.moveColumn(visibleFromIdx, visibleToIdx, colsToMove);
+    }
+    fromCtRoot.fireEvent('columnmove', fromCt, dragHeader, visibleFromIdx, visibleToIdx);
+    fromCtRoot.isDDMoveInGrid = false;
+    if (toCt.isGroupHeader && !fromCt.isGroupHeader) {
+      if (fromCt !== toCt) {
+        dragHeader.savedFlex = dragHeader.flex;
+        delete dragHeader.flex;
+        dragHeader.width = savedWidth;
+      }
+    } else {
+      if (!fromCt.isGroupHeader) {
+        if (dragHeader.savedFlex) {
+          dragHeader.flex = dragHeader.savedFlex;
+          delete dragHeader.width;
+        }
+      }
+    }
+    Ext.resumeLayouts(true);
+    if (me.headerCt.grid.floated) {
+      me.headerCt.grid.updateLayout();
+    }
+  }
+}});
+Ext.define('Ext.grid.plugin.HeaderReorderer', {extend:Ext.plugin.Abstract, alias:'plugin.gridheaderreorderer', init:function(headerCt) {
+  this.headerCt = headerCt;
+  headerCt.on({boxready:this.onHeaderCtRender, single:true, scope:this});
+}, destroy:function() {
+  var me = this;
+  me.headerCt.un('boxready', me.onHeaderCtRender, me);
+  Ext.destroy(me.dragZone, me.dropZone);
+  me.headerCt = me.dragZone = me.dropZone = null;
+  me.callParent();
+}, onHeaderCtRender:function(headerCt) {
+  var me = this;
+  me.dragZone = new Ext.grid.header.DragZone(me.headerCt);
+  me.dropZone = new Ext.grid.header.DropZone(me.headerCt);
+  if (me.disabled) {
+    me.dragZone.disable();
+  }
+  headerCt.setTouchAction({panX:false});
+}, enable:function() {
+  this.disabled = false;
+  if (this.dragZone) {
+    this.dragZone.enable();
+  }
+}, disable:function() {
+  this.disabled = true;
+  if (this.dragZone) {
+    this.dragZone.disable();
+  }
+}});
+Ext.define('Ext.grid.header.Container', {extend:Ext.container.Container, border:true, alias:'widget.headercontainer', baseCls:Ext.baseCSSPrefix + 'grid-header-ct', dock:'top', weight:100, defaultType:'gridcolumn', defaultWidth:100, sortAscText:'Sort Ascending', sortDescText:'Sort Descending', sortClearText:'Clear Sort', columnsText:'Columns', headerOpenCls:Ext.baseCSSPrefix + 'column-header-open', menuSortAscCls:Ext.baseCSSPrefix + 'hmenu-sort-asc', menuSortDescCls:Ext.baseCSSPrefix + 'hmenu-sort-desc', 
+menuColsIcon:Ext.baseCSSPrefix + 'cols-icon', blockEvents:false, dragging:false, sortOnClick:true, focusableContainer:false, childHideCount:0, sortable:true, enableColumnHide:true, initComponent:function() {
+  var me = this;
+  me.plugins = me.plugins || [];
+  me.defaults = me.defaults || {};
+  if (!me.isColumn) {
+    me.isRootHeader = true;
+    if (me.enableColumnResize) {
+      me.resizer = new Ext.grid.plugin.HeaderResizer;
+      me.plugins.push(me.resizer);
+    }
+    if (me.enableColumnMove) {
+      me.reorderer = new Ext.grid.plugin.HeaderReorderer;
+      me.plugins.push(me.reorderer);
+    }
+  }
+  if (me.isColumn && !me.isGroupHeader) {
+    if (!me.items || me.items.length === 0) {
+      me.isContainer = me.isFocusableContainer = false;
+      if (!me.hasOwnProperty('focusable')) {
+        me.focusable = true;
+      }
+      me.layout = {type:'container', calculate:Ext.emptyFn};
+    }
+  } else {
+    me.layout = Ext.apply({type:'gridcolumn', align:'stretch'}, me.initialConfig.layout);
+    me.defaults.columnLines = me.columnLines;
+    if (me.isRootHeader) {
+      if (!me.hiddenHeaders) {
+        me.focusableContainer = true;
+        me.ariaRole = 'rowgroup';
+      }
+      me.columnManager = new Ext.grid.ColumnManager(false, me);
+      me.visibleColumnManager = new Ext.grid.ColumnManager(true, me);
+      if (me.grid) {
+        me.grid.columnManager = me.columnManager;
+        me.grid.visibleColumnManager = me.visibleColumnManager;
+      }
+    } else {
+      me.visibleColumnManager = new Ext.grid.ColumnManager(true, me);
+      me.columnManager = new Ext.grid.ColumnManager(false, me);
+    }
+  }
+  me.menuTask = new Ext.util.DelayedTask(me.updateMenuDisabledState, me);
+  me.callParent();
+}, isNested:function() {
+  return !!this.getRootHeaderCt().down('[isNestedParent]');
+}, isNestedGroupHeader:function() {
+  var header = this, items = header.getRefOwner().query('\x3e:not([hidden])');
+  return items.length === 1 && items[0] === header;
+}, isSealed:function() {
+  return !!(this.sealed || this.getInherited().sealed);
+}, maybeShowNestedGroupHeader:function() {
+  var items = this.items, item;
+  if (items && items.length === 1 && (item = items.getAt(0)) && item.hidden) {
+    item.show();
+  }
+}, setNestedParent:function(target) {
+  target.isNestedParent = false;
+  target.ownerCt.isNestedParent = !!(this.ownerCt.items.length === 1 && target.ownerCt.items.length === 1);
+}, initEvents:function() {
+  var me = this, onHeaderCtEvent, listeners;
+  me.callParent();
+  if (!me.isColumn && !me.isGroupHeader) {
+    onHeaderCtEvent = me.onHeaderCtEvent;
+    listeners = {click:onHeaderCtEvent, dblclick:onHeaderCtEvent, contextmenu:onHeaderCtEvent, mousedown:me.onHeaderCtMouseDown, mouseover:me.onHeaderCtMouseOver, mouseout:me.onHeaderCtMouseOut, scope:me};
+    if (Ext.supports.Touch) {
+      listeners.longpress = me.onHeaderCtLongPress;
+    }
+    me.mon(me.el, listeners);
+  }
+}, onHeaderCtEvent:function(e, t) {
+  var me = this, headerEl = me.getHeaderElByEvent(e), header, targetEl, activeHeader;
+  if (me.longPressFired) {
+    me.longPressFired = false;
+    return;
+  }
+  if (headerEl && !me.blockEvents) {
+    header = Ext.getCmp(headerEl.id);
+    if (header) {
+      targetEl = header[header.clickTargetName];
+      if (!header.isGroupHeader && !header.isContainer || e.within(targetEl)) {
+        if (e.type === 'click' || e.type === 'tap') {
+          activeHeader = header.onTitleElClick(e, targetEl, me.sortOnClick);
+          if (activeHeader) {
+            me.onHeaderTriggerClick(activeHeader, e, e.pointerType === 'touch' ? activeHeader.el : activeHeader.triggerEl);
+          } else {
+            me.onHeaderClick(header, e, t);
+          }
+        } else {
+          if (e.type === 'contextmenu') {
+            me.onHeaderContextMenu(header, e, t);
+          } else {
+            if (e.type === 'dblclick') {
+              header.onTitleElDblClick(e, targetEl.dom);
+            }
+          }
+        }
+      }
+    }
+  }
+}, blockNextEvent:function() {
+  var me = this;
+  me.blockEvents = true;
+  if (!me.unblockTimer) {
+    me.unblockTimer = Ext.asap(me.unblockEvents, me);
+  }
+}, unblockEvents:function() {
+  this.blockEvents = this.unblockTimer = false;
+}, onHeaderCtMouseDown:function(e, target) {
+  var targetCmp = Ext.Component.from(target), cols, i, len, scrollable, col;
+  if (!e.defaultPrevented && targetCmp !== this) {
+    if (targetCmp.isGroupHeader) {
+      cols = targetCmp.getVisibleGridColumns();
+      scrollable = this.getScrollable();
+      for (i = 0, len = cols.length; i < len; ++i) {
+        col = cols[i];
+        if (scrollable.doIsInView(col.el, true).x) {
+          targetCmp = col;
+          break;
+        }
+      }
+    }
+    targetCmp.focus();
+  }
+}, onHeaderCtMouseOver:function(e, t) {
+  var headerEl, header, targetEl;
+  if (!e.within(this.el, true)) {
+    headerEl = e.getTarget('.' + Ext.grid.column.Column.prototype.baseCls);
+    header = headerEl && Ext.getCmp(headerEl.id);
+    if (header) {
+      targetEl = header[header.clickTargetName];
+      if (e.within(targetEl)) {
+        header.onTitleMouseOver(e, targetEl.dom);
+      }
+    }
+  }
+}, onHeaderCtMouseOut:function(e, t) {
+  var headerSelector = '.' + Ext.grid.column.Column.prototype.baseCls, outHeaderEl = e.getTarget(headerSelector), inHeaderEl = e.getRelatedTarget(headerSelector), header, targetEl;
+  if (outHeaderEl !== inHeaderEl) {
+    if (outHeaderEl) {
+      header = Ext.getCmp(outHeaderEl.id);
+      if (header) {
+        targetEl = header[header.clickTargetName];
+        header.onTitleMouseOut(e, targetEl.dom);
+      }
+    }
+    if (inHeaderEl) {
+      header = Ext.getCmp(inHeaderEl.id);
+      if (header) {
+        targetEl = header[header.clickTargetName];
+        header.onTitleMouseOver(e, targetEl.dom);
+      }
+    }
+  }
+}, onHeaderCtLongPress:function(e) {
+  var me = this, headerEl = me.getHeaderElByEvent(e), header;
+  if (headerEl) {
+    header = Ext.getCmp(headerEl.id);
+    if (header && !header.menuDisabled) {
+      me.longPressFired = true;
+      me.showMenuBy(e, headerEl, header);
+    }
+  }
+}, getHeaderElByEvent:function(e) {
+  return e.getTarget('.' + Ext.grid.column.Column.prototype.baseCls);
+}, isLayoutRoot:function() {
+  if (this.hiddenHeaders) {
+    return false;
+  }
+  return this.callParent();
+}, getRootHeaderCt:function() {
+  return this.isRootHeader ? this : this.up('[isRootHeader]');
+}, doDestroy:function() {
+  var me = this;
+  if (me.menu) {
+    me.menu.un('hide', me.onMenuHide, me);
+  }
+  Ext.unasap(me.unblockTimer);
+  me.menuTask.cancel();
+  Ext.destroy(me.visibleColumnManager, me.columnManager, me.menu);
+  me.callParent();
+}, removeAll:function(autoDestroy) {
+  var me = this;
+  me.suspendEvent('columnschanged');
+  me.callParent([autoDestroy]);
+  me.resumeEvent('columnschanged');
+  me.fireEvent('columnschanged', me);
+}, applyColumnsState:function(columnsState, storeState) {
+  if (!columnsState) {
+    return;
+  }
+  var me = this, items = me.items.items, count = items.length, i = 0, moved = false, newOrder = [], newCols = [], length, col, columnState, index;
+  me.purgeCache();
+  for (i = 0; i < count; i++) {
+    col = items[i];
+    columnState = columnsState[col.getStateId()];
+    if (columnState) {
+      index = columnState.index;
+      newOrder[index] = col;
+      if (i !== index) {
+        moved = true;
+      }
+      if (col.applyColumnState) {
+        col.applyColumnState(columnState, storeState);
+      }
+    } else {
+      newCols.push({index:i, column:col});
+    }
+  }
+  newOrder = Ext.Array.clean(newOrder);
+  length = newCols.length;
+  if (length) {
+    for (i = 0; i < length; i++) {
+      columnState = newCols[i];
+      index = columnState.index;
+      if (index < newOrder.length) {
+        moved = true;
+        Ext.Array.splice(newOrder, index, 0, columnState.column);
+      } else {
+        newOrder.push(columnState.column);
+      }
+    }
+  }
+  if (moved) {
+    me.applyingState = true;
+    me.removeAll(false);
+    delete me.applyingState;
+    me.add(newOrder);
+  }
+}, getColumnsState:function() {
+  var me = this, columns = [], state;
+  me.items.each(function(col) {
+    state = col.getColumnState && col.getColumnState();
+    if (state) {
+      columns.push(state);
+    }
+  });
+  return columns;
+}, onAdd:function(c) {
+  var me = this, rootHeader;
+  var stateId = c.getStateId();
+  if (stateId != null) {
+    if (!me._usedIDs) {
+      me._usedIDs = {};
+    }
+    if (me._usedIDs[stateId] && me._usedIDs[stateId] !== c) {
+      Ext.log.warn(this.$className + ' attempted to reuse an existing id: ' + stateId);
+    }
+    me._usedIDs[stateId] = c;
+  }
+  me.callParent(arguments);
+  rootHeader = me.getRootHeaderCt();
+  me.onHeadersChanged(c, rootHeader && rootHeader.isDDMoveInGrid);
+}, move:function(fromIdx, toIdx) {
+  var me = this, items = me.items, headerToMove;
+  if (fromIdx.isComponent) {
+    headerToMove = fromIdx;
+    fromIdx = items.indexOf(headerToMove);
+  } else {
+    headerToMove = items.getAt(fromIdx);
+  }
+  headerToMove.visibleFromIdx = me.getRootHeaderCt().visibleColumnManager.indexOf(headerToMove);
+  me.callParent(arguments);
+}, onMove:function(headerToMove, fromIdx, toIdx) {
+  var me = this, gridHeaderCt = me.getRootHeaderCt(), gridVisibleColumnManager = gridHeaderCt.visibleColumnManager, numColsToMove = 1, visibleToIdx;
+  me.onHeadersChanged(headerToMove, true);
+  visibleToIdx = gridVisibleColumnManager.indexOf(headerToMove);
+  if (visibleToIdx >= headerToMove.visibleFromIdx) {
+    visibleToIdx++;
+  }
+  me.callParent(arguments);
+  if (headerToMove.isGroupHeader) {
+    numColsToMove = headerToMove.visibleColumnManager.getColumns().length;
+  }
+  gridHeaderCt.onHeaderMoved(headerToMove, numColsToMove, headerToMove.visibleFromIdx, visibleToIdx);
+}, maybeContinueRemove:function() {
+  var me = this;
+  return me.isGroupHeader && !me.applyingState && !me.isNestedParent && me.ownerCt && !me.items.getCount();
+}, onRemove:function(c, isDestroying) {
+  var me = this, ownerCt = me.ownerCt;
+  me.callParent([c, isDestroying]);
+  if (!me._usedIDs) {
+    me._usedIDs = {};
+  }
+  delete me._usedIDs[c.headerId];
+  if (!me.destroying) {
+    if (!me.getRootHeaderCt().isDDMoveInGrid) {
+      me.onHeadersChanged(c, false);
+    }
+    if (me.maybeContinueRemove()) {
+      if (c.rendered) {
+        c.detachFromBody();
+      }
+      me.destroyAfterRemoving = true;
+      Ext.suspendLayouts();
+      ownerCt.remove(me, false);
+      Ext.resumeLayouts(true);
+    }
+  }
+}, onHeadersChanged:function(c, isMove) {
+  var gridPanel, gridHeaderCt = this.getRootHeaderCt();
+  this.purgeHeaderCtCache(this);
+  if (gridHeaderCt) {
+    gridHeaderCt.onColumnsChanged();
+    gridPanel = gridHeaderCt.ownerCt;
+    if (gridPanel && !isMove) {
+      gridPanel.onHeadersChanged(gridHeaderCt, c);
+    }
+  }
+}, onHeaderMoved:function(header, colsToMove, fromIdx, toIdx) {
+  var me = this, gridSection = me.ownerCt;
+  if (me.rendered) {
+    if (gridSection && gridSection.onHeaderMove) {
+      gridSection.onHeaderMove(me, header, colsToMove, fromIdx, toIdx);
+    }
+    me.fireEvent('columnmove', me, header, fromIdx, toIdx);
+  }
+}, onColumnsChanged:function() {
+  var me = this, menu = me.menu, columnItemSeparator, columnItem;
+  if (me.rendered) {
+    me.fireEvent('columnschanged', me);
+    if (menu) {
+      columnItemSeparator = menu.child('#columnItemSeparator');
+      columnItem = menu.child('#columnItem');
+      if (columnItemSeparator) {
+        columnItemSeparator.destroy();
+      }
+      if (columnItem) {
+        columnItem.destroy();
+      }
+    }
+  }
+}, lookupComponent:function(comp) {
+  var result = this.callParent(arguments);
+  if (!result.isGroupHeader && result.width === undefined && !result.flex) {
+    result.width = this.defaultWidth;
+  }
+  return result;
+}, setSortState:function() {
+  var store = this.up('[store]').store, columns = this.visibleColumnManager.getColumns(), len = columns.length, i, header, sorter;
+  for (i = 0; i < len; i++) {
+    header = columns[i];
+    sorter = header.getSorter();
+    if (sorter) {
+      if (!store.getSorters().contains(sorter)) {
+        sorter = null;
+      }
+    } else {
+      sorter = store.getSorters().get(header.getSortParam());
+    }
+    header.setSortState(sorter);
+  }
+}, getHeaderMenu:function() {
+  var menu = this.getMenu(), item;
+  if (menu) {
+    item = menu.child('#columnItem');
+    if (item) {
+      return item.menu;
+    }
+  }
+  return null;
+}, onHeaderVisibilityChange:function(header, visible) {
+  var me = this, menu = me.getHeaderMenu(), item;
+  me.purgeHeaderCtCache(header.ownerCt);
+  if (menu) {
+    item = me.getMenuItemForHeader(menu, header);
+    if (item) {
+      item.setChecked(visible, true);
+    }
+    if (menu.isVisible()) {
+      me.menuTask.delay(50);
+    }
+  }
+}, updateMenuDisabledState:function(menu) {
+  var me = this, columns = me.query('gridcolumn:not([hidden])'), i, len = columns.length, item, checkItem, method;
+  if (!menu) {
+    menu = me.getMenu();
+  }
+  for (i = 0; i < len; ++i) {
+    item = columns[i];
+    checkItem = me.getMenuItemForHeader(menu, item);
+    if (checkItem) {
+      method = item.isHideable() ? 'enable' : 'disable';
+      if (checkItem.menu) {
+        method += 'CheckChange';
+      }
+      checkItem[method]();
+    }
+  }
+}, getMenuItemForHeader:function(menu, header) {
+  return header ? menu.down('menucheckitem[headerId\x3d' + header.id + ']') : null;
+}, onHeaderShow:function(header) {
+  var me = this, ownerCt = me.ownerCt, lastHiddenHeader = header.lastHiddenHeader;
+  if (!ownerCt) {
+    return;
+  }
+  if (me.forceFit) {
+    delete me.flex;
+  }
+  if (lastHiddenHeader && !header.query('[hidden\x3dfalse]').length) {
+    lastHiddenHeader.show();
+    header.lastHiddenHeader = null;
+  }
+  me.onHeaderVisibilityChange(header, true);
+  ownerCt.onHeaderShow(me, header);
+  me.fireEvent('columnshow', me, header);
+  me.fireEvent('columnschanged', this);
+}, onHeaderHide:function(header) {
+  var me = this, ownerCt = me.ownerCt;
+  if (!ownerCt) {
+    return;
+  }
+  me.onHeaderVisibilityChange(header, false);
+  ownerCt.onHeaderHide(me, header);
+  me.fireEvent('columnhide', me, header);
+  me.fireEvent('columnschanged', this);
+}, onHeaderResize:function(header, w) {
+  var me = this, gridSection = me.ownerCt;
+  if (gridSection) {
+    gridSection.onHeaderResize(me, header, w);
+  }
+  me.fireEvent('columnresize', me, header, w);
+}, onHeaderClick:function(header, e, t) {
+  var me = this, selModel = header.getView().getSelectionModel(), ret;
+  header.fireEvent('headerclick', me, header, e, t);
+  ret = me.fireEvent('headerclick', me, header, e, t);
+  if (ret !== false) {
+    if (selModel.onHeaderClick) {
+      selModel.onHeaderClick(me, header, e);
+    }
+  }
+  return ret;
+}, onHeaderContextMenu:function(header, e, t) {
+  header.fireEvent('headercontextmenu', this, header, e, t);
+  this.fireEvent('headercontextmenu', this, header, e, t);
+}, onHeaderTriggerClick:function(header, e, t) {
+  var me = this;
+  if (header.fireEvent('headertriggerclick', me, header, e, t) !== false && me.fireEvent('headertriggerclick', me, header, e, t) !== false) {
+    if (header.activeMenu) {
+      if (e.pointerType) {
+        header.activeMenu.hide();
+      } else {
+        header.activeMenu.focus();
+      }
+    } else {
+      me.showMenuBy(e, t, header);
+    }
+  }
+}, showMenuBy:function(clickEvent, t, header) {
+  var menu = this.getMenu(), ascItem = menu.down('#ascItem'), descItem = menu.down('#descItem'), sortableMth, isTouch = clickEvent && clickEvent.pointerType === 'touch';
+  menu.activeHeader = menu.ownerCmp = header;
+  header.setMenuActive(menu);
+  sortableMth = header.sortable ? 'enable' : 'disable';
+  if (ascItem) {
+    ascItem[sortableMth]();
+  }
+  if (descItem) {
+    descItem[sortableMth]();
+  }
+  menu.autoFocus = !clickEvent || clickEvent.keyCode;
+  menu.showBy(t, 'tl-bl?');
+  if (!menu.isVisible()) {
+    this.onMenuHide(menu);
+  }
+}, hideMenu:function() {
+  if (this.menu) {
+    this.menu.hide();
+  }
+}, onMenuHide:function(menu) {
+  menu.activeHeader.setMenuActive(false);
+}, purgeHeaderCtCache:function(headerCt) {
+  while (headerCt) {
+    headerCt.purgeCache();
+    if (headerCt.isRootHeader) {
+      return;
+    }
+    headerCt = headerCt.ownerCt;
+  }
+}, purgeCache:function() {
+  var me = this, visibleColumnManager = me.visibleColumnManager, columnManager = me.columnManager;
+  me.gridVisibleColumns = me.gridDataColumns = me.hideableColumns = null;
+  if (visibleColumnManager) {
+    visibleColumnManager.invalidate();
+    columnManager.invalidate();
+  }
+}, getMenu:function() {
+  var me = this, grid = me.view && me.view.ownerGrid;
+  if (!me.menu) {
+    me.menu = new Ext.menu.Menu({hideOnParentHide:false, items:me.getMenuItems(), listeners:{beforeshow:me.beforeMenuShow, hide:me.onMenuHide, scope:me}});
+    me.fireEvent('menucreate', me, me.menu);
+    if (grid) {
+      grid.fireEvent('headermenucreate', grid, me.menu, me);
+    }
+  }
+  return me.menu;
+}, beforeMenuShow:function(menu) {
+  var me = this, columnItem = menu.child('#columnItem'), hideableColumns, insertPoint;
+  if (!columnItem) {
+    hideableColumns = me.enableColumnHide ? me.getColumnMenu(me) : null;
+    insertPoint = me.sortable ? 2 : 0;
+    if (hideableColumns && hideableColumns.length) {
+      menu.insert(insertPoint, [{itemId:'columnItemSeparator', xtype:'menuseparator'}, {itemId:'columnItem', text:me.columnsText, iconCls:me.menuColsIcon, menu:{items:hideableColumns}, hideOnClick:false}]);
+    }
+  }
+  me.updateMenuDisabledState(me.menu);
+}, getMenuItems:function() {
+  var me = this, menuItems = [], hideableColumns = me.enableColumnHide ? me.getColumnMenu(me) : null;
+  if (me.sortable) {
+    menuItems = [{itemId:'ascItem', text:me.sortAscText, iconCls:me.menuSortAscCls, handler:me.onSortAscClick, scope:me}, {itemId:'descItem', text:me.sortDescText, iconCls:me.menuSortDescCls, handler:me.onSortDescClick, scope:me}];
+  }
+  if (hideableColumns && hideableColumns.length) {
+    if (me.sortable) {
+      menuItems.push({itemId:'columnItemSeparator', xtype:'menuseparator'});
+    }
+    menuItems.push({itemId:'columnItem', text:me.columnsText, iconCls:me.menuColsIcon, menu:hideableColumns, hideOnClick:false});
+  }
+  return menuItems;
+}, onSortAscClick:function() {
+  var menu = this.getMenu(), activeHeader = menu.activeHeader;
+  activeHeader.sort('ASC');
+}, onSortDescClick:function() {
+  var menu = this.getMenu(), activeHeader = menu.activeHeader;
+  activeHeader.sort('DESC');
+}, getColumnMenu:function(headerContainer) {
+  var menuItems = [], i = 0, item, items = headerContainer.query('\x3egridcolumn[hideable]'), itemsLn = items.length, menuItem;
+  for (; i < itemsLn; i++) {
+    item = items[i];
+    menuItem = new Ext.menu.CheckItem({text:item.menuText || item.text, checked:!item.hidden, hideOnClick:false, headerId:item.id, menu:item.isGroupHeader ? this.getColumnMenu(item) : undefined, checkHandler:this.onColumnCheckChange, scope:this});
+    menuItems.push(menuItem);
+  }
+  return menuItems.length ? menuItems : null;
+}, onColumnCheckChange:function(checkItem, checked) {
+  var header = Ext.getCmp(checkItem.headerId);
+  if (header.rendered) {
+    header[checked ? 'show' : 'hide']();
+  } else {
+    header.hidden = !checked;
+  }
+}, getColumnCount:function() {
+  return this.getGridColumns().length;
+}, getTableWidth:function() {
+  var fullWidth = 0, headers = this.getVisibleGridColumns(), headersLn = headers.length, i;
+  for (i = 0; i < headersLn; i++) {
+    fullWidth += headers[i].getCellWidth() || 0;
+  }
+  return fullWidth;
+}, getVisibleGridColumns:function() {
+  var me = this, allColumns, rootHeader, result, len, i, column;
+  if (me.gridVisibleColumns) {
+    return me.gridVisibleColumns;
+  }
+  allColumns = me.getGridColumns();
+  rootHeader = me.getRootHeaderCt();
+  result = [];
+  len = allColumns.length;
+  for (i = 0; i < len; i++) {
+    column = allColumns[i];
+    if (!column.hidden && !column.isColumnHidden(rootHeader)) {
+      result[result.length] = column;
+    }
+  }
+  me.gridVisibleColumns = result;
+  return result;
+}, isColumnHidden:function(rootHeader) {
+  var owner = this.getRefOwner();
+  while (owner && owner !== rootHeader) {
+    if (owner.hidden) {
+      return true;
+    }
+    owner = owner.getRefOwner();
+  }
+  return false;
+}, getGridColumns:function(inResult, hiddenAncestor) {
+  if (!inResult && this.gridDataColumns) {
+    return this.gridDataColumns;
+  }
+  var me = this, result = inResult || [], items, i, len, item, lastVisibleColumn;
+  hiddenAncestor = hiddenAncestor || me.hidden;
+  if (me.items) {
+    items = me.items.items;
+    if (items) {
+      for (i = 0, len = items.length; i < len; i++) {
+        item = items[i];
+        if (item.isGroupHeader) {
+          item.visibleIndex = result.length;
+          item.getGridColumns(result, hiddenAncestor);
+        } else {
+          item.hiddenAncestor = hiddenAncestor;
+          result.push(item);
+        }
+      }
+    }
+  }
+  if (!inResult) {
+    me.gridDataColumns = result;
+  }
+  if (!inResult && len) {
+    for (i = 0, len = result.length; i < len; i++) {
+      item = result[i];
+      item.fullColumnIndex = i;
+      item.isFirstVisible = item.isLastVisible = false;
+      if (!(item.hidden || item.hiddenAncestor)) {
+        if (!lastVisibleColumn) {
+          item.isFirstVisible = true;
+        }
+        lastVisibleColumn = item;
+      }
+    }
+    if (lastVisibleColumn) {
+      lastVisibleColumn.isLastVisible = true;
+    }
+  }
+  return result;
+}, getHideableColumns:function() {
+  var me = this, result = me.hideableColumns;
+  if (!result) {
+    result = me.hideableColumns = me.query('[hideable]');
+  }
+  return result;
+}, getHeaderIndex:function(header) {
+  if (!this.columnManager) {
+    this.columnManager = this.getRootHeaderCt().columnManager;
+  }
+  return this.columnManager.getHeaderIndex(header);
+}, getHeaderAtIndex:function(index) {
+  if (!this.columnManager) {
+    this.columnManager = this.getRootHeaderCt().columnManager;
+  }
+  return this.columnManager.getHeaderAtIndex(index);
+}, getVisibleHeaderClosestToIndex:function(index) {
+  if (!this.visibleColumnManager) {
+    this.visibleColumnManager = this.getRootHeaderCt().visibleColumnManager;
+  }
+  return this.visibleColumnManager.getVisibleHeaderClosestToIndex(index);
+}, applyForceFit:function(header) {
+  var me = this, view = me.view, minWidth = Ext.grid.plugin.HeaderResizer.prototype.minColWidth, useMinWidthForFlex = false, defaultWidth = Ext.grid.header.Container.prototype.defaultWidth, availFlex = me.el.dom.clientWidth - (view.el.dom.scrollHeight > view.el.dom.clientHeight ? Ext.getScrollbarSize().width : 0), totalFlex = 0, items = me.getVisibleGridColumns(), hidden = header.hidden, len, i, item, maxAvailFlexOneColumn, myWidth;
+  function getTotalFlex() {
+    for (i = 0, len = items.length; i < len; i++) {
+      item = items[i];
+      if (item === header) {
+        continue;
+      }
+      item.flex = item.flex || item.width || item.getWidth();
+      totalFlex += item.flex;
+      item.width = null;
+    }
+  }
+  function applyWidth() {
+    var isCurrentHeader;
+    for (i = 0, len = items.length; i < len; i++) {
+      item = items[i];
+      isCurrentHeader = item === header;
+      if (useMinWidthForFlex && !isCurrentHeader) {
+        item.flex = minWidth;
+        item.width = null;
+      } else {
+        if (!isCurrentHeader) {
+          myWidth = item.flex || defaultWidth;
+          item.flex = Math.max(Math.ceil(myWidth / totalFlex * availFlex), minWidth);
+          item.width = null;
+        }
+      }
+      item.setWidth(item.width || item.flex);
+    }
+  }
+  Ext.suspendLayouts();
+  maxAvailFlexOneColumn = availFlex - (items.length + 1) * minWidth;
+  header.flex = null;
+  if (hidden) {
+    myWidth = header.width || header.savedWidth || Math.floor(maxAvailFlexOneColumn / (items.length + 1));
+    header.savedWidth = null;
+  } else {
+    myWidth = view.getMaxContentWidth(header);
+  }
+  if (myWidth > maxAvailFlexOneColumn) {
+    header.width = maxAvailFlexOneColumn;
+    useMinWidthForFlex = true;
+  } else {
+    header.width = myWidth;
+    availFlex -= myWidth + defaultWidth;
+    getTotalFlex();
+  }
+  applyWidth();
+  Ext.resumeLayouts(true);
+}, autoSizeColumn:function(header) {
+  var view = this.view;
+  if (view) {
+    view.autoSizeColumn(header);
+    if (this.forceFit) {
+      this.applyForceFit(header);
+    }
+  }
+}, getRefItems:function(deep) {
+  var result = this.callParent([deep]);
+  if (this.menu) {
+    result.push(this.menu);
+  }
+  return result;
+}, initInheritedState:function(inheritedState, inheritedStateInner) {
+  if (this.sealed) {
+    inheritedState.sealed = true;
+  }
+  this.callParent([inheritedState, inheritedStateInner]);
+}, privates:{beginChildHide:function() {
+  ++this.childHideCount;
+}, endChildHide:function() {
+  --this.childHideCount;
+}, getFocusables:function() {
+  return this.isRootHeader ? this.getVisibleGridColumns() : this.items.items;
+}, initFocusableContainerKeyNav:function(el) {
+  var me = this;
+  if (!me.focusableKeyNav) {
+    me.focusableKeyNav = new Ext.util.KeyNav({target:el, scope:me, down:me.showHeaderMenu, left:me.onFocusableContainerLeftKey, right:me.onFocusableContainerRightKey, home:me.onHomeKey, end:me.onEndKey, space:me.onHeaderActivate, enter:me.onHeaderActivate});
+  }
+}, onHomeKey:function(e) {
+  return this.focusChild(null, true, e);
+}, onEndKey:function(e) {
+  return this.focusChild(null, false, e);
+}, showHeaderMenu:function(e) {
+  var column = this.getFocusableFromEvent(e);
+  if (column && column.isColumn && column.triggerEl) {
+    this.onHeaderTriggerClick(column, e, column.triggerEl);
+  }
+}, onHeaderActivate:function(e) {
+  var column = this.getFocusableFromEvent(e), view, lastFocused;
+  if (column && column.isColumn) {
+    view = column.getView();
+    if (column.sortable && this.sortOnClick) {
+      lastFocused = view.getNavigationModel().getLastFocused();
+      column.toggleSortState();
+      if (lastFocused) {
+        view.ownerCt.ensureVisible(lastFocused.record);
+      }
+    } else {
+      if (e.getKey() === e.SPACE) {
+        column.onTitleElClick(e, e.target, this.sortOnClick);
+      }
+    }
+    return this.onHeaderClick(column, e, column.el);
+  }
+}, onOwnerGridReconfigure:function(storeChanged, columnsChanged) {
+  var me = this;
+  if (!me.rendered || me.destroying || me.destroyed) {
+    return;
+  }
+  if (storeChanged || columnsChanged) {
+    if (Ext.Component.layoutSuspendCount) {
+      me.$initFocusableContainerAfterLayout = true;
+    } else {
+      me.initFocusableContainer();
+    }
+  }
+}}});
+Ext.define('Ext.grid.column.Column', {extend:Ext.grid.header.Container, xtype:'gridcolumn', alternateClassName:'Ext.grid.Column', config:{triggerVisible:false, sorter:null, align:'start'}, baseCls:Ext.baseCSSPrefix + 'column-header', hoverCls:Ext.baseCSSPrefix + 'column-header-over', ariaRole:'columnheader', focusableContainer:false, sortState:null, possibleSortStates:['ASC', 'DESC'], ariaSortStates:{ASC:'ascending', DESC:'descending'}, childEls:['titleEl', 'triggerEl', 'textEl', 'textContainerEl', 
+'textInnerEl'], headerWrap:false, renderTpl:['\x3cdiv id\x3d"{id}-titleEl" data-ref\x3d"titleEl" role\x3d"presentation"', '{tipMarkup}class\x3d"', Ext.baseCSSPrefix, 'column-header-inner\x3ctpl if\x3d"!$comp.isContainer"\x3e ', Ext.baseCSSPrefix, 'leaf-column-header\x3c/tpl\x3e', '\x3ctpl if\x3d"empty"\x3e ', Ext.baseCSSPrefix, 'column-header-inner-empty\x3c/tpl\x3e"\x3e', '\x3cdiv id\x3d"{id}-textContainerEl" data-ref\x3d"textContainerEl" role\x3d"presentation" class\x3d"', Ext.baseCSSPrefix, 'column-header-text-container"\x3e', 
+'\x3cdiv role\x3d"presentation" class\x3d"', Ext.baseCSSPrefix, 'column-header-text-wrapper"\x3e', '\x3cdiv id\x3d"{id}-textEl" data-ref\x3d"textEl" role\x3d"presentation" class\x3d"', Ext.baseCSSPrefix, 'column-header-text', '{childElCls}"\x3e', '\x3cspan id\x3d"{id}-textInnerEl" data-ref\x3d"textInnerEl" role\x3d"presentation" class\x3d"', Ext.baseCSSPrefix, 'column-header-text-inner"\x3e{text}\x3c/span\x3e', '\x3c/div\x3e', '{%', 'values.$comp.afterText(out, values);', '%}', '\x3c/div\x3e', '\x3c/div\x3e', 
+'\x3ctpl if\x3d"!menuDisabled"\x3e', '\x3cdiv id\x3d"{id}-triggerEl" data-ref\x3d"triggerEl" role\x3d"presentation" unselectable\x3d"on" class\x3d"', Ext.baseCSSPrefix, 'column-header-trigger', '{childElCls}" style\x3d"{triggerStyle}"\x3e\x3c/div\x3e', '\x3c/tpl\x3e', '\x3c/div\x3e', '{%this.renderContainer(out,values)%}'], dataIndex:null, text:' ', menuText:null, emptyCellText:' ', sortable:true, resizable:true, hideable:true, menuDisabled:false, renderer:false, draggable:true, tooltipType:'qtip', 
+initDraggable:Ext.emptyFn, tdCls:'', dirtyText:'Cell value has been edited', producesHTML:true, ignoreExport:false, exportStyle:null, exportRenderer:false, exportSummaryRenderer:false, isHeader:true, isColumn:true, scrollable:false, requiresMenu:false, tabIndex:-1, ascSortCls:Ext.baseCSSPrefix + 'column-header-sort-ASC', descSortCls:Ext.baseCSSPrefix + 'column-header-sort-DESC', componentLayout:'columncomponent', groupSubHeaderCls:Ext.baseCSSPrefix + 'group-sub-header', groupHeaderCls:Ext.baseCSSPrefix + 
+'group-header', clickTargetName:'titleEl', detachOnRemove:true, initResizable:Ext.emptyFn, rendererNames:{column:'renderer', edit:'editRenderer', summary:'summaryRenderer'}, formatterNames:{column:'formatter', edit:'editFormatter', summary:'summaryFormatter'}, initComponent:function() {
+  var me = this;
+  if (!me.rendererScope) {
+    me.rendererScope = me.scope;
+  }
+  if (me.header != null) {
+    me.text = me.header;
+    me.header = null;
+  }
+  if (me.cellWrap) {
+    me.tdCls = (me.tdCls || '') + ' ' + Ext.baseCSSPrefix + 'wrap-cell';
+  }
+  if (me.columns != null) {
+    me.isGroupHeader = true;
+    me.ariaRole = 'presentation';
+    if (me.dataIndex) {
+      Ext.raise('Ext.grid.column.Column: Group header may not accept a dataIndex');
+    }
+    if (me.width && me.width !== Ext.grid.header.Container.prototype.defaultWidth) {
+      Ext.raise('Ext.grid.column.Column: Group header does not support setting explicit widths. A group header either shrinkwraps its children, or must be flexed.');
+    }
+    me.items = me.columns;
+    me.columns = null;
+    me.cls = (me.cls || '') + ' ' + me.groupHeaderCls;
+    me.sortable = me.resizable = false;
+    me.align = 'center';
+  } else {
+    if (me.flex) {
+      me.minWidth = me.minWidth || Ext.grid.plugin.HeaderResizer.prototype.minColWidth;
+    }
+  }
+  me.addCls(Ext.baseCSSPrefix + 'column-header-align-' + me.getMappedAlignment(me.align));
+  me.setupRenderer();
+  me.setupRenderer('edit');
+  me.setupRenderer('summary');
+  me.callParent();
+}, beforeLayout:function() {
+  var me = this, items = me.items, colCount = 0, flex = me.flex, len, i, item, hasFlexedChildren;
+  if (flex && me.isGroupHeader) {
+    if (!Ext.isArray(items)) {
+      items = items.items;
+    }
+    len = items.length;
+    for (i = 0; !hasFlexedChildren && i < len; i++) {
+      item = items[i];
+      if (item.isColumn && !item.hidden) {
+        ++colCount;
+        hasFlexedChildren = item.flex;
+      }
+    }
+    if (!hasFlexedChildren && colCount) {
+      me.savedFlex = flex;
+      me.flex = null;
+    }
+  }
+  me.callParent();
+}, onAdded:function(container, pos, instanced) {
+  var me = this;
+  me.callParent([container, pos, instanced]);
+  me.view = me.rootHeaderCt = me.cellSelector = me.visibleIndex = null;
+  if (!me.headerId) {
+    me.calculateHeaderId();
+  }
+  me.configureStateInfo();
+}, _initSorterFn:function(a, b) {
+  var sorter = this, column = sorter.column, scope = column.resolveListenerScope(), name = sorter.methodName, fn = scope && scope[name], ret = 0;
+  if (fn) {
+    sorter.setSorterFn(fn);
+    sorter.column = null;
+    ret = fn.call(scope, a, b);
+  } else {
+    if (!scope) {
+      Ext.raise('Cannot resolve scope for column ' + column.id);
+    } else {
+      Ext.raise('No such method "' + name + '" on ' + scope.$className);
+    }
+  }
+  return ret;
+}, applySorter:function(sorter) {
+  var me = this, sorterFn = sorter ? sorter.sorterFn : null, tablepanel, ret;
+  if (typeof sorterFn === 'string') {
+    ret = new Ext.util.Sorter(Ext.applyIf({sorterFn:me._initSorterFn}, sorter));
+    ret.methodName = sorterFn;
+    ret.column = me;
+  } else {
+    tablepanel = me.getRootHeaderCt().up('tablepanel');
+    ret = tablepanel.store.getData().getSorters().decodeSorter(sorter);
+  }
+  return ret;
+}, updateAlign:function(align) {
+  this.textAlign = this.getMappedAlignment(align);
+}, bindFormatter:function(format) {
+  var me = this;
+  return function(v) {
+    return format(v, me.rendererScope || me.resolveListenerScope());
+  };
+}, bindRenderer:function(renderer) {
+  var me = this;
+  if (renderer in Ext.util.Format) {
+    Ext.log.warn('Use "formatter" config instead of "renderer" to use ' + 'Ext.util.Format to format cell values');
+  }
+  me.hasCustomRenderer = true;
+  return function() {
+    return Ext.callback(renderer, me.rendererScope, arguments, 0, me);
+  };
+}, setupRenderer:function(type) {
+  type = type || 'column';
+  var me = this, format = me[me.formatterNames[type]], renderer = me[me.rendererNames[type]], isColumnRenderer = type === 'column', parser, dynamic;
+  if (!format) {
+    if (renderer) {
+      if (typeof renderer === 'string') {
+        renderer = me[me.rendererNames[type]] = me.bindRenderer(renderer);
+        dynamic = true;
+      }
+      if (isColumnRenderer) {
+        me.hasCustomRenderer = dynamic || renderer.length > 1;
+      }
+    } else {
+      if (isColumnRenderer && me.defaultRenderer) {
+        me.renderer = me.defaultRenderer;
+        me.usingDefaultRenderer = true;
+      }
+    }
+  } else {
+    parser = Ext.app.bind.Parser.fly(format);
+    format = parser.compileFormat();
+    parser.release();
+    me[me.formatterNames[type]] = null;
+    me[me.rendererNames[type]] = me.bindFormatter(format);
+  }
+}, getView:function() {
+  var rootHeaderCt;
+  if (!this.view) {
+    rootHeaderCt = this.getRootHeaderCt();
+    if (rootHeaderCt) {
+      this.view = rootHeaderCt.view;
+    }
+  }
+  return this.view;
+}, onFocusLeave:function(e) {
+  this.callParent([e]);
+  if (this.activeMenu) {
+    this.activeMenu.hide();
+  }
+}, initItems:function() {
+  var me = this;
+  me.callParent(arguments);
+  if (me.isGroupHeader) {
+    if (me.config.hidden || !me.hasVisibleChildColumns()) {
+      me.hide();
+    }
+  }
+}, hasVisibleChildColumns:function() {
+  var items = this.items.items, len = items.length, i, item;
+  for (i = 0; i < len; ++i) {
+    item = items[i];
+    if (item.isColumn && !item.hidden) {
+      return true;
+    }
+  }
+  return false;
+}, onAdd:function(child) {
+  var me = this;
+  if (child.isColumn) {
+    child.isSubHeader = true;
+    child.addCls(me.groupSubHeaderCls);
+  }
+  if (me.isGroupHeader && me.hidden && me.hasVisibleChildColumns()) {
+    me.show();
+  }
+  me.callParent([child]);
+}, onRemove:function(child, isDestroying) {
+  var me = this;
+  if (child.isSubHeader) {
+    child.isSubHeader = false;
+    child.removeCls(me.groupSubHeaderCls);
+  }
+  me.callParent([child, isDestroying]);
+  if (!(me.destroyed || me.destroying) && !me.hasVisibleChildColumns() && (me.ownerCt && !me.ownerCt.isNested())) {
+    me.hide();
+  }
+}, initRenderData:function() {
+  var me = this, tipMarkup = '', tip = me.tooltip, text = me.text, attr = me.tooltipType === 'qtip' ? 'data-qtip' : 'title';
+  if (!Ext.isEmpty(tip)) {
+    tipMarkup = attr + '\x3d"' + tip + '" ';
+  }
+  return Ext.applyIf(me.callParent(arguments), {text:text, empty:me.isEmptyText(text), menuDisabled:me.menuDisabled, tipMarkup:tipMarkup, triggerStyle:this.getTriggerVisible() ? 'display:block' : ''});
+}, applyColumnState:function(state, storeState) {
+  var me = this, sorter = me.getSorter(), stateSorters = storeState && storeState.sorters, len, i, savedSorter, mySorterId;
+  if (sorter && stateSorters && (len = stateSorters.length)) {
+    mySorterId = sorter.getId();
+    for (i = 0; !savedSorter && i < len; i++) {
+      if (stateSorters[i].id === mySorterId) {
+        sorter.setDirection(stateSorters[i].direction);
+        stateSorters[i] = sorter;
+        break;
+      }
+    }
+  }
+  me.applyColumnsState(state.columns);
+  if (state.hidden != null) {
+    me.hidden = state.hidden;
+  }
+  if (state.locked != null) {
+    me.locked = state.locked;
+  }
+  if (state.sortable != null) {
+    me.sortable = state.sortable;
+  }
+  if (state.width != null) {
+    me.flex = null;
+    me.width = state.width;
+  } else {
+    if (state.flex != null) {
+      me.width = null;
+      me.flex = state.flex;
+    }
+  }
+}, getColumnState:function() {
+  var me = this, items = me.items.items, state = {id:me.getStateId()};
+  me.savePropsToState(['hidden', 'sortable', 'locked', 'flex', 'width'], state);
+  if (me.isGroupHeader && items && items.length) {
+    state.columns = me.getColumnsState();
+  }
+  if ('width' in state) {
+    delete state.flex;
+  }
+  return state;
+}, setText:function(text) {
+  var me = this, grid;
+  me.text = text;
+  if (me.rendered) {
+    grid = me.getView().ownerGrid;
+    me.textInnerEl.setHtml(text);
+    me.titleEl.toggleCls(Ext.baseCSSPrefix + 'column-header-inner-empty', me.isEmptyText(text));
+    grid.syncHeaderVisibility();
+  }
+}, getIndex:function() {
+  return this.isGroupColumn ? false : this.getRootHeaderCt().getHeaderIndex(this);
+}, getVisibleIndex:function() {
+  return this.visibleIndex != null ? this.visibleIndex : this.isGroupColumn ? false : Ext.Array.indexOf(this.getRootHeaderCt().getVisibleGridColumns(), this);
+}, getLabelChain:function() {
+  var child = this, labels = [], parent;
+  while (parent = child.up('headercontainer')) {
+    if (parent.text) {
+      labels.unshift(Ext.util.Format.stripTags(parent.text));
+    }
+    child = parent;
+  }
+  return labels;
+}, beforeRender:function() {
+  var me = this, rootHeaderCt = me.getRootHeaderCt(), isSortable = me.isSortable(), labels = [], ariaAttr;
+  me.textAlign = me.getMappedAlignment(me.getAlign());
+  me.callParent();
+  if (!me.requiresMenu && !isSortable && !me.groupable && !me.lockable && (rootHeaderCt.grid.enableColumnHide === false || !rootHeaderCt.getHideableColumns().length)) {
+    me.menuDisabled = true;
+  }
+  if (me.cellWrap) {
+    me.variableRowHeight = true;
+  }
+  ariaAttr = me.ariaRenderAttributes || (me.ariaRenderAttributes = {});
+  ariaAttr['aria-readonly'] = true;
+  if (isSortable) {
+    ariaAttr['aria-sort'] = me.ariaSortStates[me.sortState];
+  }
+  if (me.isSubHeader) {
+    labels = me.getLabelChain();
+    if (me.text) {
+      labels.push(Ext.util.Format.stripTags(me.text));
+    }
+    if (labels.length) {
+      ariaAttr['aria-label'] = labels.join(' ');
+    }
+  }
+  me.protoEl.unselectable();
+}, getTriggerElWidth:function() {
+  var me = this, triggerEl = me.triggerEl, width = me.self.triggerElWidth;
+  if (triggerEl && width === undefined) {
+    triggerEl.setStyle('display', 'block');
+    width = me.self.triggerElWidth = triggerEl.getWidth();
+    triggerEl.setStyle('display', '');
+  }
+  return width;
+}, afterComponentLayout:function(width, height, oldWidth, oldHeight) {
+  var me = this, rootHeaderCt = me.getRootHeaderCt(), savedFlex = me.savedFlex;
+  me.callParent([width, height, oldWidth, oldHeight]);
+  if (rootHeaderCt && (oldWidth != null || me.flex) && width !== oldWidth) {
+    rootHeaderCt.onHeaderResize(me, width);
+  }
+  if (savedFlex) {
+    me.flex = savedFlex;
+    delete me.savedFlex;
+  }
+}, doDestroy:function() {
+  Ext.destroy(this.field, this.editor);
+  this.callParent();
+}, onTitleMouseOver:function() {
+  this.titleEl.addCls(this.hoverCls);
+}, onTitleMouseOut:function() {
+  this.titleEl.removeCls(this.hoverCls);
+}, onDownKey:function(e) {
+  if (this.triggerEl) {
+    this.onTitleElClick(e, this.triggerEl.dom || this.el.dom);
+  }
+}, onEnterKey:function(e) {
+  this.onTitleElClick(e, this.el.dom);
+}, onTitleElDblClick:function(e) {
+  var me = this, prev, leafColumns, headerCt;
+  if (me.isAtStartEdge(e)) {
+    prev = me.previousNode('gridcolumn:not([hidden]):not([isGroupHeader])');
+    if (prev && prev.getRootHeaderCt() === me.getRootHeaderCt()) {
+      prev.autoSize();
+    }
+  } else {
+    if (me.isAtEndEdge(e)) {
+      if (me.isGroupHeader && e.getPoint().isContainedBy(me.layout.innerCt)) {
+        leafColumns = me.query('gridcolumn:not([hidden]):not([isGroupHeader])');
+        leafColumns[leafColumns.length - 1].autoSize();
+        return;
+      } else {
+        headerCt = me.getRootHeaderCt();
+        if (headerCt.visibleColumnManager.getColumns().length === 1 && headerCt.forceFit) {
+          return;
+        }
+      }
+      me.autoSize();
+    }
+  }
+}, autoSize:function() {
+  var me = this, leafColumns, numLeaves, i, headerCt;
+  if (me.resizable) {
+    if (me.isGroupHeader) {
+      leafColumns = me.query('gridcolumn:not([hidden]):not([isGroupHeader])');
+      numLeaves = leafColumns.length;
+      headerCt = me.getRootHeaderCt();
+      Ext.suspendLayouts();
+      for (i = 0; i < numLeaves; i++) {
+        headerCt.autoSizeColumn(leafColumns[i]);
+      }
+      Ext.resumeLayouts(true);
+      return;
+    }
+    me.getRootHeaderCt().autoSizeColumn(me);
+  }
+}, isEmptyText:function(text, visual) {
+  if (visual) {
+    return Ext.String.trim(text).length === 0;
+  } else {
+    return text == null || text === '';
+  }
+}, onTitleElClick:function(e, t, sortOnClick) {
+  var me = this, activeHeader, prevSibling, tapMargin;
+  if (e.pointerType === 'touch') {
+    prevSibling = me.previousSibling(':not([hidden])');
+    if (!me.menuDisabled) {
+      tapMargin = parseInt(me.triggerEl.getStyle('width'), 10);
+      if (isNaN(tapMargin)) {
+        tapMargin = me.getHandleWidth(e) * 3;
+      }
+      if (me.isAtEndEdge(e, tapMargin)) {
+        activeHeader = me;
+      }
+    }
+    if (!activeHeader && prevSibling && !prevSibling.menuDisabled && me.isAtStartEdge(e)) {
+      activeHeader = prevSibling;
+    }
+  } else {
+    activeHeader = me.triggerEl && (e.target === me.triggerEl.dom || t === me.triggerEl || e.within(me.triggerEl)) ? me : null;
+  }
+  if (sortOnClick !== false && (!activeHeader && !me.isAtStartEdge(e) && !me.isAtEndEdge(e) || e.getKey())) {
+    me.toggleSortState();
+  }
+  return activeHeader;
+}, processEvent:function(type, view, cell, recordIndex, cellIndex, e) {
+  return this.fireEvent.apply(this, arguments);
+}, isSortable:function() {
+  var rootHeader = this.getRootHeaderCt(), grid = rootHeader ? rootHeader.grid : null, sortable = this.sortable;
+  if (grid && grid.sortableColumns === false) {
+    sortable = false;
+  }
+  return sortable;
+}, toggleSortState:function() {
+  if (this.isSortable()) {
+    this.sort();
+  }
+}, sort:function(direction) {
+  var me = this, grid = me.up('tablepanel'), store = grid.store, storeIsSorted = store.isSorted(), storeSorters = storeIsSorted && store.getSorters(), sorter = me.getSorter(), idx = storeSorters && storeSorters.indexOf(sorter), currentDirection;
+  Ext.suspendLayouts();
+  if (sorter) {
+    currentDirection = sorter.getDirection();
+    if (!direction || currentDirection !== direction || !storeIsSorted || idx === -1) {
+      if ((!storeIsSorted || idx === -1) && currentDirection !== direction) {
+        sorter.setDirection(direction);
+      }
+      store.sort(sorter, grid.multiColumnSort ? 'multi' : 'replace');
+    }
+  } else {
+    store.sort(me.getSortParam(), direction, grid.multiColumnSort ? 'multi' : 'replace');
+  }
+  Ext.resumeLayouts(true);
+}, getSortParam:function() {
+  return this.dataIndex;
+}, setSortState:function(sorter) {
+  var me = this, direction = sorter && sorter.getDirection(), ascCls = me.ascSortCls, descCls = me.descSortCls, rootHeaderCt = me.getRootHeaderCt(), ariaDom = me.ariaEl.dom, changed;
+  switch(direction) {
+    case 'DESC':
+      if (!me.hasCls(descCls)) {
+        me.addCls(descCls);
+        me.sortState = 'DESC';
+        changed = true;
+      }
+      me.removeCls(ascCls);
+      break;
+    case 'ASC':
+      if (!me.hasCls(ascCls)) {
+        me.addCls(ascCls);
+        me.sortState = 'ASC';
+        changed = true;
+      }
+      me.removeCls(descCls);
+      break;
+    default:
+      me.removeCls([ascCls, descCls]);
+      me.sortState = null;
+      break;
+  }
+  if (ariaDom) {
+    if (me.sortState) {
+      ariaDom.setAttribute('aria-sort', me.ariaSortStates[me.sortState]);
+    } else {
+      ariaDom.removeAttribute('aria-sort');
+    }
+  }
+  if (changed) {
+    rootHeaderCt.fireEvent('sortchange', rootHeaderCt, me, direction);
+  }
+}, isHideable:function() {
+  var result = {hideCandidate:this, result:this.hideable};
+  if (result.result) {
+    this.ownerCt.bubble(this.hasOtherMenuEnabledChildren, null, [result]);
+  }
+  return result.result;
+}, hasOtherMenuEnabledChildren:function(result) {
+  var visibleChildren, count;
+  if (!this.isXType('headercontainer')) {
+    result.result = false;
+    return false;
+  }
+  visibleChildren = this.query('\x3egridcolumn:not([hidden]):not([menuDisabled])');
+  count = visibleChildren.length;
+  if (Ext.Array.contains(visibleChildren, result.hideCandidate)) {
+    count--;
+  }
+  if (count) {
+    return false;
+  }
+  result.hideCandidate = this;
+}, isLockable:function() {
+  var result = {result:this.lockable !== false};
+  if (result.result) {
+    this.ownerCt.bubble(this.hasMultipleVisibleChildren, null, [result]);
+  }
+  return result.result;
+}, isLocked:function() {
+  if (this.locked == null) {
+    this.locked = this.getInherited().inLockedGrid;
+  }
+  return this.locked;
+}, hasMultipleVisibleChildren:function(result) {
+  if (!this.isXType('headercontainer')) {
+    result.result = false;
+    return false;
+  }
+  if (this.query('\x3egridcolumn:not([hidden])').length > 1) {
+    return false;
+  }
+}, hide:function() {
+  var me = this, rootHeaderCt = me.getRootHeaderCt(), owner = me.getRefOwner();
+  if (owner.constructing) {
+    me.callParent();
+    return me;
+  }
+  if (me.rendered && !me.isVisible()) {
+    return me;
+  }
+  if (rootHeaderCt.forceFit) {
+    me.visibleSiblingCount = rootHeaderCt.getVisibleGridColumns().length - 1;
+    if (me.flex) {
+      me.savedWidth = me.getWidth();
+      me.flex = null;
+    }
+  }
+  rootHeaderCt.beginChildHide();
+  Ext.suspendLayouts();
+  if (owner.isGroupHeader) {
+    if (me.isNestedGroupHeader()) {
+      owner.hide();
+    }
+    if (me.isSubHeader && !me.isGroupHeader && owner.query('\x3egridcolumn:not([hidden])').length === 1) {
+      owner.lastHiddenHeader = me;
+    }
+  }
+  me.callParent();
+  rootHeaderCt.endChildHide();
+  rootHeaderCt.onHeaderHide(me);
+  Ext.resumeLayouts(true);
+  return me;
+}, show:function() {
+  var me = this, rootHeaderCt = me.getRootHeaderCt(), ownerCt = me.getRefOwner();
+  if (me.isVisible()) {
+    return me;
+  }
+  if (ownerCt.isGroupHeader) {
+    ownerCt.lastHiddenHeader = null;
+  }
+  if (me.rendered) {
+    if (rootHeaderCt.forceFit) {
+      rootHeaderCt.applyForceFit(me);
+    }
+  }
+  Ext.suspendLayouts();
+  if (me.isSubHeader && ownerCt.hidden) {
+    ownerCt.show(false, true);
+  }
+  me.callParent(arguments);
+  if (me.isGroupHeader) {
+    me.maybeShowNestedGroupHeader();
+  }
+  ownerCt = me.getRootHeaderCt();
+  if (ownerCt) {
+    ownerCt.onHeaderShow(me);
+  }
+  Ext.resumeLayouts(true);
+  return me;
+}, shouldUpdateCell:function(record, changedFieldNames) {
+  if (!this.preventUpdate) {
+    if (this.hasCustomRenderer) {
+      return 1;
+    }
+    if (changedFieldNames) {
+      var len = changedFieldNames.length, i, field;
+      for (i = 0; i < len; ++i) {
+        field = changedFieldNames[i];
+        if (field === this.dataIndex || field === record.idProperty) {
+          return 2;
+        }
+      }
+    } else {
+      return 2;
+    }
+  }
+}, getCellWidth:function() {
+  var me = this, result;
+  if (me.rendered && me.componentLayout && me.componentLayout.lastComponentSize) {
+    result = me.componentLayout.lastComponentSize.width;
+  } else {
+    if (me.width) {
+      result = me.width;
+    } else {
+      if (!me.isColumn) {
+        result = me.getTableWidth();
+      }
+    }
+  }
+  return result;
+}, getCellId:function() {
+  return Ext.baseCSSPrefix + 'grid-cell-' + this.getItemId();
+}, getCellSelector:function() {
+  if (!this.cellSelector) {
+    var view = this.getView();
+    this.cellSelector = (view ? view.getCellSelector() : '') + '.' + this.getCellId();
+  }
+  return this.cellSelector;
+}, getCellInnerSelector:function() {
+  return this.getCellSelector() + ' .' + Ext.baseCSSPrefix + 'grid-cell-inner';
+}, isAtStartEdge:function(e) {
+  var offset = e.getXY()[0] - this.getX();
+  if (offset < 0 && this.getIndex() === 0) {
+    return false;
+  }
+  return offset < this.getHandleWidth(e);
+}, isAtEndEdge:function(e, margin) {
+  return this.getX() + this.getWidth() - e.getXY()[0] <= (margin || this.getHandleWidth(e));
+}, getHandleWidth:function(e) {
+  return e.pointerType === 'touch' ? 10 : 4;
+}, setMenuActive:function(menu) {
+  this.activeMenu = menu;
+  this.titleEl[menu ? 'addCls' : 'removeCls'](this.headerOpenCls);
+}, privates:{_alignMap:{start:'left', end:'right'}, afterText:function(out, values) {
+  if (this.dirtyText) {
+    this.dirtyTextElementId = this.id + '-dirty-cell-text';
+    out.push('\x3cspan id\x3d"' + this.dirtyTextElementId + '" class\x3d"' + Ext.baseCSSPrefix + 'hidden-offsets"\x3e' + this.dirtyText + '\x3c/span\x3e');
+  }
+}, calculateHeaderId:function() {
+  var me = this, ownerGrid, counterOwner, items, item, i, len;
+  if (!me.headerId) {
+    ownerGrid = me.up('tablepanel');
+    if (!ownerGrid) {
+      return;
+    }
+    items = me.items.items;
+    if (items) {
+      for (i = 0, len = items.length; i < len; ++i) {
+        item = items[i];
+        if (item.isColumn) {
+          item.calculateHeaderId();
+        }
+      }
+    }
+    counterOwner = ownerGrid ? ownerGrid.ownerGrid : me.getRootHeaderCt();
+    counterOwner.headerCounter = (counterOwner.headerCounter || 0) + 1;
+    me.headerId = 'h' + counterOwner.headerCounter;
+  }
+  me.configureStateInfo();
+}, getMappedAlignment:function(align) {
+  return this._alignMap[align] || align;
+}, configureStateInfo:function() {
+  var me = this, sorter;
+  if (!me.stateId) {
+    me.stateId = me.initialConfig.id || me.headerId;
+  }
+  sorter = me.getSorter();
+  if (!me.hasSetSorter && sorter && !sorter.initialConfig.id) {
+    if (me.dataIndex || me.stateId) {
+      sorter.setId((me.dataIndex || me.stateId) + '-sorter');
+      me.hasSetSorter = true;
+    }
+  }
+}, onLock:function(header) {
+  var items = this.items.items, len = items.length, i, item;
+  for (i = 0; i < len; ++i) {
+    item = items[i];
+    if (item.isColumn) {
+      item.onLock(header);
+    }
+  }
+}, onUnlock:function(header) {
+  var items = this.items.items, len = items.length, i, item;
+  for (i = 0; i < len; ++i) {
+    item = items[i];
+    if (item.isColumn) {
+      item.onUnlock(header);
+    }
+  }
+}}, deprecated:{5:{methods:{bindRenderer:function(renderer) {
+  return function(value) {
+    return Ext.util.Format[renderer](value);
+  };
+}}}}});
+Ext.define('Ext.theme.triton.grid.column.Column', {override:'Ext.grid.column.Column', compatibility:Ext.isIE8, onTitleMouseOver:function() {
+  var triggerEl = this.triggerEl;
+  this.callParent(arguments);
+  if (triggerEl) {
+    triggerEl.syncRepaint();
+  }
+}});
+Ext.define('Ext.grid.column.ActionProxy', {constructor:function(column, item, itemIndex) {
+  this.column = column;
+  this.item = item;
+  this.itemIndex = itemIndex;
+}, setHandler:function(handler) {
+  this.item.handler = handler;
+}, setDisabled:function(disabled) {
+  if (disabled) {
+    this.column.disableAction(this.itemIndex);
+  } else {
+    this.column.enableAction(this.itemIndex);
+  }
+}, setIconCls:function(iconCls) {
+  this.item.iconCls = iconCls;
+  this.column.getView().refreshView();
+}, setIconGlyph:function(glyph) {
+  this.item.glyph = glyph;
+  this.column.getView().refreshView();
+}, setHidden:function(hidden) {
+  this.item.hidden = hidden;
+  this.column.getView().refreshView();
+}, setVisible:function(visible) {
+  this.setHidden(!visible);
+}, on:function() {
+  return this.column.on.apply(this.column, arguments);
+}});
+Ext.define('Ext.grid.column.Action', {extend:Ext.grid.column.Column, alias:['widget.actioncolumn'], alternateClassName:'Ext.grid.ActionColumn', stopSelection:true, actionIdRe:new RegExp(Ext.baseCSSPrefix + 'action-col-(\\d+)'), altText:'', menuText:'\x3ci\x3eActions\x3c/i\x3e', itemTabIndex:0, itemAriaRole:'button', maskOnDisable:false, ignoreExport:true, sortable:false, innerCls:Ext.baseCSSPrefix + 'grid-cell-inner-action-col', actionIconCls:Ext.baseCSSPrefix + 'action-col-icon', constructor:function(config) {
+  var me = this, cfg = Ext.apply({}, config), items = cfg.items || me.items || [me], hasGetClass, i, len, item;
+  me.origRenderer = cfg.renderer || me.renderer;
+  me.origScope = cfg.scope || me.scope;
+  me.renderer = me.scope = cfg.renderer = cfg.scope = null;
+  cfg.items = null;
+  me.callParent([cfg]);
+  if (me.hasOwnProperty('isDisabled')) {
+    Ext.log.warn('[Ext.grid.column.Action] The isDisabled config is deprecated. ' + 'Use isActionDisabled to avoid conflict with Ext.Component#isDisabled().');
+    me.isActionDisabled = me.isDisabled;
+    delete me.isDisabled;
+  }
+  me.items = items;
+  for (i = 0, len = items.length; i < len; ++i) {
+    item = items[i];
+    if (item.substr && item[0] === '@') {
+      item = me.getAction(item.substr(1));
+    }
+    if (item.hasOwnProperty('isDisabled')) {
+      Ext.log.warn('[Ext.grid.column.Action] The isDisabled config is deprecated. ' + 'Use isActionDisabled to avoid conflict with Ext.Component#isDisabled().');
+      item.isActionDisabled = item.isDisabled;
+      delete item.isDisabled;
+    }
+    if (item.isAction) {
+      items[i] = item.initialConfig;
+      item.addComponent(new Ext.grid.column.ActionProxy(me, items[i], i));
+    }
+    if (item.getClass) {
+      hasGetClass = true;
+    }
+  }
+  if (me.origRenderer || hasGetClass) {
+    me.hasCustomRenderer = true;
+  }
+}, initComponent:function() {
+  var me = this;
+  me.callParent();
+  if (me.sortable && !me.dataIndex) {
+    me.sortable = false;
+  }
+}, defaultRenderer:function(v, cellValues, record, rowIdx, colIdx, store, view) {
+  var me = this, scope = me.origScope || me, items = me.items, len = items.length, i, item, ret, disabled, tooltip, altText, icon, glyph, tabIndex, ariaRole;
+  ret = Ext.isFunction(me.origRenderer) ? me.origRenderer.apply(scope, arguments) || '' : '';
+  cellValues.tdCls += ' ' + Ext.baseCSSPrefix + 'action-col-cell';
+  for (i = 0; i < len; i++) {
+    item = items[i];
+    icon = item.icon;
+    glyph = item.glyph;
+    disabled = item.disabled || (item.isActionDisabled ? Ext.callback(item.isActionDisabled, item.scope || me.origScope, [view, rowIdx, colIdx, item, record], 0, me) : false);
+    tooltip = item.tooltip || (item.getTip ? Ext.callback(item.getTip, item.scope || me.origScope, arguments, 0, me) : null);
+    altText = item.getAltText ? Ext.callback(item.getAltText, item.scope || me.origScope, arguments, 0, me) : item.altText || me.altText;
+    if (!item.hasActionConfiguration) {
+      item.stopSelection = me.stopSelection;
+      item.disable = Ext.Function.bind(me.disableAction, me, [i], 0);
+      item.enable = Ext.Function.bind(me.enableAction, me, [i], 0);
+      item.hasActionConfiguration = true;
+    }
+    if (glyph) {
+      glyph = Ext.Glyph.fly(glyph);
+    }
+    tabIndex = item !== me && item.tabIndex !== undefined ? item.tabIndex : me.itemTabIndex;
+    ariaRole = item !== me && item.ariaRole !== undefined ? item.ariaRole : me.itemAriaRole;
+    ret += '\x3c' + (icon ? 'img' : 'div') + (typeof tabIndex === 'number' ? ' tabIndex\x3d"' + tabIndex + '"' : '') + (ariaRole ? ' role\x3d"' + ariaRole + '"' : ' role\x3d"presentation"') + (icon ? ' alt\x3d"' + altText + '" src\x3d"' + item.icon + '"' : '') + ' class\x3d"' + me.actionIconCls + ' ' + Ext.baseCSSPrefix + 'action-col-' + String(i) + ' ' + (disabled ? me.disabledCls + ' ' : ' ') + (item.hidden ? Ext.baseCSSPrefix + 'hidden-display ' : '') + (item.getClass ? Ext.callback(item.getClass, 
+    item.scope || me.origScope, arguments, undefined, me) : item.iconCls || me.iconCls || '') + '"' + (tooltip ? ' data-qtip\x3d"' + Ext.util.Format.htmlEncode(tooltip) + '"' : '') + (icon ? '/\x3e' : glyph ? ' style\x3d"font-family:' + glyph.fontFamily + '"\x3e' + glyph.character + '\x3c/div\x3e' : '\x3e\x3c/div\x3e');
+  }
+  return ret;
+}, updater:function(cell, value, record, view, dataSource) {
+  var cellValues = {};
+  Ext.fly(cell).addCls(cellValues.tdCls).down(this.getView().innerSelector, true).innerHTML = this.defaultRenderer(value, cellValues, record, null, null, dataSource, view);
+}, enableAction:function(index, silent) {
+  var me = this;
+  if (!index) {
+    index = 0;
+  } else {
+    if (!Ext.isNumber(index)) {
+      index = Ext.Array.indexOf(me.items, index);
+    }
+  }
+  me.items[index].disabled = false;
+  me.up('tablepanel').el.select('.' + Ext.baseCSSPrefix + 'action-col-' + index).removeCls(me.disabledCls);
+  if (!silent) {
+    me.fireEvent('enable', me);
+  }
+}, disableAction:function(index, silent) {
+  var me = this;
+  if (!index) {
+    index = 0;
+  } else {
+    if (!Ext.isNumber(index)) {
+      index = Ext.Array.indexOf(me.items, index);
+    }
+  }
+  me.items[index].disabled = true;
+  me.up('tablepanel').el.select('.' + Ext.baseCSSPrefix + 'action-col-' + index).addCls(me.disabledCls);
+  if (!silent) {
+    me.fireEvent('disable', me);
+  }
+}, doDestroy:function() {
+  this.renderer = this.items = null;
+  return this.callParent();
+}, processEvent:function(type, view, cell, recordIndex, cellIndex, e, record, row) {
+  var me = this, target = e.getTarget(), key = type === 'keydown' && e.getKey(), match, item, disabled, cellFly = Ext.fly(cell), oldActiveEl;
+  e.stopSelection = !key && me.stopSelection;
+  if (key && (target === cell || !cellFly.contains(target))) {
+    target = cellFly.query('.' + me.actionIconCls, true);
+    if (target.length === 1) {
+      target = target[0];
+    } else {
+      return;
+    }
+  }
+  if (target && (match = target.className.match(me.actionIdRe))) {
+    item = me.items[parseInt(match[1], 10)];
+    disabled = item.disabled || (item.isActionDisabled ? Ext.callback(item.isActionDisabled, item.scope || me.origScope, [view, recordIndex, cellIndex, item, record], 0, me) : false);
+    if (item && !disabled) {
+      if (type === 'mousedown' && !me.getView().actionableMode) {
+        e.preventDefault();
+      } else {
+        if (type === 'click' || (key === e.ENTER || key === e.SPACE)) {
+          oldActiveEl = Ext.Element.getActiveElement();
+          Ext.callback(item.handler || me.handler, item.scope || me.origScope, [view, recordIndex, cellIndex, item, e, record, row], undefined, me);
+          if (view.destroyed) {
+            return false;
+          } else {
+            if (!e.position.getNode(true)) {
+              e.position.refresh();
+            }
+            if (Ext.Element.getActiveElement() !== oldActiveEl) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+  }
+  return me.callParent(arguments);
+}, cascade:function(fn, scope) {
+  fn.call(scope || this, this);
+}, getRefItems:function() {
+  return [];
+}, contains:function() {
+  return false;
+}, privates:{getFocusables:function() {
+  return [];
+}, shouldUpdateCell:function() {
+  return 2;
+}}});
+Ext.define('Ext.grid.column.Check', {extend:Ext.grid.column.Column, alternateClassName:['Ext.ux.CheckColumn', 'Ext.grid.column.CheckColumn'], alias:'widget.checkcolumn', isCheckColumn:true, config:{headerCheckbox:false}, align:'center', triggerEvent:'click', invert:false, ignoreExport:true, stopSelection:true, headerCheckedCls:Ext.baseCSSPrefix + 'grid-hd-checker-on', headerCheckboxCls:Ext.baseCSSPrefix + 'column-header-checkbox', checkboxCls:Ext.baseCSSPrefix + 'grid-checkcolumn', checkboxCheckedCls:Ext.baseCSSPrefix + 
+'grid-checkcolumn-checked', innerCls:Ext.baseCSSPrefix + 'grid-checkcolumn-cell-inner', clickTargetName:'el', defaultFilterType:'boolean', checkboxAriaRole:'button', constructor:function(config) {
+  this.scope = this;
+  this.callParent([config]);
+}, afterComponentLayout:function() {
+  var me = this;
+  me.callParent(arguments);
+  if (me.useAriaElements && me.headerCheckbox) {
+    me.updateHeaderAriaDescription(me.areAllChecked());
+  }
+  if (!me.storeListeners) {
+    me.updateHeaderState();
+    me.storeListeners = me.getView().dataSource.on({datachanged:me.onDataChanged, scope:me, destroyable:true});
+  }
+}, onRemoved:function() {
+  this.callParent(arguments);
+  this.storeListeners = Ext.destroy(this.storeListeners);
+}, onDataChanged:function(store, records) {
+  this.updateHeaderState();
+}, updateHeaderCheckbox:function(headerCheckbox) {
+  var me = this, cls = Ext.baseCSSPrefix + 'column-header-checkbox';
+  if (headerCheckbox) {
+    me.addCls(cls);
+    me.sortable = false;
+    if (me.useAriaElements) {
+      me.updateHeaderAriaDescription(me.areAllChecked());
+    }
+  } else {
+    me.removeCls(cls);
+    if (me.useAriaElements && me.ariaEl.dom) {
+      me.ariaEl.dom.removeAttribute('aria-describedby');
+    }
+  }
+  me.updateHeaderState();
+}, processEvent:function(type, view, cell, recordIndex, cellIndex, e, record, row) {
+  var me = this, key = type === 'keydown' && e.getKey(), isClick = type === me.triggerEvent, disabled = me.disabled, ret, checked;
+  e.stopSelection = !key && me.stopSelection;
+  if (!disabled && (isClick || (key === e.ENTER || key === e.SPACE))) {
+    checked = !me.isRecordChecked(record);
+    if (me.fireEvent('beforecheckchange', me, recordIndex, checked, record, e) !== false) {
+      me.setRecordCheck(record, recordIndex, checked, cell, e);
+      if (isClick && !view.actionableMode) {
+        e.preventDefault();
+      }
+      if (me.hasListeners.checkchange) {
+        me.fireEvent('checkchange', me, recordIndex, checked, record, e);
+      }
+    }
+  } else {
+    ret = me.callParent(arguments);
+  }
+  return ret;
+}, onTitleElClick:function(e, t, sortOnClick) {
+  var me = this;
+  if (!me.disabled && (e.keyCode || !me.text || Ext.fly(e.target).hasCls(me.headerCheckboxCls))) {
+    me.toggleAll(e);
+  } else {
+    return me.callParent([e, t, sortOnClick]);
+  }
+}, toggleAll:function(e) {
+  var me = this, view = me.getView(), store = view.getStore(), checked = !me.allChecked, position;
+  if (me.fireEvent('beforeheadercheckchange', me, checked, e) !== false) {
+    if (me.hasListeners.checkchange || me.hasListeners.beforecheckchange) {
+      position = e.position = new Ext.grid.CellContext(view);
+    }
+    store.each(function(record, recordIndex) {
+      me.setRecordCheck(record, recordIndex, checked, view.getCell(record, me));
+    });
+    me.setHeaderStatus(checked, e);
+    me.fireEvent('headercheckchange', me, checked, e);
+  }
+}, setHeaderStatus:function(checked, e) {
+  var me = this;
+  if (me.allChecked !== checked) {
+    me.allChecked = checked;
+    if (me.headerCheckbox) {
+      me[checked ? 'addCls' : 'removeCls'](me.headerCheckedCls);
+      if (me.useAriaElements) {
+        me.updateHeaderAriaDescription(checked);
+      }
+    }
+  }
+}, updateHeaderState:function(e) {
+  var me = this;
+  if (!me.headerStateTimer) {
+    me.headerStateTimer = Ext.raf(me.doUpdateHeaderState, me);
+  }
+}, doUpdateHeaderState:function(e) {
+  var me = this;
+  me.headerStateTimer = null;
+  if (!me.destroyed && me.headerCheckbox) {
+    me.setHeaderStatus(me.areAllChecked(), e);
+  }
+}, onEnable:function() {
+  this.callParent(arguments);
+  this._setDisabled(false);
+}, onDisable:function() {
+  this._setDisabled(true);
+}, _setDisabled:function(disabled) {
+  var me = this, cls = me.disabledCls, items;
+  items = me.up('tablepanel').el.select(me.getCellSelector());
+  if (disabled) {
+    items.addCls(cls);
+  } else {
+    items.removeCls(cls);
+  }
+}, defaultRenderer:function(value, cellValues) {
+  var me = this, cls = me.checkboxCls, tip = '';
+  if (me.invert) {
+    value = !value;
+  }
+  if (me.disabled) {
+    cellValues.tdCls += ' ' + me.disabledCls;
+  }
+  if (value) {
+    cls += ' ' + me.checkboxCheckedCls;
+    tip = me.checkedTooltip;
+  } else {
+    tip = me.tooltip;
+  }
+  if (tip) {
+    cellValues.tdAttr += ' data-qtip\x3d"' + Ext.htmlEncode(tip) + '"';
+  }
+  if (me.useAriaElements) {
+    cellValues.tdAttr += ' aria-describedby\x3d"' + me.id + '-cell-description' + (!value ? '-not' : '') + '-selected"';
+  }
+  me.updateHeaderState();
+  return '\x3cspan class\x3d"' + cls + '" role\x3d"' + me.checkboxAriaRole + '"' + (!me.ariaStaticRoles[me.checkboxAriaRole] ? ' tabIndex\x3d"0"' : '') + '\x3e\x3c/span\x3e';
+}, isRecordChecked:function(record) {
+  var prop = this.property;
+  if (prop) {
+    return record[prop];
+  }
+  return record.get(this.dataIndex);
+}, areAllChecked:function() {
+  var me = this, store = me.getView().getStore(), records, len, i;
+  if (!store.isBufferedStore && store.getCount() > 0) {
+    records = store.getData().items;
+    len = records.length;
+    for (i = 0; i < len; ++i) {
+      if (!me.isRecordChecked(records[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+}, setRecordCheck:function(record, recordIndex, checked, cell) {
+  var me = this, prop = me.property;
+  if ((prop ? record[prop] : record.get(me.dataIndex)) != checked) {
+    if (prop) {
+      record[prop] = checked;
+      me.updater(cell, checked);
+    } else {
+      record.set(me.dataIndex, checked);
+    }
+  }
+}, updater:function(cell, value) {
+  var me = this, tip;
+  if (me.invert) {
+    value = !value;
+  }
+  if (value) {
+    tip = me.checkedTooltip;
+  } else {
+    tip = me.tooltip;
+  }
+  if (tip) {
+    cell.setAttribute('data-qtip', tip);
+  } else {
+    cell.removeAttribute('data-qtip');
+  }
+  if (me.useAriaElements) {
+    me.updateCellAriaDescription(null, value, cell);
+  }
+  cell = Ext.fly(cell);
+  cell[me.disabled ? 'addCls' : 'removeCls'](me.disabledCls);
+  Ext.fly(cell.down(me.getView().innerSelector, true).firstChild)[value ? 'addCls' : 'removeCls'](Ext.baseCSSPrefix + 'grid-checkcolumn-checked');
+  me.updateHeaderState();
+}, updateHeaderAriaDescription:function(isSelected) {
+  var me = this;
+  if (me.useAriaElements && me.ariaEl.dom) {
+    me.ariaEl.dom.setAttribute('aria-describedby', me.id + '-header-description' + (!isSelected ? '-not' : '') + '-selected');
+  }
+}, updateCellAriaDescription:function(record, isSelected, cell) {
+  var me = this;
+  if (me.useAriaElements) {
+    cell = cell || me.getView().getCell(record, me);
+    if (cell) {
+      cell.setAttribute('aria-describedby', me.id + '-cell-description' + (!isSelected ? '-not' : '') + '-selected');
+    }
+  }
+}, doDestroy:function() {
+  Ext.unraf(this.headerStateTimer);
+  this.callParent();
+}, privates:{afterText:function(out, values) {
+  var me = this, id = me.id;
+  out.push('\x3cspan role\x3d"presentation" class\x3d"', me.headerCheckboxCls, '"\x3e\x3c/span\x3e');
+  if (me.useAriaElements) {
+    out.push('\x3cspan id\x3d"' + id + '-header-description-selected" class\x3d"' + Ext.baseCSSPrefix + 'hidden-offsets"\x3e' + me.headerDeselectText + '\x3c/span\x3e' + '\x3cspan id\x3d"' + id + '-header-description-not-selected" class\x3d"' + Ext.baseCSSPrefix + 'hidden-offsets"\x3e' + me.headerSelectText + '\x3c/span\x3e' + '\x3cspan id\x3d"' + id + '-cell-description-selected" class\x3d"' + Ext.baseCSSPrefix + 'hidden-offsets"\x3e' + me.rowDeselectText + '\x3c/span\x3e' + '\x3cspan id\x3d"' + 
+    id + '-cell-description-not-selected" class\x3d"' + Ext.baseCSSPrefix + 'hidden-offsets"\x3e' + me.rowSelectText + '\x3c/span\x3e');
+  }
+}}});
+Ext.define('Ext.theme.triton.grid.column.Check', {override:'Ext.grid.column.Check', compatibility:Ext.isIE8, setRecordCheck:function(record, index, checked, cell) {
+  this.callParent(arguments);
+  Ext.fly(cell).syncRepaint();
+}});
+Ext.define('Ext.grid.column.Date', {extend:Ext.grid.column.Column, alias:['widget.datecolumn'], alternateClassName:'Ext.grid.DateColumn', isDateColumn:true, defaultFilterType:'date', producesHTML:false, initComponent:function() {
+  if (!this.format) {
+    this.format = Ext.Date.defaultFormat;
+  }
+  this.callParent(arguments);
+}, defaultRenderer:function(value) {
+  return Ext.util.Format.date(value, this.format);
+}, updater:function(cell, value) {
+  Ext.fly(cell).down(this.getView().innerSelector, true).innerHTML = Ext.grid.column.Date.prototype.defaultRenderer.call(this, value);
+}});
+Ext.define('Ext.grid.column.RowNumberer', {extend:Ext.grid.column.Column, alternateClassName:'Ext.grid.RowNumberer', alias:'widget.rownumberer', isRowNumberer:true, text:'\x26#160;', width:30, sortable:false, draggable:false, autoLock:true, lockable:false, align:'right', producesHTML:false, ignoreExport:true, constructor:function(config) {
+  var me = this;
+  me.width = me.width;
+  me.callParent(arguments);
+  me.sortable = false;
+  me.scope = me;
+}, resizable:false, hideable:false, menuDisabled:true, dataIndex:'', cls:Ext.baseCSSPrefix + 'row-numberer', tdCls:Ext.baseCSSPrefix + 'grid-cell-row-numberer ' + Ext.baseCSSPrefix + 'grid-cell-special', innerCls:Ext.baseCSSPrefix + 'grid-cell-inner-row-numberer', rowspan:undefined, onAdded:function() {
+  var me = this;
+  me.renumberRows = Ext.Function.createBuffered(me.renumberRows, 1, me);
+  me.callParent(arguments);
+  me.storeListener = me.getView().on({itemadd:me.renumberRows, itemremove:me.renumberRows, destroyable:true});
+}, onRemoved:function() {
+  var me = this;
+  me.callParent(arguments);
+  if (me.storeListener) {
+    me.storeListener = me.storeListener.destroy();
+  }
+  if (me.renumberRows.timer) {
+    Ext.undefer(me.renumberRows.timer);
+  }
+  me.renumberRows = null;
+  delete me.renumberRows;
+}, defaultRenderer:function(value, metaData, record, rowIdx, colIdx, dataSource, view) {
+  var me = this, rowspan = me.rowspan, page = dataSource.currentPage, result = record ? view.store.indexOf(record) : value - 1;
+  if (metaData && rowspan) {
+    metaData.tdAttr = 'rowspan\x3d"' + rowspan + '"';
+  }
+  if (page > 1) {
+    result += (page - 1) * dataSource.pageSize;
+  }
+  return result + 1;
+}, updater:function(cell, value, record, view, dataSource) {
+  var cellInner = cell && cell.querySelector(this.getView().innerSelector);
+  if (cellInner) {
+    cellInner.innerHTML = this.defaultRenderer(value, null, record, null, null, dataSource, view);
+  }
+}, renumberRows:function() {
+  if (this.destroying || this.destroyed) {
+    return;
+  }
+  var me = this, view = me.getView(), dataSource = view.dataSource, recCount = dataSource.getCount(), context = (new Ext.grid.CellContext(view)).setColumn(me), rows = me.getView().all, index = rows.startIndex;
+  while (index <= rows.endIndex && index < recCount) {
+    context.setRow(index);
+    me.updater(context.getCell(true), ++index, null, view, dataSource);
+  }
+}});
+Ext.define('Ext.theme.neptune.grid.column.RowNumberer', {override:'Ext.grid.column.RowNumberer', width:25});
+Ext.define('Ext.theme.triton.grid.column.RowNumberer', {override:'Ext.grid.column.RowNumberer', width:32});
 Ext.define('Ext.menu.Item', {extend:Ext.Component, alias:'widget.menuitem', alternateClassName:'Ext.menu.TextItem', isMenuItem:true, mixins:[Ext.mixin.Queryable], config:{glyph:null}, activated:false, activeCls:Ext.baseCSSPrefix + 'menu-item-active', clickHideDelay:0, destroyMenu:true, disabledCls:Ext.baseCSSPrefix + 'menu-item-disabled', hideOnClick:true, menuAlign:'tl-tr?', menuExpandDelay:200, menuHideDelay:200, tooltipType:'qtip', focusable:true, ariaRole:'menuitem', ariaEl:'itemEl', baseCls:Ext.baseCSSPrefix + 
 'menu-item', arrowCls:Ext.baseCSSPrefix + 'menu-item-arrow', baseIconCls:Ext.baseCSSPrefix + 'menu-item-icon', textCls:Ext.baseCSSPrefix + 'menu-item-text', indentCls:Ext.baseCSSPrefix + 'menu-item-indent', indentNoSeparatorCls:Ext.baseCSSPrefix + 'menu-item-indent-no-separator', indentRightIconCls:Ext.baseCSSPrefix + 'menu-item-indent-right-icon', indentRightArrowCls:Ext.baseCSSPrefix + 'menu-item-indent-right-arrow', linkCls:Ext.baseCSSPrefix + 'menu-item-link', linkHrefCls:Ext.baseCSSPrefix + 
 'menu-item-link-href', childEls:['itemEl', 'iconEl', 'textEl', 'arrowEl'], renderTpl:'\x3ctpl if\x3d"plain"\x3e' + '{text}' + '\x3ctpl else\x3e' + '\x3ca id\x3d"{id}-itemEl" data-ref\x3d"itemEl"' + ' class\x3d"{linkCls}\x3ctpl if\x3d"hasHref"\x3e {linkHrefCls}\x3c/tpl\x3e{childElCls}"' + ' href\x3d"{href}" ' + '\x3ctpl if\x3d"hrefTarget"\x3e target\x3d"{hrefTarget}"\x3c/tpl\x3e' + ' hidefocus\x3d"true"' + ' unselectable\x3d"on"' + '\x3ctpl if\x3d"tabIndex !\x3d null"\x3e' + ' tabindex\x3d"{tabIndex}"' + 
@@ -64776,6 +75456,1998 @@ Ext.define('Ext.theme.triton.menu.Menu', {override:'Ext.menu.Menu', compatibilit
       item.repaintIcons();
     }
   }
+}});
+Ext.define('Ext.grid.locking.HeaderContainer', {extend:Ext.grid.header.Container, headerCtRelayEvents:['blur', 'focus', 'move', 'resize', 'destroy', 'beforedestroy', 'boxready', 'afterrender', 'render', 'beforerender', 'removed', 'hide', 'beforehide', 'show', 'beforeshow', 'enable', 'disable', 'added', 'deactivate', 'beforedeactivate', 'activate', 'beforeactivate', 'remove', 'add', 'beforeremove', 'beforeadd', 'afterlayout', 'menucreate', 'sortchange', 'columnschanged', 'columnshow', 'columnhide', 
+'columnmove', 'headertriggerclick', 'headercontextmenu', 'headerclick', 'columnresize', 'statesave', 'beforestatesave', 'staterestore', 'beforestaterestore'], constructor:function(lockable) {
+  var me = this, lockedGrid = lockable.lockedGrid, normalGrid = lockable.normalGrid;
+  me.lockable = lockable;
+  me.callParent();
+  lockedGrid.visibleColumnManager.rootColumns = normalGrid.visibleColumnManager.rootColumns = lockable.visibleColumnManager = me.visibleColumnManager = new Ext.grid.ColumnManager(true, lockedGrid.headerCt, normalGrid.headerCt);
+  lockedGrid.columnManager.rootColumns = normalGrid.columnManager.rootColumns = lockable.columnManager = me.columnManager = new Ext.grid.ColumnManager(false, lockedGrid.headerCt, normalGrid.headerCt);
+  me.lockedEventRelayers = me.relayEvents(lockedGrid.headerCt, me.headerCtRelayEvents);
+  me.normalEventRelayers = me.relayEvents(normalGrid.headerCt, me.headerCtRelayEvents);
+}, getRefItems:function() {
+  return this.lockable.lockedGrid.headerCt.getRefItems().concat(this.lockable.normalGrid.headerCt.getRefItems());
+}, getGridColumns:function() {
+  return this.lockable.lockedGrid.headerCt.getGridColumns().concat(this.lockable.normalGrid.headerCt.getGridColumns());
+}, getColumnsState:function() {
+  var me = this, locked = me.lockable.lockedGrid.headerCt.getColumnsState(), normal = me.lockable.normalGrid.headerCt.getColumnsState();
+  return locked.concat(normal);
+}, applyColumnsState:function(columnsState, storeState) {
+  var me = this, lockedGrid = me.lockable.lockedGrid, normalGrid = me.lockable.normalGrid, lockedHeaderCt = lockedGrid.headerCt, normalHeaderCt = me.lockable.normalGrid.headerCt, columns = lockedHeaderCt.items.items.concat(normalHeaderCt.items.items), length = columns.length, i, colState, column, lockedCount, switchSides;
+  for (i = 0; i < length; i++) {
+    column = columns[i];
+    colState = columnsState[column.getStateId()];
+    if (colState) {
+      switchSides = colState.locked != null && !!column.locked !== colState.locked;
+      if (column.applyColumnState) {
+        column.applyColumnState(colState, storeState);
+      }
+      if (switchSides) {
+        (column.locked ? lockedHeaderCt : normalHeaderCt).add(column);
+      }
+    }
+  }
+  lockedCount = lockedHeaderCt.items.items.length;
+  for (i = 0; i < length; i++) {
+    column = columns[i];
+    colState = columnsState[column.getStateId()];
+    if (colState && !column.locked) {
+      colState.index -= lockedCount;
+    }
+  }
+  lockedHeaderCt.applyColumnsState(columnsState, storeState);
+  normalHeaderCt.applyColumnsState(columnsState, storeState);
+  if (!lockedGrid.getVisibleColumnManager().getColumns().length) {
+    lockedGrid.hide();
+  }
+  if (!normalGrid.getVisibleColumnManager().getColumns().length) {
+    normalGrid.hide();
+  }
+}, disable:function() {
+  var topGrid = this.lockable;
+  topGrid.lockedGrid.headerCt.disable();
+  topGrid.normalGrid.headerCt.disable();
+}, enable:function() {
+  var topGrid = this.lockable;
+  topGrid.lockedGrid.headerCt.enable();
+  topGrid.normalGrid.headerCt.enable();
+}});
+Ext.define('Ext.grid.locking.View', {alternateClassName:'Ext.grid.LockingView', mixins:[Ext.util.Observable, Ext.util.StoreHolder, Ext.mixin.Focusable], isLockingView:true, loadMask:true, eventRelayRe:/^(beforeitem|beforecontainer|item|container|cell|refresh)/, constructor:function(config) {
+  var ext = Ext, me = this, lockedView, normalView;
+  me.ownerGrid = config.ownerGrid;
+  me.ownerGrid.view = me;
+  me.navigationModel = config.locked.xtype === 'treepanel' ? new ext.tree.NavigationModel(me) : new ext.grid.NavigationModel(me);
+  config.locked.viewConfig.bindStore = ext.emptyFn;
+  config.normal.viewConfig.bindStore = me.subViewBindStore;
+  config.normal.viewConfig.isNormalView = config.locked.viewConfig.isLockedView = true;
+  config.locked.viewConfig.navigationModel = config.normal.viewConfig.navigationModel = me.navigationModel;
+  me.lockedGrid = me.ownerGrid.lockedGrid = ext.ComponentManager.create(config.locked);
+  me.lockedView = lockedView = me.lockedGrid.getView();
+  me.selModel = config.normal.viewConfig.selModel = lockedView.getSelectionModel();
+  if (me.lockedGrid.isTree) {
+    me.lockedView.animate = false;
+    config.normal.store = lockedView.store;
+    config.normal.viewConfig.stripeRows = me.lockedView.stripeRows;
+    config.normal.rowLines = me.lockedGrid.rowLines;
+  }
+  me.normalGrid = me.ownerGrid.normalGrid = ext.ComponentManager.create(config.normal);
+  lockedView.lockingPartner = normalView = me.normalView = me.normalGrid.getView();
+  normalView.lockingPartner = lockedView;
+  Ext.override(me.normalGrid, {beforeRender:me.beforeNormalGridRender});
+  me.loadMask = config.loadMask !== undefined ? config.loadMask : me.loadMask;
+  me.mixins.observable.constructor.call(me);
+  me.lockedViewEventRelayers = me.relayEvents(lockedView, ext.view.Table.events);
+  me.normalViewEventRelayers = me.relayEvents(normalView, ext.view.Table.events.concat(ext.view.Table.normalSideEvents));
+  normalView.on({scope:me, itemmouseleave:me.onItemMouseLeave, itemmouseenter:me.onItemMouseEnter});
+  lockedView.on({scope:me, itemmouseleave:me.onItemMouseLeave, itemmouseenter:me.onItemMouseEnter});
+  me.loadingText = normalView.loadingText;
+  me.loadingCls = normalView.loadingCls;
+  me.loadingUseMsg = normalView.loadingUseMsg;
+  me.itemSelector = me.getItemSelector();
+  me.all = normalView.all;
+  me.bindStore(normalView.dataSource, true, 'dataSource');
+}, subViewBindStore:function(store, initial) {
+  var me = this, grid = me.ownerGrid, selModel;
+  if (me.destroying || me.destroyed || grid.destroying || grid.destroyed) {
+    return;
+  }
+  selModel = me.getSelectionModel();
+  selModel.bindStore(store, initial);
+  selModel.bindComponent(me);
+}, beforeNormalGridRender:function() {
+  if (this.ownerGrid.lockedGrid.getHeader() && !this.title) {
+    this.title = ' ';
+  }
+  this.callParent();
+}, onPanelRender:function(el) {
+  var me = this, mask = me.loadMask, cfg = {target:me.ownerGrid, msg:me.loadingText, msgCls:me.loadingCls, useMsg:me.loadingUseMsg, store:me.ownerGrid.store};
+  me.el = el;
+  me.rendered = true;
+  me.fireEvent('render', me);
+  me.ownerGrid.maskElement = 'scrollBody';
+  if (mask) {
+    if (Ext.isObject(mask)) {
+      cfg = Ext.apply(cfg, mask);
+    }
+    me.loadMask = new Ext.LoadMask(cfg);
+  }
+}, getRefOwner:function() {
+  return this.ownerGrid;
+}, getVisibleColumnManager:function() {
+  return this.ownerGrid.getVisibleColumnManager();
+}, getTopLevelVisibleColumnManager:function() {
+  return this.ownerGrid.getVisibleColumnManager();
+}, getGridColumns:function() {
+  return this.getVisibleColumnManager().getColumns();
+}, getEl:function(column) {
+  return column.getView().getEl();
+}, getCellSelector:function() {
+  return this.normalView.getCellSelector();
+}, getItemSelector:function() {
+  return this.normalView.getItemSelector();
+}, onItemMouseEnter:function(view, record) {
+  var me = this, locked = me.lockedView, other = me.normalView, item;
+  if (view.trackOver) {
+    if (view !== locked) {
+      other = locked;
+    }
+    item = other.getNode(record);
+    other.highlightItem(item);
+  }
+}, onItemMouseLeave:function(view, record) {
+  var me = this, locked = me.lockedView, other = me.normalView;
+  if (view.trackOver) {
+    if (view !== locked) {
+      other = locked;
+    }
+    other.clearHighlight();
+  }
+}, relayFn:function(name, args) {
+  args = args || [];
+  var me = this, view = me.lockedView;
+  me.relayingOperation = true;
+  view[name].apply(view, args);
+  view = me.normalView;
+  view[name].apply(view, args);
+  me.relayingOperation = false;
+}, getSelectionModel:function() {
+  return this.normalView.getSelectionModel();
+}, getNavigationModel:function() {
+  return this.navigationModel;
+}, getStore:function() {
+  return this.ownerGrid.store;
+}, onBindStore:function(store) {
+  var me = this, lockedView = me.lockedView, normalView = me.normalView;
+  if (normalView.componentLayoutCounter && !(lockedView.blockRefresh && normalView.blockRefresh)) {
+    Ext.suspendLayouts();
+    lockedView.doFirstRefresh(store);
+    normalView.doFirstRefresh(store);
+    Ext.resumeLayouts(true);
+  }
+}, getStoreListeners:function() {
+  var me = this;
+  return {priority:1000, refresh:me.onDataRefresh, replace:me.onReplace, add:me.onAdd, remove:me.onRemove, update:me.onUpdate, clear:me.onDataRefresh, beginupdate:me.onBeginUpdate, endupdate:me.onEndUpdate};
+}, onOwnerGridHide:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onOwnerGridHide', arguments);
+  Ext.resumeLayouts(true);
+}, onOwnerGridShow:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onOwnerGridShow', arguments);
+  Ext.resumeLayouts(true);
+}, onBeginUpdate:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onBeginUpdate', arguments);
+  Ext.resumeLayouts(true);
+}, onEndUpdate:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onEndUpdate', arguments);
+  Ext.resumeLayouts(true);
+}, onDataRefresh:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onDataRefresh', arguments);
+  Ext.resumeLayouts(true);
+}, onReplace:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onReplace', arguments);
+  Ext.resumeLayouts(true);
+}, onAdd:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onAdd', arguments);
+  Ext.resumeLayouts(true);
+}, onRemove:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onRemove', arguments);
+  Ext.resumeLayouts(true);
+}, setActionableMode:function(enabled, position) {
+  var result, targetView;
+  if (enabled) {
+    if (!position) {
+      position = this.getNavigationModel().getPosition();
+    }
+    if (position) {
+      position = position.clone();
+      position.view = targetView = position.column.getView();
+      result = targetView.setActionableMode(enabled, position);
+      if (result !== false && targetView.lockingPartner.grid.isVisible()) {
+        targetView.lockingPartner.setActionableMode(enabled, position);
+        if (!targetView.lockingPartner.actionableMode) {
+          targetView.setActionableMode(false);
+          result = false;
+        }
+      }
+      return result;
+    } else {
+      return false;
+    }
+  } else {
+    this.relayFn('setActionableMode', [false, position]);
+  }
+}, onUpdate:function() {
+  Ext.suspendLayouts();
+  this.relayFn('onUpdate', arguments);
+  Ext.resumeLayouts(true);
+}, refresh:function() {
+  var lockedView = this.lockedView, normalView = this.normalView;
+  Ext.suspendLayouts();
+  lockedView.clearViewEl(true);
+  normalView.clearViewEl(true);
+  normalView.refresh();
+  lockedView.refresh();
+  Ext.resumeLayouts(true);
+}, refreshView:function() {
+  var lockedView = this.lockedView, normalView = this.normalView, startIndex = normalView.all.startIndex;
+  Ext.suspendLayouts();
+  lockedView.clearViewEl(true);
+  normalView.clearViewEl(true);
+  normalView.refreshView(startIndex);
+  lockedView.refreshView(startIndex);
+  Ext.resumeLayouts(true);
+}, setScrollable:function(scrollable) {
+  Ext.suspendLayouts();
+  this.lockedView.setScrollable(scrollable);
+  if (scrollable.isScroller) {
+    scrollable = new Ext.scroll.Scroller(scrollable.initialConfig);
+  }
+  this.normalView.setScrollable(scrollable);
+  Ext.resumeLayouts(true);
+}, getNode:function(nodeInfo) {
+  return this.normalView.getNode(nodeInfo);
+}, getRow:function(nodeInfo) {
+  return this.normalView.getRow(nodeInfo);
+}, getCell:function(record, column, returnElement) {
+  var row = column.getView().getRow(record), cell = row.querySelector(column.getCellSelector());
+  return returnElement ? Ext.get(cell) : cell;
+}, indexOf:function(record) {
+  var result = this.lockedView.indexOf(record);
+  if (!result) {
+    result = this.normalView.indexOf(record);
+  }
+  return result;
+}, focus:function() {
+  var target = this.ownerGrid.down('\x3etablepanel:not(hidden)\x3etableview');
+  if (target) {
+    target.focus();
+  }
+}, focusRow:function(row) {
+  var view, lastFocused = this.getNavigationModel().lastFocused;
+  view = lastFocused ? lastFocused.view : this.normalView;
+  view.focusRow(row);
+}, focusCell:function(position) {
+  position.view.focusCell(position);
+}, onRowFocus:function() {
+  this.relayFn('onRowFocus', arguments);
+}, cancelFocusTask:function() {
+  this.lockedView.cancelFocusTask();
+  this.normalView.cancelFocusTask();
+}, isVisible:function(deep) {
+  return this.ownerGrid.isVisible(deep);
+}, getCellInclusive:function(pos, returnDom) {
+  var col = pos.column, lockedSize = this.lockedGrid.getColumnManager().getColumns().length;
+  if (col >= lockedSize) {
+    pos = Ext.apply({}, pos);
+    pos.column -= lockedSize;
+    return this.normalView.getCellInclusive(pos, returnDom);
+  } else {
+    return this.lockedView.getCellInclusive(pos, returnDom);
+  }
+}, getHeaderByCell:function(cell) {
+  if (cell) {
+    return this.getVisibleColumnManager().getHeaderById(cell.getAttribute('data-columnId'));
+  }
+  return false;
+}, onRowSelect:function() {
+  this.relayFn('onRowSelect', arguments);
+}, onRowDeselect:function() {
+  this.relayFn('onRowDeselect', arguments);
+}, onCellSelect:function(cellContext) {
+  cellContext.column.getView().onCellSelect({record:cellContext.record, column:cellContext.column});
+}, onCellDeselect:function(cellContext) {
+  cellContext.column.getView().onCellDeselect({record:cellContext.record, column:cellContext.column});
+}, getCellByPosition:function(pos, returnDom) {
+  var me = this, view = pos.view, col = pos.column;
+  if (view === me) {
+    pos = (new Ext.grid.CellContext(col.getView())).setPosition(pos.record, pos.column);
+  }
+  return view.getCellByPosition(pos, returnDom);
+}, getRecord:function(node) {
+  var result = this.lockedView.getRecord(node);
+  if (!result) {
+    result = this.normalView.getRecord(node);
+  }
+  return result;
+}, scrollBy:function() {
+  var scroller = this.ownerGrid.getScrollable();
+  scroller.scrollBy.apply(scroller, arguments);
+}, ensureVisible:function() {
+  var normal = this.normalView;
+  normal.ensureVisible.apply(normal, arguments);
+}, disable:function() {
+  this.relayFn('disable', arguments);
+}, enable:function() {
+  this.relayFn('enable', arguments);
+}, addElListener:function() {
+  this.relayFn('addElListener', arguments);
+}, refreshNode:function() {
+  this.relayFn('refreshNode', arguments);
+}, addRowCls:function() {
+  this.relayFn('addRowCls', arguments);
+}, removeRowCls:function() {
+  this.relayFn('removeRowCls', arguments);
+}, destroy:function() {
+  var me = this;
+  me.rendered = false;
+  me.bindStore(null, false, 'dataSource');
+  Ext.destroy(me.selModel, me.navigationModel, me.loadMask);
+  me.lockedView.lockingPartner = me.normalView.lockingPartner = null;
+  me.callParent();
+}}, function() {
+  this.borrow(Ext.Component, ['up']);
+  this.borrow(Ext.view.AbstractView, ['doFirstRefresh', 'applyFirstRefresh']);
+  this.borrow(Ext.view.Table, ['cellSelector', 'selectedCellCls', 'selectedItemCls']);
+});
+Ext.define('Ext.scroll.LockingScroller', {extend:Ext.scroll.Scroller, alias:'scroller.locking', config:{lockedScroller:null, normalScroller:null}, scrollTo:function(x, y, animate) {
+  var lockedX, lockedPromise, ret;
+  if (Ext.isObject(x)) {
+    lockedX = x.lockedX;
+    if (lockedX) {
+      lockedPromise = this.getLockedScroller().scrollTo(lockedX, null, animate);
+    }
+  }
+  ret = this.callParent([x, y, animate]);
+  if (lockedPromise) {
+    ret = Ext.Promise.all([ret, lockedPromise]);
+  }
+  return ret;
+}, updateLockedScroller:function(lockedScroller) {
+  lockedScroller.on('scroll', 'onLockedScroll', this);
+  lockedScroller.setLockingScroller(this);
+}, updateNormalScroller:function(normalScroller) {
+  normalScroller.on('scroll', 'onNormalScroll', this);
+  normalScroller.setLockingScroller(this);
+}, updateTouchAction:function(touchAction, oldTouchAction) {
+  this.callParent([touchAction, oldTouchAction]);
+  this.getLockedScroller().setTouchAction(touchAction);
+  this.getNormalScroller().setTouchAction(touchAction);
+}, getPosition:function() {
+  var position = this.callParent();
+  position.x = this.getNormalScroller().getPosition().x;
+  position.lockedX = this.getLockedScroller().getPosition().x;
+  return position;
+}, privates:{updateSpacerXY:function(pos) {
+  var me = this, lockedScroller = me.getLockedScroller(), normalScroller = me.getNormalScroller(), lockedView = lockedScroller.component, normalView = normalScroller.component, height = pos.y + (normalView.headerCt.tooNarrow || lockedView.headerCt.tooNarrow ? Ext.getScrollbarSize().height : 0);
+  normalView.stretchHeight(height);
+  lockedView.stretchHeight(height);
+  me.callParent([pos]);
+}, doScrollTo:function(x, y, animate) {
+  var ret, normalPromise;
+  if (x != null) {
+    normalPromise = this.getNormalScroller().scrollTo(x, null, animate);
+    x = null;
+  }
+  ret = this.callParent([x, y, animate]);
+  if (normalPromise) {
+    ret = Ext.Promise.all([ret, normalPromise]);
+  }
+  return ret;
+}, onLockedScroll:function(lockedScroller, x, y) {
+  this.position.lockedX = x;
+}, onNormalScroll:function(normalScroller, x, y) {
+  this.position.x = x;
+}, readPosition:function(position) {
+  var me = this;
+  position = me.callParent([position]);
+  position = position || {};
+  position.x = me.getNormalScroller().getPosition().x;
+  return position;
+}}});
+Ext.define('Ext.grid.locking.Lockable', {alternateClassName:'Ext.grid.Lockable', syncRowHeight:true, headerCounter:0, lockedGridCls:Ext.baseCSSPrefix + 'grid-inner-locked', normalGridCls:Ext.baseCSSPrefix + 'grid-inner-normal', lockingBodyCls:Ext.baseCSSPrefix + 'grid-locking-body', scrollContainerCls:Ext.baseCSSPrefix + 'grid-scroll-container', scrollBodyCls:Ext.baseCSSPrefix + 'grid-scroll-body', scrollbarClipperCls:Ext.baseCSSPrefix + 'grid-scrollbar-clipper', scrollbarCls:Ext.baseCSSPrefix + 
+'grid-scrollbar', scrollbarVisibleCls:Ext.baseCSSPrefix + 'grid-scrollbar-visible', lockText:'Lock', unlockText:'Unlock', bothCfgCopy:['hideHeaders', 'enableColumnHide', 'enableColumnMove', 'enableColumnResize', 'sortableColumns', 'multiColumnSort', 'columnLines', 'rowLines', 'variableRowHeight', 'numFromEdge', 'trailingBufferZone', 'leadingBufferZone', 'scrollToLoadBuffer', 'syncRowHeight'], normalCfgCopy:['scroll'], lockedCfgCopy:[], determineXTypeToCreate:function(lockedSide) {
+  var me = this;
+  if (me.subGridXType) {
+    return me.subGridXType;
+  } else {
+    if (!lockedSide) {
+      return 'gridpanel';
+    }
+  }
+  return me.isXType('treepanel') ? 'treepanel' : 'gridpanel';
+}, injectLockable:function() {
+  this.focusable = false;
+  this.lockable = true;
+  this.hasView = true;
+  var me = this, store = me.store = Ext.StoreManager.lookup(me.store), lockedViewConfig = me.lockedViewConfig, normalViewConfig = me.normalViewConfig, Obj = Ext.Object, allFeatures, allPlugins, lockedGrid, normalGrid, i, columns, lockedHeaderCt, normalHeaderCt, viewConfig = me.viewConfig, loadMaskCfg = viewConfig && viewConfig.loadMask, loadMask = loadMaskCfg !== undefined ? loadMaskCfg : me.loadMask, bufferedRenderer = me.bufferedRenderer, setWidth;
+  allFeatures = me.constructLockableFeatures();
+  me.scrollable = new Ext.scroll.LockingScroller({component:me, x:false, y:true});
+  me.features = null;
+  allPlugins = me.constructLockablePlugins();
+  me.plugins = allPlugins.topPlugins;
+  lockedGrid = {id:me.id + '-locked', $initParent:me, isLocked:true, bufferedRenderer:bufferedRenderer, ownerGrid:me, ownerLockable:me, xtype:me.determineXTypeToCreate(true), store:store, scrollerOwner:false, animate:false, border:false, cls:me.lockedGridCls, isLayoutRoot:function() {
+    return this.floatedFromCollapse || this.ownerGrid.normalGrid.floatedFromCollapse;
+  }, features:allFeatures.lockedFeatures, plugins:allPlugins.lockedPlugins};
+  normalGrid = {id:me.id + '-normal', $initParent:me, isLocked:false, bufferedRenderer:bufferedRenderer, ownerGrid:me, ownerLockable:me, xtype:me.determineXTypeToCreate(), store:store, reserveScrollbar:me.reserveScrollbar, scrollerOwner:false, border:false, cls:me.normalGridCls, isLayoutRoot:function() {
+    return this.floatedFromCollapse || this.ownerGrid.lockedGrid.floatedFromCollapse;
+  }, features:allFeatures.normalFeatures, plugins:allPlugins.normalPlugins};
+  me.addCls(Ext.baseCSSPrefix + 'grid-locked');
+  Ext.copy(normalGrid, me, me.bothCfgCopy, true);
+  Ext.copy(lockedGrid, me, me.bothCfgCopy, true);
+  Ext.copy(normalGrid, me, me.normalCfgCopy, true);
+  Ext.copy(lockedGrid, me, me.lockedCfgCopy, true);
+  Ext.apply(normalGrid, me.normalGridConfig);
+  Ext.apply(lockedGrid, me.lockedGridConfig);
+  for (i = 0; i < me.normalCfgCopy.length; i++) {
+    delete me[me.normalCfgCopy[i]];
+  }
+  for (i = 0; i < me.lockedCfgCopy.length; i++) {
+    delete me[me.lockedCfgCopy[i]];
+  }
+  me.addStateEvents(['lockcolumn', 'unlockcolumn']);
+  columns = me.processColumns(me.columns || [], lockedGrid);
+  lockedGrid.columns = columns.locked;
+  if (!lockedGrid.columns.items.length) {
+    lockedGrid.hidden = true;
+  }
+  normalGrid.columns = columns.normal;
+  if (!normalGrid.columns.items.length) {
+    normalGrid.hidden = true;
+  }
+  normalGrid.flex = 1;
+  lockedGrid.viewConfig = lockedViewConfig = lockedViewConfig ? Obj.chain(lockedViewConfig) : {};
+  normalGrid.viewConfig = normalViewConfig = normalViewConfig ? Obj.chain(normalViewConfig) : {};
+  lockedViewConfig.loadingUseMsg = false;
+  lockedViewConfig.loadMask = false;
+  normalViewConfig.loadMask = false;
+  if (viewConfig && viewConfig.id) {
+    Ext.log.warn('id specified on Lockable viewConfig, it will be shared between both views: "' + viewConfig.id + '"');
+  }
+  Ext.applyIf(lockedViewConfig, viewConfig);
+  Ext.applyIf(normalViewConfig, viewConfig);
+  if (me.layout === Ext.panel.Table.prototype.layout) {
+    me.layout = {type:'hbox', align:'stretch'};
+  }
+  me.getLayout();
+  if (me.layout.type === 'border') {
+    if (me.split) {
+      lockedGrid.split = me.split;
+    }
+    if (!lockedGrid.region) {
+      lockedGrid.region = 'west';
+    }
+    if (!normalGrid.region) {
+      normalGrid.region = 'center';
+    }
+    me.addCls(Ext.baseCSSPrefix + 'grid-locked-split');
+  }
+  if (!(me.layout instanceof Ext.layout.container.Box)) {
+    me.split = false;
+  }
+  me.view = new Ext.grid.locking.View({loadMask:loadMask, locked:lockedGrid, normal:normalGrid, ownerGrid:me});
+  lockedGrid = me.lockedGrid;
+  normalGrid = me.normalGrid;
+  lockedGrid.on({beginfloat:me.onBeginLockedFloat, endfloat:me.onEndLockedFloat, scope:me});
+  setWidth = lockedGrid.setWidth;
+  lockedGrid.setWidth = function() {
+    lockedGrid.shrinkWrapColumns = false;
+    setWidth.apply(lockedGrid, arguments);
+  };
+  if (!lockedGrid.getVisibleColumnManager().getColumns().length) {
+    lockedGrid.hide();
+  }
+  if (!normalGrid.getVisibleColumnManager().getColumns().length) {
+    normalGrid.hide();
+  }
+  lockedHeaderCt = lockedGrid.headerCt;
+  normalHeaderCt = normalGrid.headerCt;
+  me.headerCt = me.view.headerCt = new Ext.grid.locking.HeaderContainer(me);
+  lockedHeaderCt.lockedCt = true;
+  lockedHeaderCt.lockableInjected = true;
+  normalHeaderCt.lockableInjected = true;
+  lockedHeaderCt.on({add:me.delaySyncLockedWidth, remove:me.delaySyncLockedWidth, columnshow:me.delaySyncLockedWidth, columnhide:me.delaySyncLockedWidth, sortchange:me.onLockedHeaderSortChange, columnresize:me.delaySyncLockedWidth, scope:me});
+  normalHeaderCt.on({add:me.delaySyncLockedWidth, remove:me.delaySyncLockedWidth, columnshow:me.delaySyncLockedWidth, columnhide:me.delaySyncLockedWidth, sortchange:me.onNormalHeaderSortChange, scope:me});
+  me.modifyHeaderCt();
+  me.items = [lockedGrid];
+  if (me.split) {
+    me.addCls(Ext.baseCSSPrefix + 'grid-locked-split');
+    me.items[1] = Ext.apply({xtype:'splitter'}, me.split);
+  }
+  me.items.push(normalGrid);
+  me.relayHeaderCtEvents(lockedHeaderCt);
+  me.relayHeaderCtEvents(normalHeaderCt);
+  me.storeRelayers = me.relayEvents(store, ['filterchange', 'groupchange', 'beforeload', 'load']);
+  me.gridRelayers = me.relayEvents(normalGrid, ['viewready']);
+}, afterInjectLockable:function() {
+  var me = this;
+  delete me.lockedGrid.$initParent;
+  delete me.normalGrid.$initParent;
+}, syncLockableHeaderVisibility:function() {
+  var me = this, hideHeaders = me.hideHeaders, locked = this.lockedGrid, normal = this.normalGrid;
+  if (hideHeaders === null) {
+    hideHeaders = locked.shouldAutoHideHeaders() && normal.shouldAutoHideHeaders();
+  }
+  locked.hideHeaders = normal.hideHeaders = hideHeaders;
+  locked.syncHeaderVisibility();
+  normal.syncHeaderVisibility();
+}, getLockingViewConfig:function() {
+  return {xclass:'Ext.grid.locking.View', locked:this.lockedGrid, normal:this.normalGrid, panel:this};
+}, onBeginLockedFloat:function(locked) {
+  var el = locked.getContentTarget().dom, lockedHeaderCt = this.lockedGrid.headerCt, normalHeaderCt = this.normalGrid.headerCt, headerCtHeight = Math.max(normalHeaderCt.getHeight(), lockedHeaderCt.getHeight());
+  lockedHeaderCt.minHeight = headerCtHeight;
+  normalHeaderCt.minHeight = headerCtHeight;
+  locked.el.addCls(Ext.panel.Panel.floatCls);
+  if (el.firstChild !== locked.view.el.dom) {
+    el.appendChild(locked.view.el.dom);
+  }
+  locked.body.dom.scrollTop = this.getScrollable().getPosition().y;
+}, onEndLockedFloat:function() {
+  var locked = this.lockedGrid;
+  if (locked.collapsed) {
+    locked.el.removeCls(Ext.panel.Panel.floatCls);
+  } else {
+    this.lockedGrid.headerCt.minHeight = this.normalGrid.headerCt.minHeight = null;
+  }
+  this.lockedScrollbarClipper.appendChild(locked.view.el.dom);
+  this.doSyncLockableLayout();
+}, beforeLayout:function() {
+  var me = this, lockedGrid = me.lockedGrid, normalGrid = me.normalGrid, totalColumnWidth;
+  if (lockedGrid && normalGrid) {
+    if (lockedGrid.getSizeModel().width.shrinkWrap) {
+      lockedGrid.gridPanelBorderWidth = lockedGrid.el.getBorderWidth('lr');
+      lockedGrid.shrinkWrapColumns = true;
+    }
+    if (lockedGrid.shrinkWrapColumns) {
+      totalColumnWidth = lockedGrid.headerCt.getTableWidth();
+      if (isNaN(totalColumnWidth)) {
+        Ext.raise('Locked columns in an unsized locked side do NOT support a flex width.');
+      }
+      lockedGrid.setWidth(totalColumnWidth + lockedGrid.gridPanelBorderWidth);
+      lockedGrid.shrinkWrapColumns = true;
+    }
+    if (!me.scrollContainer) {
+      me.initScrollContainer();
+    }
+    me.lastScrollPos = me.getScrollable().getPosition();
+    lockedGrid.view.el.setStyle('margin-bottom', '');
+    normalGrid.view.el.setStyle('margin-bottom', '');
+  }
+}, syncLockableLayout:function() {
+  var me = this;
+  if (!me.afterLayoutListener) {
+    me.afterLayoutListener = Ext.on({afterlayout:me.doSyncLockableLayout, scope:me, single:true});
+  }
+}, doSyncLockableLayout:function() {
+  var me = this, collapseExpand = me.isCollapsingOrExpanding, lockedGrid = me.lockedGrid, normalGrid = me.normalGrid, lockedViewEl, normalViewEl, lockedViewRegion, normalViewRegion, scrollbarSize, scrollbarWidth, scrollbarHeight, normalViewWidth, normalViewX, hasVerticalScrollbar, hasHorizontalScrollbar, scrollContainerHeight, scrollBodyHeight, lockedScrollbar, normalScrollbar, scrollbarVisibleCls, scrollHeight, lockedGridVisible, normalGridVisible, scrollBodyDom, viewRegion, scrollerElHeight, scrollable;
+  me.afterLayoutListener = null;
+  if (collapseExpand) {
+    if (collapseExpand === 2) {
+      me.on('expand', 'doSyncLockableLayout', me, {single:true});
+    }
+    return;
+  }
+  if (lockedGrid && normalGrid) {
+    lockedGridVisible = lockedGrid.isVisible(true) && !lockedGrid.collapsed;
+    normalGridVisible = normalGrid.isVisible(true);
+    lockedViewEl = lockedGrid.view.el;
+    normalViewEl = normalGrid.view.el;
+    scrollBodyDom = me.scrollBody.dom;
+    lockedViewRegion = lockedGridVisible ? lockedGrid.body.getRegion(true) : new Ext.util.Region(0, 0, 0, 0);
+    normalViewRegion = normalGridVisible ? normalGrid.body.getRegion(true) : new Ext.util.Region(0, 0, 0, 0);
+    scrollbarSize = Ext.getScrollbarSize();
+    scrollbarWidth = scrollbarSize.width;
+    scrollbarHeight = scrollerElHeight = scrollbarSize.height;
+    normalViewWidth = normalGridVisible ? normalViewRegion.width : 0;
+    normalViewX = lockedGridVisible ? normalGridVisible ? normalViewRegion.x - lockedViewRegion.x : lockedViewRegion.width : 0;
+    hasHorizontalScrollbar = normalGrid.headerCt.tooNarrow || lockedGrid.headerCt.tooNarrow ? scrollbarHeight : 0;
+    scrollContainerHeight = normalViewRegion.height || lockedViewRegion.height;
+    scrollBodyHeight = scrollContainerHeight;
+    lockedScrollbar = me.lockedScrollbar;
+    normalScrollbar = me.normalScrollbar;
+    scrollbarVisibleCls = me.scrollbarVisibleCls;
+    scrollable = me.getScrollable();
+    if (Ext.supports.CannotScrollExactHeight) {
+      scrollerElHeight += 1;
+    }
+    if (hasHorizontalScrollbar) {
+      lockedViewEl.setStyle('margin-bottom', -scrollbarHeight + 'px');
+      normalViewEl.setStyle('margin-bottom', -scrollbarHeight + 'px');
+      scrollBodyHeight -= scrollbarHeight;
+      if (lockedGridVisible && lockedGrid.view.body.dom) {
+        me.lockedScrollbarScroller.setSize({x:lockedGrid.headerCt.getTableWidth()});
+      }
+      if (normalGrid.view.body.dom) {
+        me.normalScrollbarScroller.setSize({x:normalGrid.headerCt.getTableWidth()});
+      }
+    }
+    me.scrollBody.setHeight(scrollBodyHeight);
+    lockedViewEl.dom.style.height = normalViewEl.dom.style.height = '';
+    scrollHeight = me.scrollable.getSize().y + hasHorizontalScrollbar;
+    normalGrid.view.stretchHeight(scrollHeight);
+    lockedGrid.view.stretchHeight(scrollHeight);
+    hasVerticalScrollbar = scrollbarWidth && scrollBodyDom.scrollHeight > scrollBodyDom.clientHeight;
+    if (hasVerticalScrollbar && normalViewWidth) {
+      normalViewWidth -= scrollbarWidth;
+      normalViewEl.setStyle('width', normalViewWidth + 'px');
+    }
+    lockedScrollbar.toggleCls(scrollbarVisibleCls, lockedGridVisible && !!hasHorizontalScrollbar);
+    normalScrollbar.toggleCls(scrollbarVisibleCls, !!hasHorizontalScrollbar);
+    me.normalScrollbarClipper.toggleCls(me.scrollbarClipperCls + '-floated', !!me.normalGrid.floatedFromCollapse);
+    me.normalScrollbar.toggleCls(me.scrollbarCls + '-floated', !!me.normalGrid.floatedFromCollapse);
+    me.lockedScrollbarClipper.toggleCls(me.scrollbarClipperCls + '-floated', !!me.lockedGrid.floatedFromCollapse);
+    me.lockedScrollbar.toggleCls(me.scrollbarCls + '-floated', !!me.lockedGrid.floatedFromCollapse);
+    lockedScrollbar.setSize(me.lockedScrollbarClipper.dom.offsetWidth, scrollerElHeight);
+    normalScrollbar.setSize(normalViewWidth, scrollerElHeight);
+    me.setNormalScrollerX(normalViewX);
+    if (lockedGridVisible && normalGridVisible) {
+      viewRegion = lockedViewRegion.union(normalViewRegion);
+    } else {
+      if (lockedGridVisible) {
+        viewRegion = lockedViewRegion;
+      } else {
+        viewRegion = normalViewRegion;
+      }
+    }
+    me.scrollContainer.setBox(viewRegion);
+    me.onSyncLockableLayout(hasVerticalScrollbar, viewRegion.width);
+    if (!Ext.Object.equals(scrollable.position, me.lastScrollPos)) {
+      scrollable.scrollTo(me.lastScrollPos);
+    }
+  }
+}, onSyncLockableLayout:Ext.emptyFn, setNormalScrollerX:function(x) {
+  this.normalScrollbar.setLocalX(x);
+  this.normalScrollbarClipper.setLocalX(x);
+}, getScrollExtraCls:function() {
+  return '';
+}, initScrollContainer:function() {
+  var me = this, extraCls = me.getScrollExtraCls(), scrollContainer = me.scrollContainer = me.body.insertFirst({cls:[me.scrollContainerCls, extraCls]}), scrollBody = me.scrollBody = scrollContainer.appendChild({cls:me.scrollBodyCls}), lockedScrollbar = me.lockedScrollbar = scrollContainer.appendChild({cls:[me.scrollbarCls, me.scrollbarCls + '-locked', extraCls]}), normalScrollbar = me.normalScrollbar = scrollContainer.appendChild({cls:[me.scrollbarCls, extraCls]}), lockedView = me.lockedGrid.view, 
+  normalView = me.normalGrid.view, lockedScroller = lockedView.getScrollable(), normalScroller = normalView.getScrollable(), Scroller = Ext.scroll.Scroller, lockedScrollbarScroller, normalScrollbarScroller, lockedScrollbarClipper, normalScrollbarClipper;
+  lockedView.stretchHeight(0);
+  normalView.stretchHeight(0);
+  me.scrollable.setConfig({element:scrollBody, lockedScroller:lockedScroller, normalScroller:normalScroller});
+  lockedScrollbarClipper = me.lockedScrollbarClipper = scrollBody.appendChild({cls:[me.scrollbarClipperCls, me.scrollbarClipperCls + '-locked', extraCls]});
+  normalScrollbarClipper = me.normalScrollbarClipper = scrollBody.appendChild({cls:[me.scrollbarClipperCls, extraCls]});
+  lockedScrollbarClipper.appendChild(lockedView.el);
+  normalScrollbarClipper.appendChild(normalView.el);
+  lockedView.ignoreDomPosition = true;
+  normalView.ignoreDomPosition = true;
+  lockedScrollbarScroller = me.lockedScrollbarScroller = new Scroller({element:lockedScrollbar, x:'scroll', y:false, rtl:lockedScroller.getRtl && lockedScroller.getRtl()});
+  normalScrollbarScroller = me.normalScrollbarScroller = new Scroller({element:normalScrollbar, x:'scroll', y:false, rtl:normalScroller.getRtl && normalScroller.getRtl()});
+  me.initScrollers();
+  lockedScrollbarScroller.addPartner(lockedScroller, 'x');
+  normalScrollbarScroller.addPartner(normalScroller, 'x');
+  me.view.onPanelRender(scrollBody);
+}, initScrollers:Ext.emptyFn, processColumns:function(columns, lockedGrid) {
+  var me = this, i, len, column, cp = new Ext.grid.header.Container({'$initParent':me}), lockedHeaders = [], normalHeaders = [], lockedHeaderCt = {itemId:'lockedHeaderCt', stretchMaxPartner:'^^\x3e\x3e#normalHeaderCt', items:lockedHeaders}, normalHeaderCt = {itemId:'normalHeaderCt', stretchMaxPartner:'^^\x3e\x3e#lockedHeaderCt', items:normalHeaders}, result = {locked:lockedHeaderCt, normal:normalHeaderCt}, copy;
+  if (Ext.isObject(columns)) {
+    Ext.applyIf(lockedHeaderCt, columns);
+    Ext.applyIf(normalHeaderCt, columns);
+    copy = Ext.apply({}, columns);
+    delete copy.items;
+    Ext.apply(cp, copy);
+    columns = columns.items;
+  }
+  cp.constructing = true;
+  for (i = 0, len = columns.length; i < len; ++i) {
+    column = columns[i];
+    if (!column.isComponent) {
+      column = cp.applyDefaults(column);
+      column.$initParent = cp;
+      column = cp.lookupComponent(column);
+      delete column.$initParent;
+    }
+    column.processed = true;
+    if (column.locked || column.autoLock) {
+      lockedHeaders.push(column);
+    } else {
+      normalHeaders.push(column);
+    }
+  }
+  me.fireEvent('processcolumns', me, lockedHeaders, normalHeaders);
+  cp.destroy();
+  return result;
+}, ensureLockedVisible:function(record, options) {
+  var column = options && options.column, lockedGrid = this.lockedGrid, grid = column ? column.getView().ownerCt : lockedGrid.isVisible() ? lockedGrid : this.normalGrid;
+  grid.ensureVisible.apply(grid, arguments);
+}, syncRowHeights:function() {
+  if (!this.destroyed) {
+    var me = this, normalView = me.normalGrid.getView(), lockedView = me.lockedGrid.getView(), normalSync = normalView.syncRowHeightBegin(), lockedSync = lockedView.syncRowHeightBegin(), scrollTop;
+    normalView.syncRowHeightMeasure(normalSync);
+    lockedView.syncRowHeightMeasure(lockedSync);
+    normalView.syncRowHeightFinish(normalSync, lockedSync);
+    lockedView.syncRowHeightFinish(lockedSync, normalSync);
+    scrollTop = normalView.getScrollY();
+    lockedView.setScrollY(scrollTop);
+    me.syncRowHeightOnNextLayout = false;
+  }
+}, modifyHeaderCt:function() {
+  var me = this;
+  me.lockedGrid.headerCt.getMenuItems = me.getMenuItems(me.lockedGrid.headerCt.getMenuItems, true);
+  me.normalGrid.headerCt.getMenuItems = me.getMenuItems(me.normalGrid.headerCt.getMenuItems, false);
+  me.lockedGrid.headerCt.showMenuBy = Ext.Function.createInterceptor(me.lockedGrid.headerCt.showMenuBy, me.showMenuBy);
+  me.normalGrid.headerCt.showMenuBy = Ext.Function.createInterceptor(me.normalGrid.headerCt.showMenuBy, me.showMenuBy);
+}, onUnlockMenuClick:function() {
+  this.unlock();
+}, onLockMenuClick:function() {
+  this.lock();
+}, showMenuBy:function(clickEvent, t, header) {
+  var menu = this.getMenu(), unlockItem = menu.down('#unlockItem'), lockItem = menu.down('#lockItem'), sep = unlockItem.prev();
+  if (header.lockable === false) {
+    sep.hide();
+    unlockItem.hide();
+    lockItem.hide();
+  } else {
+    sep.show();
+    unlockItem.show();
+    lockItem.show();
+    if (!unlockItem.initialConfig.disabled) {
+      unlockItem.setDisabled(header.lockable === false);
+    }
+    if (!lockItem.initialConfig.disabled) {
+      lockItem.setDisabled(!header.isLockable());
+    }
+  }
+}, getMenuItems:function(getMenuItems, locked) {
+  var me = this, unlockText = me.unlockText, lockText = me.lockText, unlockCls = Ext.baseCSSPrefix + 'hmenu-unlock', lockCls = Ext.baseCSSPrefix + 'hmenu-lock', unlockHandler = me.onUnlockMenuClick.bind(me), lockHandler = me.onLockMenuClick.bind(me);
+  return function() {
+    var o = getMenuItems.call(this);
+    o.push('-', {itemId:'unlockItem', iconCls:unlockCls, text:unlockText, handler:unlockHandler, disabled:!locked});
+    o.push({itemId:'lockItem', iconCls:lockCls, text:lockText, handler:lockHandler, disabled:locked});
+    return o;
+  };
+}, syncTaskDelay:1, delaySyncLockedWidth:function() {
+  var me = this, task = me.syncLockedWidthTask || (me.syncLockedWidthTask = new Ext.util.DelayedTask(me.syncLockedWidth, me));
+  if (me.reconfiguring) {
+    return;
+  }
+  if (!Ext.Component.layoutSuspendCount || me.syncTaskDelay === 0) {
+    me.syncLockedWidth();
+  } else {
+    task.delay(1);
+  }
+}, syncLockedWidth:function() {
+  var me = this, rendered = me.rendered, locked = me.lockedGrid, normal = me.normalGrid, lockedColCount = locked.getVisibleColumnManager().getColumns().length, normalColCount = normal.getVisibleColumnManager().getColumns().length, task = me.syncLockedWidthTask;
+  if (task) {
+    task.cancel();
+  }
+  if (me.reconfiguring) {
+    return;
+  }
+  Ext.suspendLayouts();
+  if (normalColCount) {
+    normal.show();
+    if (lockedColCount) {
+      if (me.layout.type === 'border') {
+        locked.region = locked.initialConfig.region;
+      }
+      if (rendered && locked.shrinkWrapColumns && !locked.headerCt.forceFit) {
+        delete locked.flex;
+        locked.width = locked.headerCt.getTableWidth() + locked.gridPanelBorderWidth;
+        locked.updateLayout();
+      }
+      locked.addCls(me.lockedGridCls);
+      locked.show();
+      if (locked.split) {
+        me.child('splitter').show();
+        me.addCls(Ext.baseCSSPrefix + 'grid-locked-split');
+      }
+    } else {
+      locked.hide();
+      if (rendered) {
+        locked.getView().clearViewEl(true);
+      }
+      if (locked.split) {
+        me.child('splitter').hide();
+        me.removeCls(Ext.baseCSSPrefix + 'grid-locked-split');
+      }
+    }
+  } else {
+    normal.hide();
+    delete locked.width;
+    if (me.layout.type === 'border') {
+      locked.region = 'center';
+      normal.region = 'west';
+    } else {
+      locked.flex = 1;
+    }
+    locked.removeCls(me.lockedGridCls);
+    locked.show();
+  }
+  Ext.resumeLayouts(true);
+  return {locked:!!lockedColCount, normal:!!normalColCount};
+}, onLockedHeaderSortChange:Ext.emptyFn, onNormalHeaderSortChange:Ext.emptyFn, lock:function(activeHd, toIdx, toCt) {
+  var me = this, normalGrid = me.normalGrid, lockedGrid = me.lockedGrid, normalView = normalGrid.view, lockedView = lockedGrid.view, normalScroller = normalView.getScrollable(), lockedScroller = lockedView.getScrollable(), normalHCt = normalGrid.headerCt, refreshFlags, ownerCt, lbr;
+  activeHd = activeHd || normalHCt.getMenu().activeHeader;
+  activeHd.unlockedWidth = activeHd.width;
+  if (activeHd.flex) {
+    if (activeHd.lockedWidth) {
+      activeHd.width = activeHd.lockedWidth;
+      activeHd.lockedWidth = null;
+    } else {
+      activeHd.width = activeHd.lastBox.width;
+    }
+    activeHd.flex = null;
+  }
+  toCt = toCt || lockedGrid.headerCt;
+  ownerCt = activeHd.ownerCt;
+  if (ownerCt && !activeHd.isLockable()) {
+    return;
+  }
+  Ext.suspendLayouts();
+  if (normalScroller) {
+    normalScroller.suspendPartnerSync();
+    lockedScroller.suspendPartnerSync();
+  }
+  if (lockedGrid.hidden) {
+    if (!lockedGrid.componentLayoutCounter) {
+      lockedGrid.height = normalGrid.lastBox.height;
+      lbr = lockedView.bufferedRenderer;
+      if (lbr) {
+        lbr.rowHeight = normalView.bufferedRenderer.rowHeight;
+        lbr.onViewResize(lockedView, 0, normalGrid.body.lastBox.height);
+      }
+    }
+    lockedGrid.show();
+  }
+  lockedGrid.reconfiguring = normalGrid.reconfiguring = true;
+  activeHd.ownerCmp = activeHd.ownerCt;
+  activeHd.locked = true;
+  if (Ext.isDefined(toIdx)) {
+    toCt.insert(toIdx, activeHd);
+  } else {
+    toCt.add(activeHd);
+  }
+  lockedGrid.reconfiguring = normalGrid.reconfiguring = false;
+  activeHd.ownerCmp = null;
+  activeHd.rootHeaderCt = null;
+  activeHd.view = lockedView;
+  refreshFlags = me.syncLockedWidth();
+  if (refreshFlags.locked) {
+    lockedView.clearViewEl(true);
+  }
+  if (refreshFlags.normal) {
+    normalView.clearViewEl(true);
+  }
+  normalGrid.getView().refreshNeeded = refreshFlags.normal;
+  lockedGrid.getView().refreshNeeded = refreshFlags.locked;
+  activeHd.onLock(activeHd);
+  me.fireEvent('lockcolumn', me, activeHd);
+  Ext.resumeLayouts(true);
+  if (normalScroller) {
+    normalScroller.resumePartnerSync(true);
+    lockedScroller.resumePartnerSync();
+  }
+}, unlock:function(activeHd, toIdx, toCt) {
+  var me = this, normalGrid = me.normalGrid, lockedGrid = me.lockedGrid, normalView = normalGrid.view, lockedView = lockedGrid.view, startIndex = normalView.all.startIndex, lockedHCt = lockedGrid.headerCt, refreshFlags;
+  if (!Ext.isDefined(toIdx)) {
+    toIdx = 0;
+  }
+  activeHd = activeHd || lockedHCt.getMenu().activeHeader;
+  activeHd.lockedWidth = activeHd.width;
+  if (activeHd.flex) {
+    if (activeHd.unlockedWidth) {
+      activeHd.width = activeHd.unlockedWidth;
+      activeHd.unlockedWidth = null;
+    } else {
+      activeHd.width = activeHd.lastBox.width;
+    }
+    activeHd.flex = null;
+  }
+  toCt = toCt || normalGrid.headerCt;
+  Ext.suspendLayouts();
+  lockedGrid.reconfiguring = normalGrid.reconfiguring = true;
+  activeHd.ownerCmp = activeHd.ownerCt;
+  if (activeHd.ownerCt) {
+    activeHd.ownerCt.remove(activeHd, false);
+  }
+  activeHd.locked = false;
+  toCt.insert(toIdx, activeHd);
+  lockedGrid.reconfiguring = normalGrid.reconfiguring = false;
+  activeHd.ownerCmp = null;
+  activeHd.rootHeaderCt = null;
+  activeHd.view = normalView;
+  refreshFlags = me.syncLockedWidth();
+  if (refreshFlags.locked) {
+    lockedView.clearViewEl(true);
+  }
+  if (refreshFlags.normal) {
+    normalView.clearViewEl(true);
+  }
+  if (refreshFlags.normal) {
+    normalGrid.getView().refreshView(startIndex);
+  }
+  if (refreshFlags.locked) {
+    lockedGrid.getView().refreshView(startIndex);
+  }
+  activeHd.onUnlock(activeHd);
+  me.fireEvent('unlockcolumn', me, activeHd);
+  Ext.resumeLayouts(true);
+}, reconfigureLockable:function(store, columns, allowUnbind) {
+  var me = this, oldStore = me.store, lockedGrid = me.lockedGrid, normalGrid = me.normalGrid, view, loadMask;
+  if (!store && allowUnbind) {
+    store = Ext.StoreManager.lookup('ext-empty-store');
+  }
+  if (store && store !== oldStore) {
+    store = Ext.data.StoreManager.lookup(store);
+    me.store = store;
+    lockedGrid.view.blockRefresh = normalGrid.view.blockRefresh = true;
+    lockedGrid.bindStore(store);
+    view = lockedGrid.view;
+    view.store = store;
+    if (!view.dataSource.isFeatureStore) {
+      view.dataSource = store;
+    }
+    if (view.bufferedRenderer) {
+      view.bufferedRenderer.bindStore(store);
+    }
+    normalGrid.bindStore(store);
+    view = normalGrid.view;
+    view.store = store;
+    if (!view.dataSource.isFeatureStore) {
+      view.dataSource = store;
+    }
+    if (view.bufferedRenderer) {
+      view.bufferedRenderer.bindStore(store);
+    }
+    me.view.store = store;
+    loadMask = me.view.loadMask;
+    if (loadMask && loadMask.isLoadMask) {
+      loadMask.bindStore(store);
+    }
+    me.view.bindStore(normalGrid.view.dataSource, false, 'dataSource');
+    lockedGrid.view.blockRefresh = normalGrid.view.blockRefresh = false;
+  }
+  if (columns) {
+    lockedGrid.reconfiguring = normalGrid.reconfiguring = true;
+    lockedGrid.headerCt.removeAll();
+    normalGrid.headerCt.removeAll();
+    columns = me.processColumns(columns, lockedGrid);
+    lockedGrid.headerCt.add(columns.locked.items);
+    normalGrid.headerCt.add(columns.normal.items);
+    lockedGrid.reconfiguring = normalGrid.reconfiguring = false;
+    me.syncLockedWidth();
+  }
+  me.refreshCounter = normalGrid.view.refreshCounter;
+}, afterReconfigureLockable:function() {
+  this.syncLockedWidth();
+  if (this.refreshCounter === this.normalGrid.getView().refreshCounter) {
+    this.view.refreshView();
+  }
+}, constructLockableFeatures:function() {
+  var features = this.features, feature, featureClone, lockedFeatures, normalFeatures, i = 0, len;
+  if (features) {
+    if (!Ext.isArray(features)) {
+      features = [features];
+    }
+    lockedFeatures = [];
+    normalFeatures = [];
+    len = features.length;
+    for (; i < len; i++) {
+      feature = features[i];
+      if (!feature.isFeature) {
+        feature = Ext.create('feature.' + feature.ftype, feature);
+      }
+      switch(feature.lockableScope) {
+        case 'locked':
+          lockedFeatures.push(feature);
+          break;
+        case 'normal':
+          normalFeatures.push(feature);
+          break;
+        default:
+          feature.lockableScope = 'both';
+          lockedFeatures.push(feature);
+          normalFeatures.push(featureClone = feature.clone());
+          featureClone.lockingPartner = feature;
+          feature.lockingPartner = featureClone;
+      }
+    }
+  }
+  return {normalFeatures:normalFeatures, lockedFeatures:lockedFeatures};
+}, constructLockablePlugins:function() {
+  var plugins = this.plugins, plugin, normalPlugin, lockedPlugin, topPlugins, lockedPlugins, normalPlugins, i = 0, len, lockableScope, pluginCls;
+  if (plugins) {
+    if (!Ext.isArray(plugins)) {
+      plugins = [plugins];
+    }
+    topPlugins = [];
+    lockedPlugins = [];
+    normalPlugins = [];
+    len = plugins.length;
+    for (; i < len; i++) {
+      plugin = plugins[i];
+      if (plugin.init) {
+        lockableScope = plugin.lockableScope;
+      } else {
+        pluginCls = plugin.ptype ? Ext.ClassManager.getByAlias('plugin.' + plugin.ptype) : Ext.ClassManager.get(plugin.xclass);
+        lockableScope = pluginCls.prototype.lockableScope;
+      }
+      switch(lockableScope) {
+        case 'both':
+          lockedPlugins.push(lockedPlugin = plugin.clonePlugin());
+          normalPlugins.push(normalPlugin = plugin.clonePlugin());
+          lockedPlugin.lockingPartner = normalPlugin;
+          normalPlugin.lockingPartner = lockedPlugin;
+          Ext.destroy(plugin);
+          break;
+        case 'locked':
+          lockedPlugins.push(plugin);
+          break;
+        case 'normal':
+          normalPlugins.push(plugin);
+          break;
+        default:
+          topPlugins.push(plugin);
+      }
+    }
+  }
+  return {topPlugins:topPlugins, normalPlugins:normalPlugins, lockedPlugins:lockedPlugins};
+}, destroyLockable:function() {
+  var me = this, task = me.syncLockedWidthTask;
+  if (task) {
+    task.cancel();
+    me.syncLockedWidthTask = null;
+  }
+  if (me.lockedGrid && me.lockedGrid.headerCt) {
+    me.lockedGrid.headerCt.showMenuBy = null;
+  }
+  if (me.normalGrid && me.normalGrid.headerCt) {
+    me.normalGrid.headerCt.showMenuBy = null;
+  }
+  Ext.destroy(me.normalScrollbarClipper, me.lockedScrollbarClipper, me.normalScrollbar, me.lockedScrollbar, me.scrollBody, me.scrollContainer, me.normalScrollbarScroller, me.lockedScrollbarScroller, me.view, me.headerCt);
+}}, function() {
+  this.borrow(Ext.Component, ['constructPlugin']);
+});
+Ext.define('Ext.grid.plugin.BufferedRenderer', {extend:Ext.plugin.Abstract, alias:'plugin.bufferedrenderer', isBufferedRenderer:true, lockableScope:'both', numFromEdge:2, trailingBufferZone:10, leadingBufferZone:20, synchronousRender:true, scrollToLoadBuffer:200, viewSize:100, rowHeight:21, position:0, scrollTop:0, lastScrollDirection:1, bodyTop:0, scrollHeight:0, loadId:0, init:function(grid) {
+  var me = this, view = grid.view, viewListeners = {refresh:me.onViewRefresh, columnschanged:me.checkVariableRowHeight, scope:me, destroyable:true}, scrollerListeners = {scroll:me.onViewScroll, scope:me}, initialConfig = view.initialConfig;
+  me.scroller = view.lockingPartner ? view.ownerGrid.scrollable : view.getScrollable();
+  if (grid.isTree || grid.ownerLockable && grid.ownerLockable.isTree) {
+    view.blockRefresh = false;
+    if (initialConfig && initialConfig.loadMask === undefined) {
+      view.loadMask = true;
+    }
+  }
+  if (view.positionBody) {
+    viewListeners.refresh = me.onViewRefresh;
+  }
+  me.grid = grid;
+  me.view = view;
+  me.isRTL = view.getInherited().rtl;
+  view.bufferedRenderer = me;
+  view.preserveScrollOnRefresh = true;
+  view.animate = false;
+  me.bindStore(view.dataSource);
+  if (view.hasOwnProperty('rowHeight')) {
+    me.rowHeight = view.rowHeight;
+  }
+  me.position = 0;
+  me.viewListeners = view.on(viewListeners);
+  if (me.scroller) {
+    me.scrollListeners = me.scroller.on(scrollerListeners);
+  }
+}, checkVariableRowHeight:function() {
+  var hadVariableRowHeight = this.variableRowHeight;
+  this.variableRowHeight = this.view.hasVariableRowHeight();
+  if (!!this.variableRowHeight !== !!hadVariableRowHeight) {
+    delete this.rowHeight;
+  }
+}, bindStore:function(newStore) {
+  var me = this, currentStore = me.store;
+  if (currentStore && currentStore.isFeatureStore) {
+    return;
+  }
+  if (currentStore) {
+    me.unbindStore();
+  }
+  me.storeListeners = newStore.on({scope:me, groupchange:me.onStoreGroupChange, clear:me.onStoreClear, beforeload:me.onBeforeStoreLoad, load:me.onStoreLoad, destroyable:true});
+  me.store = newStore;
+  me.setBodyTop(me.position = me.scrollTop = 0);
+  delete me.viewSize;
+  delete me.rowHeight;
+  if (newStore.isBufferedStore) {
+    newStore.setViewSize(me.viewSize);
+  }
+}, unbindStore:function() {
+  this.storeListeners.destroy();
+  this.storeListeners = this.store = null;
+}, onBeforeStoreLoad:function(store) {
+  var me = this, view = me.view;
+  if (view && view.refreshCounter) {
+    if (store.isTreeStore || view.preserveScrollOnReload) {
+      me.nextRefreshStartIndex = view.all.startIndex;
+    } else {
+      if (me.scrollTop !== 0) {
+        me.setBodyTop(me.bodyTop = me.scrollTop = me.position = me.scrollHeight = me.nextRefreshStartIndex = 0);
+        me.scroller.scrollTo(null, 0);
+      }
+    }
+    me.lastScrollDirection = me.scrollOffset = null;
+  }
+  me.disable();
+}, onStoreLoad:function() {
+  this.isStoreLoading = true;
+  this.enable();
+}, onStoreClear:function() {
+  var me = this, view = me.view;
+  if (view.rendered && !me.store.destroyed) {
+    if (me.scrollTop !== 0) {
+      me.bodyTop = me.scrollTop = me.position = me.scrollHeight = 0;
+      me.nextRefreshStartIndex = null;
+      me.scroller.scrollTo(null, 0);
+    }
+    view.refresh();
+    me.lastScrollDirection = me.scrollOffset = null;
+  }
+}, onStoreGroupChange:function(store) {
+  this.refreshSize();
+}, onViewRefresh:function(view, records) {
+  var me = this, rows = view.all, height;
+  me.checkVariableRowHeight();
+  if (!view.componentLayoutCounter && (view.headerCt.down('{flex}') || me.variableRowHeight)) {
+    view.on({boxready:Ext.Function.pass(me.onViewRefresh, [view, records], me), single:true});
+    me.skipNextRefreshSize = true;
+    return;
+  }
+  me.skipNextRefreshSize = false;
+  if (me.refreshing) {
+    return;
+  }
+  me.refreshSize();
+  if (me.scroller) {
+    if (me.scrollTop !== me.scroller.getPosition().y) {
+      me.onViewScroll();
+    } else {
+      if (!me.hasOwnProperty('bodyTop')) {
+        me.bodyTop = rows.startIndex * me.rowHeight;
+        me.scroller.scrollTo(null, me.bodyTop);
+      }
+      me.setBodyTop(me.bodyTop);
+      height = view.lastBox && view.lastBox.height;
+      if (height && rows.getCount()) {
+        me.onViewResize(view, null, height);
+        if (records && rows.getCount() !== records.length) {
+          records.length = 0;
+          records.push.apply(records, me.store.getRange(rows.startIndex, rows.endIndex));
+        }
+      }
+    }
+  }
+}, beforeTableLayout:function(ownerContext) {
+  var dom = this.view.body.dom, size;
+  if (dom) {
+    size = this.grid.getElementSize(dom);
+    ownerContext.bodyHeight = size.height;
+    ownerContext.bodyWidth = size.width;
+  }
+}, afterTableLayout:function(ownerContext) {
+  var me = this, view = me.view, renderedBlockHeight;
+  if (ownerContext.bodyHeight && view.body.dom) {
+    delete me.rowHeight;
+    me.refreshSize();
+    renderedBlockHeight = me.grid.getElementHeight(view.body.dom);
+    if (renderedBlockHeight !== ownerContext.bodyHeight) {
+      me.onViewResize(view, null, view.el.lastBox.height);
+      renderedBlockHeight = me.bodyHeight;
+      if (renderedBlockHeight < ownerContext.bodyHeight) {
+        if (me.viewSize >= me.store.getCount()) {
+          me.setBodyTop(0);
+        } else {
+          if (me.bodyTop > me.scrollTop || me.bodyTop + renderedBlockHeight < me.scrollTop + me.viewClientHeight) {
+            me.setBodyTop(me.scrollTop - me.trailingBufferZone * me.rowHeight);
+          }
+        }
+      }
+      if (view.all.endIndex === view.dataSource.getCount() - 1) {
+        me.stretchView(view, me.scrollHeight = me.bodyTop + renderedBlockHeight - 1);
+      }
+    }
+  }
+}, refreshSize:function() {
+  var me = this, view = me.view, skipNextRefreshSize = me.skipNextRefreshSize || Ext.Component.pendingLayouts && Ext.Component.layoutSuspendCount || !view.body.dom;
+  me.skipNextRefreshSize = false;
+  if (skipNextRefreshSize) {
+    return;
+  }
+  me.bodyHeight = me.grid.getElementHeight(view.body.dom);
+  me.scrollHeight = me.getScrollHeight();
+  me.stretchView(view, me.scrollHeight);
+}, onViewResize:function(view, width, height, oldWidth, oldHeight) {
+  var me = this, newViewSize;
+  me.refreshSize();
+  if (!oldHeight || height !== oldHeight) {
+    Ext.suspendLayouts();
+    me.viewClientHeight = view.lockingPartner ? me.scroller && me.scroller.getClientSize().y || height : view.el.dom.clientHeight;
+    newViewSize = Math.ceil(height / Math.min(me.getThemeRowHeight(), me.rowHeight)) + me.trailingBufferZone + me.leadingBufferZone;
+    me.viewSize = me.setViewSize(newViewSize);
+    Ext.resumeLayouts(true);
+  }
+}, stretchView:function(view, scrollRange) {
+  var me = this, newY;
+  if (me.scrollTop > scrollRange) {
+    newY = me.nextRefreshStartIndex == null ? me.bodyHeight : scrollRange - me.bodyHeight;
+    me.position = me.scrollTop = Math.max(newY, 0);
+    me.scroller.scrollTo(null, me.scrollTop);
+  }
+  if (me.bodyTop > scrollRange) {
+    view.body.translate(null, me.bodyTop = me.position);
+  }
+  if (view.getScrollable()) {
+    me.refreshScroller(view, scrollRange);
+  }
+}, refreshScroller:function(view, scrollRange) {
+  var scroller = view.getScrollable();
+  if (scroller) {
+    if (scroller.setElementSize) {
+      scroller.setElementSize();
+    }
+    scroller.setSize({x:view.headerCt.getTableWidth(), y:view.lockingPartner ? null : scrollRange});
+    if (view.lockingPartner) {
+      this.scroller.setSize({x:0, y:scrollRange});
+    }
+  }
+}, setViewSize:function(viewSize, fromLockingPartner) {
+  var me = this, store = me.store, view = me.view, ownerGrid, rows = view.all, elCount = rows.getCount(), storeCount = store.getCount(), start, end, lockingPartner = me.view.lockingPartner && me.view.lockingPartner.bufferedRenderer, diff = elCount - viewSize, oldTop = 0, maxIndex = Math.max(0, storeCount - 1), pointyEnd = Ext.Number.sign(me.getFirstVisibleRowIndex() - rows.startIndex - (rows.endIndex - me.getLastVisibleRowIndex()));
+  if (lockingPartner && !fromLockingPartner) {
+    lockingPartner.setViewSize(viewSize, true);
+  }
+  diff = elCount - viewSize;
+  if (diff) {
+    me.scrollTop = me.scroller ? me.scroller.getPosition().y : 0;
+    me.viewSize = viewSize;
+    if (store.isBufferedStore) {
+      store.setViewSize(viewSize);
+    }
+    if (elCount) {
+      start = Math.max(0, Math.min(rows.startIndex, storeCount - viewSize));
+      end = Math.min(start + viewSize - 1, maxIndex);
+      if (start === rows.startIndex && end === rows.endIndex) {
+        if (diff < 0) {
+          me.handleViewScroll(pointyEnd);
+        }
+      } else {
+        if (lockingPartner) {
+          lockingPartner.disable();
+        }
+        if (diff < 0) {
+          if (storeCount > viewSize && storeCount > elCount) {
+            store.getRange(start, end, {callback:function(newRecords, start, end) {
+              ownerGrid = view.ownerGrid;
+              if (end > rows.endIndex) {
+                rows.scroll(Ext.Array.slice(newRecords, rows.endIndex + 1, Infinity), 1, 0);
+              }
+              if (start < rows.startIndex) {
+                oldTop = rows.first(true);
+                rows.scroll(Ext.Array.slice(newRecords, 0, rows.startIndex - start), -1, 0);
+                me.bodyTop -= oldTop.offsetTop;
+              }
+              me.setBodyTop(me.bodyTop);
+              if (lockingPartner && !fromLockingPartner && (ownerGrid.syncRowHeight || ownerGrid.syncRowHeightOnNextLayout)) {
+                lockingPartner.setViewSize(viewSize, true);
+                ownerGrid.syncRowHeights();
+              }
+            }});
+          } else {
+            me.refreshView(0);
+          }
+        } else {
+          if (pointyEnd === 1) {
+            oldTop = rows.item(rows.startIndex + diff, true).offsetTop;
+          }
+          rows.clip(pointyEnd, diff);
+          me.setBodyTop(me.bodyTop + oldTop);
+        }
+        if (lockingPartner) {
+          lockingPartner.enable();
+        }
+      }
+    }
+    me.refreshSize();
+  }
+  return viewSize;
+}, getViewRange:function() {
+  var me = this, view = me.view, rows = view.all, rowCount = rows.getCount(), lockingPartnerRows = view.lockingPartner && view.lockingPartner.all, store = me.store, startIndex = 0, endIndex;
+  if (!me.hasOwnProperty('viewSize') && me.ownerCt && me.ownerCt.height) {
+    me.viewSize = Math.ceil(me.ownerCt.height / me.rowHeight);
+  }
+  if (!store.data.getCount()) {
+    return [];
+  }
+  if (!rowCount && lockingPartnerRows && lockingPartnerRows.getCount()) {
+    startIndex = lockingPartnerRows.startIndex;
+    endIndex = Math.min(lockingPartnerRows.endIndex, startIndex + me.viewSize - 1, store.getCount() - 1);
+  } else {
+    if (rowCount) {
+      startIndex = rows.startIndex;
+    } else {
+      if (store.isBufferedStore) {
+        if (!store.currentPage) {
+          store.currentPage = 1;
+        }
+        startIndex = rows.startIndex = (store.currentPage - 1) * (store.pageSize || 1);
+        store.currentPage = 1;
+      }
+    }
+    endIndex = startIndex + (me.viewSize || store.defaultViewSize) - 1;
+  }
+  return store.getRange(startIndex, endIndex);
+}, onReplace:function(store, startIndex, oldRecords, newRecords) {
+  var me = this, scroller = me.scroller, view = me.view, rows = view.all, oldStartIndex, renderedSize = rows.getCount(), lastAffectedIndex = startIndex + oldRecords.length - 1, recordIncrement = newRecords.length - oldRecords.length, scrollIncrement = recordIncrement * me.rowHeight, preserveScrollOnRefresh;
+  if (startIndex >= rows.startIndex + me.viewSize) {
+    me.refreshSize();
+    return;
+  }
+  if (renderedSize && lastAffectedIndex < rows.startIndex && rows.getCount() >= me.viewSize) {
+    rows.moveBlock(recordIncrement);
+    me.refreshSize();
+    oldStartIndex = rows.startIndex;
+    if (recordIncrement > 0) {
+      me.doNotMirror = true;
+      me.handleViewScroll(-1);
+      me.doNotMirror = false;
+    }
+    if (rows.startIndex === oldStartIndex) {
+      if (rows.startIndex) {
+        me.setBodyTop(me.bodyTop += scrollIncrement);
+        view.suspendEvent('scroll');
+        view.scrollBy(0, scrollIncrement);
+        view.resumeEvent('scroll');
+        me.position = me.scrollTop = me.scroller.getPosition().y;
+      }
+    } else {
+      view.suspendEvent('scroll');
+      view.scrollBy(0, (oldStartIndex - rows.startIndex) * me.rowHeight);
+      view.resumeEvent('scroll');
+    }
+    view.refreshSize(rows.getCount() !== renderedSize);
+    return;
+  }
+  if (renderedSize && startIndex > rows.endIndex) {
+    me.refreshSize();
+    if (recordIncrement > 0) {
+      me.onRangeFetched(null, rows.startIndex, Math.min(store.getCount(), rows.startIndex + me.viewSize) - 1);
+    }
+    view.refreshSize(rows.getCount() !== renderedSize);
+    return;
+  }
+  if (startIndex < rows.startIndex && lastAffectedIndex <= rows.endIndex) {
+    preserveScrollOnRefresh = view.preserveScrollOnRefresh;
+    view.preserveScrollOnRefresh = false;
+    me.refreshView(rows.startIndex - oldRecords.length + newRecords.length);
+    view.preserveScrollOnRefresh = preserveScrollOnRefresh;
+    return;
+  }
+  if (startIndex < rows.startIndex && lastAffectedIndex <= rows.endIndex && scrollIncrement) {
+    me.doVerticalScroll(scroller, me.scrollTop += scrollIncrement, true);
+  }
+  me.refreshView(rows.startIndex, scrollIncrement);
+}, doVerticalScroll:function(scroller, pos, supressEvents) {
+  var me = this;
+  if (!scroller) {
+    return;
+  }
+  if (supressEvents) {
+    scroller.suspendEvent('scroll');
+  }
+  scroller.scrollTo(null, me.position = pos);
+  if (supressEvents) {
+    scroller.resumeEvent('scroll');
+  }
+}, scrollTo:function(recordIdx, options) {
+  var args = arguments, me = this, view = me.view, lockingPartner = view.lockingPartner && view.lockingPartner.grid.isVisible() && view.lockingPartner.bufferedRenderer, store = me.store, total = store.getCount(), startIdx, endIdx, targetRow, tableTop, groupingFeature, metaGroup, record, direction;
+  if (options !== undefined && !(options instanceof Object)) {
+    options = {select:args[1], callback:args[2], scope:args[3]};
+  }
+  if ((groupingFeature = view.dataSource.groupingFeature) && groupingFeature.collapsible) {
+    if (recordIdx.isEntity) {
+      record = recordIdx;
+    } else {
+      record = view.store.getAt(Math.min(Math.max(recordIdx, 0), view.store.getCount() - 1));
+    }
+    metaGroup = groupingFeature.getMetaGroup(record);
+    if (metaGroup && metaGroup.isCollapsed) {
+      if (!groupingFeature.isExpandingOrCollapsing && record !== metaGroup.placeholder) {
+        groupingFeature.expand(groupingFeature.getGroup(record).getGroupKey());
+        total = store.getCount();
+        recordIdx = groupingFeature.indexOf(record);
+      } else {
+        record = metaGroup.placeholder;
+        recordIdx = groupingFeature.indexOfPlaceholder(record);
+      }
+    } else {
+      recordIdx = groupingFeature.indexOf(record);
+    }
+  } else {
+    if (recordIdx.isEntity) {
+      record = recordIdx;
+      recordIdx = store.indexOf(record);
+      if (recordIdx === -1) {
+        Ext.raise('Unknown record passed to BufferedRenderer#scrollTo');
+        return;
+      }
+    } else {
+      recordIdx = Math.min(Math.max(recordIdx, 0), total - 1);
+      record = store.getAt(recordIdx);
+    }
+  }
+  if (record && (targetRow = view.getNode(record))) {
+    view.grid.ensureVisible(record, options);
+    me.onViewScroll();
+    return;
+  }
+  if (recordIdx < view.all.startIndex) {
+    direction = -1;
+    startIdx = Math.max(Math.min(recordIdx - Math.floor((me.leadingBufferZone + me.trailingBufferZone) / 2), total - me.viewSize + 1), 0);
+    endIdx = Math.min(startIdx + me.viewSize - 1, total - 1);
+  } else {
+    direction = 1;
+    endIdx = Math.min(recordIdx + Math.floor((me.leadingBufferZone + me.trailingBufferZone) / 2), total - 1);
+    startIdx = Math.max(endIdx - (me.viewSize - 1), 0);
+  }
+  tableTop = Math.max(startIdx * me.rowHeight, 0);
+  store.getRange(startIdx, endIdx, {callback:function(range, start, end) {
+    me.renderRange(start, end, true);
+    record = store.data.getRange(recordIdx, recordIdx + 1)[0];
+    targetRow = view.getNode(record);
+    view.body.translate(null, me.bodyTop = tableTop);
+    if (direction === 1 && view.hasVariableRowHeight()) {
+      me.refreshSize();
+    }
+    if (lockingPartner) {
+      lockingPartner.renderRange(start, end, true);
+      me.syncRowHeights();
+      lockingPartner.view.body.translate(null, lockingPartner.bodyTop = tableTop);
+      if (direction === 1) {
+        lockingPartner.refreshSize();
+      }
+    }
+    if (!targetRow) {
+      return;
+    }
+    view.grid.ensureVisible(record, options);
+    me.scrollTop = me.position = me.scroller.getPosition().y;
+    if (lockingPartner) {
+      lockingPartner.position = lockingPartner.scrollTop = me.scrollTop;
+    }
+  }});
+}, onViewScroll:function(scroller, x, scrollTop) {
+  var me = this, bodyDom = me.view.body.dom, store = me.store, totalCount = store.getCount(), vscrollDistance, scrollDirection;
+  me.scrollTop = scrollTop == null ? scrollTop = me.scroller.getPosition().y : scrollTop;
+  if (bodyDom) {
+    if (!(me.disabled || totalCount < me.viewSize)) {
+      vscrollDistance = scrollTop - me.position;
+      scrollDirection = vscrollDistance > 0 ? 1 : -1;
+      if (Math.abs(vscrollDistance) >= 20 || scrollDirection !== me.lastScrollDirection) {
+        me.lastScrollDirection = scrollDirection;
+        me.handleViewScroll(me.lastScrollDirection, vscrollDistance);
+      }
+    }
+  }
+}, handleViewScroll:function(direction, vscrollDistance) {
+  var me = this, rows = me.view.all, store = me.store, storeCount = store.getCount(), viewSize = me.viewSize, lastItemIndex = storeCount - 1, maxRequestStart = Math.max(0, storeCount - viewSize), requestStart, requestEnd;
+  if (direction === -1) {
+    if (rows.startIndex) {
+      if (me.topOfViewCloseToEdge()) {
+        requestStart = Math.max(0, me.getLastVisibleRowIndex() + me.trailingBufferZone - viewSize);
+        if (requestStart > rows.startIndex) {
+          requestStart = Math.max(0, rows.startIndex + Math.floor(vscrollDistance / me.rowHeight));
+        }
+      }
+    }
+  } else {
+    if (rows.endIndex < lastItemIndex) {
+      if (me.bottomOfViewCloseToEdge()) {
+        requestStart = Math.max(0, Math.min(me.getFirstVisibleRowIndex() - me.trailingBufferZone, maxRequestStart));
+      }
+    }
+  }
+  if (requestStart == null) {
+    me.position = me.scrollTop;
+    me.loadId++;
+  } else {
+    requestEnd = Math.min(requestStart + viewSize - 1, lastItemIndex);
+    if (me.variableRowHeight && requestEnd === rows.endIndex && requestEnd < lastItemIndex) {
+      requestEnd++;
+      requestStart++;
+    }
+    if (requestStart !== rows.startIndex || requestEnd !== rows.endIndex) {
+      me.scroller.trackingScrollTop = me.scrollTop;
+      me.renderRange(requestStart, requestEnd);
+      return true;
+    }
+  }
+}, bottomOfViewCloseToEdge:function() {
+  var me = this;
+  if (me.variableRowHeight) {
+    return me.bodyTop + me.bodyHeight < me.scrollTop + me.view.lastBox.height + me.numFromEdge * me.rowHeight;
+  } else {
+    return me.view.all.endIndex - me.getLastVisibleRowIndex() < me.numFromEdge;
+  }
+}, topOfViewCloseToEdge:function() {
+  var me = this;
+  if (me.variableRowHeight) {
+    return me.bodyTop > me.scrollTop - me.numFromEdge * me.rowHeight;
+  } else {
+    return me.getFirstVisibleRowIndex() - me.view.all.startIndex < me.numFromEdge;
+  }
+}, refreshView:function(startIndex, scrollIncrement) {
+  var me = this, viewSize = me.viewSize, view = me.view, rows = view.all, store = me.store, storeCount = store.getCount(), maxIndex = Math.max(0, storeCount - 1), lockingPartnerRows = view.lockingPartner && view.lockingPartner.all, preserveScroll = me.bodyTop && view.preserveScrollOnRefresh || scrollIncrement, endIndex;
+  if (!storeCount) {
+    return me.doRefreshView([], 0, 0);
+  } else {
+    if (storeCount < viewSize) {
+      startIndex = 0;
+      endIndex = maxIndex;
+      me.nextRefreshStartIndex = preserveScroll ? null : 0;
+    } else {
+      if (startIndex == null && !rows.getCount() && lockingPartnerRows && lockingPartnerRows.getCount()) {
+        startIndex = lockingPartnerRows.startIndex;
+        endIndex = Math.min(lockingPartnerRows.endIndex, startIndex + viewSize - 1, maxIndex);
+      } else {
+        if (startIndex == null) {
+          if (me.nextRefreshStartIndex != null && !preserveScroll) {
+            startIndex = me.nextRefreshStartIndex;
+          } else {
+            startIndex = rows.startIndex;
+          }
+          me.nextRefreshStartIndex = null;
+        }
+        startIndex = Math.max(0, Math.min(startIndex, maxIndex - viewSize + 1));
+        endIndex = Math.min(startIndex + viewSize - 1, maxIndex);
+        if (endIndex - startIndex + 1 > viewSize) {
+          startIndex = endIndex - viewSize + 1;
+        }
+      }
+    }
+  }
+  if (startIndex === 0 && endIndex === -1) {
+    me.doRefreshView([], 0, 0);
+  } else {
+    store.getRange(startIndex, endIndex, {callback:me.doRefreshView, scope:me});
+  }
+}, doRefreshView:function(range, startIndex, endIndex) {
+  var me = this, view = me.view, scroller = me.scroller, rows = view.all, previousStartIndex = rows.startIndex, previousEndIndex = rows.endIndex, prevRowCount = rows.getCount(), viewMoved = startIndex !== rows.startIndex && !me.isStoreLoading, calculatedTop = -1, previousFirstItem, previousLastItem, scrollIncrement, restoreFocus;
+  me.isStoreLoading = false;
+  view.refreshing = me.refreshing = true;
+  if (view.refreshCounter) {
+    if (view.hasListeners.beforerefresh && view.fireEvent('beforerefresh', view) === false) {
+      return view.refreshNeeded = view.refreshing = me.refreshing = false;
+    }
+    restoreFocus = view.saveFocusState();
+    view.clearViewEl(true);
+    view.refreshCounter++;
+    if (range.length) {
+      view.doAdd(range, startIndex);
+      if (viewMoved) {
+        previousFirstItem = rows.item(previousStartIndex, true);
+        previousLastItem = rows.item(previousEndIndex, true);
+        if (previousFirstItem) {
+          scrollIncrement = -previousFirstItem.offsetTop;
+        } else {
+          if (previousLastItem) {
+            scrollIncrement = rows.last(true).offsetTop - previousLastItem.offsetTop;
+          }
+        }
+        if (scrollIncrement) {
+          calculatedTop = Math.max(me.bodyTop + scrollIncrement, 0);
+          me.scrollTop = calculatedTop ? me.scrollTop + scrollIncrement : 0;
+        } else {
+          calculatedTop = startIndex * me.rowHeight;
+          me.scrollTop = Math.max(calculatedTop + me.rowHeight * (calculatedTop < me.bodyTop ? me.leadingBufferZone : me.trailingBufferZone), 0);
+        }
+      }
+    } else {
+      me.scrollTop = calculatedTop = me.position = 0;
+      view.addEmptyText();
+    }
+    if (calculatedTop !== -1) {
+      me.setBodyTop(calculatedTop);
+      me.doVerticalScroll(scroller, me.scrollTop, true);
+    }
+    me.refreshSize();
+    view.refreshSize(rows.getCount() !== prevRowCount);
+    view.fireItemMutationEvent('refresh', view, range);
+    restoreFocus();
+    if (view.preserveScrollOnRefresh && restoreFocus !== Ext.emptyFn) {
+      me.doVerticalScroll(scroller, me.scrollTop, true);
+    }
+    view.headerCt.setSortState();
+  } else {
+    view.refresh();
+  }
+  if (view.getVisibleColumnManager().getColumns().length && rows.getCount() !== Math.min(me.store.getCount(), me.viewSize)) {
+    Ext.raise('rendered block refreshed at ' + rows.getCount() + ' rows while BufferedRenderer view size is ' + me.viewSize);
+  }
+  view.refreshNeeded = view.refreshing = me.refreshing = false;
+}, renderRange:function(start, end, forceSynchronous) {
+  var me = this, rows = me.view.all, store = me.store;
+  if (rows.startIndex === start && rows.endIndex === end) {
+    return;
+  }
+  if (!(start === rows.startIndex && end === rows.endIndex)) {
+    if (store.rangeCached(start, end)) {
+      me.cancelLoad();
+      if (me.synchronousRender || forceSynchronous) {
+        me.onRangeFetched(null, start, end);
+      } else {
+        if (!me.renderTask) {
+          me.renderTask = new Ext.util.DelayedTask(me.onRangeFetched, me);
+        }
+        me.renderTask.delay(-1, null, null, [null, start, end]);
+      }
+    } else {
+      me.attemptLoad(start, end, me.scrollTop);
+    }
+  }
+}, onRangeFetched:function(range, start, end) {
+  var me = this, view = me.view, scroller = me.scroller, viewEl = view.el, rows = view.all, increment = 0, calculatedTop, partnerView = !me.doNotMirror && view.lockingPartner, lockingPartner = partnerView && partnerView.bufferedRenderer, partnerRows = partnerView && partnerView.all, variableRowHeight = me.variableRowHeight, doSyncRowHeight = partnerView && partnerView.ownerCt.isVisible() && (view.ownerGrid.syncRowHeight || view.ownerGrid.syncRowHeightOnNextLayout || lockingPartner.variableRowHeight !== 
+  variableRowHeight), activeEl, focusedView, i, newRows, newTop, noOverlap, oldStart, partnerNewRows, pos, removeCount, topAdditionSize, topBufferZone, records;
+  if (view.destroyed) {
+    return;
+  }
+  if (range) {
+    me.scrollTop = scroller.getPosition().y;
+  } else {
+    range = me.store.getRange(start, end);
+    if (!range) {
+      return;
+    }
+  }
+  activeEl = Ext.fly(Ext.Element.getActiveElement());
+  if (viewEl.contains(activeEl)) {
+    focusedView = view;
+  } else {
+    if (partnerView && partnerView.el.contains(activeEl)) {
+      focusedView = partnerView;
+    }
+  }
+  if (focusedView) {
+    activeEl.suspendFocusEvents();
+  }
+  calculatedTop = start * me.rowHeight;
+  if (start < rows.startIndex && end > rows.endIndex) {
+    topAdditionSize = rows.startIndex - start;
+    view.clearViewEl(true);
+    newRows = view.doAdd(range, start);
+    view.fireItemMutationEvent('itemadd', range, start, newRows, view);
+    if (lockingPartner) {
+      partnerView.clearViewEl(true);
+      partnerNewRows = partnerView.doAdd(range, start);
+      partnerView.fireItemMutationEvent('itemadd', range, start, partnerNewRows, partnerView);
+      if (doSyncRowHeight) {
+        me.syncRowHeights(newRows, partnerNewRows);
+        doSyncRowHeight = false;
+      }
+    }
+    for (i = 0; i < topAdditionSize; i++) {
+      increment -= me.grid.getElementHeight(newRows[i]);
+    }
+    newTop = me.bodyTop + increment;
+  } else {
+    noOverlap = me.teleported || start > rows.endIndex || end < rows.startIndex;
+    if (noOverlap) {
+      view.clearViewEl(true);
+      me.teleported = false;
+    }
+    if (!rows.getCount()) {
+      newRows = view.doAdd(range, start);
+      view.fireItemMutationEvent('itemadd', range, start, newRows, view);
+      if (lockingPartner) {
+        partnerView.clearViewEl(true);
+        partnerNewRows = lockingPartner.view.doAdd(range, start);
+        partnerView.fireItemMutationEvent('itemadd', range, start, partnerNewRows, partnerView);
+      }
+      newTop = calculatedTop;
+      if (noOverlap && variableRowHeight) {
+        topBufferZone = me.scrollTop < me.position ? me.leadingBufferZone : me.trailingBufferZone;
+        if (start > topBufferZone) {
+          newTop = Math.max(me.scrollTop - rows.item(rows.startIndex + topBufferZone - 1, true).offsetTop, 0);
+        }
+      }
+    } else {
+      if (end > rows.endIndex) {
+        removeCount = Math.max(start - rows.startIndex, 0);
+        if (variableRowHeight) {
+          increment = rows.item(rows.startIndex + removeCount, true).offsetTop;
+        }
+        records = Ext.Array.slice(range, rows.endIndex + 1 - start);
+        newRows = rows.scroll(records, 1, removeCount);
+        if (lockingPartner) {
+          partnerNewRows = partnerRows.scroll(records, 1, removeCount);
+        }
+        if (variableRowHeight) {
+          newTop = me.bodyTop + increment;
+        } else {
+          newTop = calculatedTop;
+        }
+      } else {
+        removeCount = Math.max(rows.endIndex - end, 0);
+        oldStart = rows.startIndex;
+        records = Ext.Array.slice(range, 0, rows.startIndex - start);
+        newRows = rows.scroll(records, -1, removeCount);
+        if (lockingPartner) {
+          partnerNewRows = partnerRows.scroll(records, -1, removeCount);
+        }
+        if (doSyncRowHeight) {
+          me.syncRowHeights(newRows, partnerNewRows);
+          doSyncRowHeight = false;
+          newTop = me.bodyTop - rows.item(oldStart, true).offsetTop;
+          if (!rows.startIndex) {
+            if (newTop) {
+              me.doVerticalScroll(scroller, me.scrollTop -= newTop);
+              newTop = 0;
+            }
+          } else {
+            if (newTop < 0) {
+              increment = rows.startIndex * me.rowHeight;
+              me.doVerticalScroll(scroller, me.scrollTop += increment);
+              newTop = me.bodyTop + increment;
+            }
+          }
+        } else {
+          newTop = calculatedTop;
+        }
+      }
+    }
+    me.position = me.scrollTop;
+  }
+  if (focusedView) {
+    activeEl.resumeFocusEvents();
+    if (!focusedView.el.contains(activeEl)) {
+      pos = focusedView.actionableMode ? focusedView.actionPosition : focusedView.lastFocused;
+      if (pos && pos.column) {
+        focusedView.renderingRows = true;
+        focusedView.onFocusLeave({});
+        focusedView.renderingRows = false;
+        me.getNewFocusTarget(pos).focus();
+      }
+    }
+  }
+  newTop = Math.max(Math.floor(newTop), 0);
+  if (view.positionBody) {
+    me.setBodyTop(newTop, true);
+  }
+  if (lockingPartner) {
+    lockingPartner.scrollTop = me.scrollTop;
+    if (lockingPartner.bodyTop !== newTop) {
+      lockingPartner.setBodyTop(newTop, true);
+    }
+    if (doSyncRowHeight) {
+      me.syncRowHeights(newRows, partnerNewRows);
+    }
+  } else {
+    if (variableRowHeight) {
+      delete me.rowHeight;
+      me.refreshSize();
+    }
+  }
+  if (view.getVisibleColumnManager().getColumns().length && rows.getCount() !== Math.min(me.store.getCount(), me.viewSize)) {
+    Ext.raise('rendered block refreshed at ' + rows.getCount() + ' rows while BufferedRenderer view size is ' + me.viewSize);
+  }
+  return newRows;
+}, getNewFocusTarget:function(pos) {
+  var view = pos.view, grid = view.grid, column = pos.column, hiddenHeaders = column.isHidden() || grid.hideHeaders, tabbableItems;
+  if (column.focusable && !hiddenHeaders) {
+    return column;
+  }
+  tabbableItems = column.el.findTabbableElements();
+  if (tabbableItems && tabbableItems.length) {
+    return tabbableItems[0];
+  }
+  return grid.findFocusTarget() || view.el;
+}, syncRowHeights:function(itemEls, partnerItemEls) {
+  var me = this, ln = 0, otherLn = 1, mySynchronizer = [], otherSynchronizer = [], RowSynchronizer = Ext.grid.locking.RowSynchronizer, i, rowSync;
+  if (itemEls && partnerItemEls) {
+    ln = itemEls.length;
+    otherLn = partnerItemEls.length;
+  }
+  if (ln !== otherLn) {
+    itemEls = me.view.all.slice();
+    partnerItemEls = me.view.lockingPartner.all.slice();
+    ln = otherLn = itemEls.length;
+  }
+  for (i = 0; i < ln; i++) {
+    mySynchronizer[i] = rowSync = new RowSynchronizer(me.view, itemEls[i]);
+    rowSync.measure();
+  }
+  for (i = 0; i < otherLn; i++) {
+    otherSynchronizer[i] = rowSync = new RowSynchronizer(me.view.lockingPartner, partnerItemEls[i]);
+    rowSync.measure();
+  }
+  for (i = 0; i < ln; i++) {
+    mySynchronizer[i].finish(otherSynchronizer[i]);
+    otherSynchronizer[i].finish(mySynchronizer[i]);
+  }
+  me.syncRowHeightsFinish();
+}, syncRowHeightsFinish:function() {
+  var me = this, view = me.view, lockingPartner = view.lockingPartner.bufferedRenderer, ownerGrid = view.ownerGrid, scrollable = view.getScrollable();
+  ownerGrid.syncRowHeightOnNextLayout = false;
+  if (view.componentLayoutCounter) {
+    delete me.rowHeight;
+    me.refreshSize();
+    delete lockingPartner.rowHeight;
+    lockingPartner.refreshSize();
+  }
+  if (scrollable) {
+    scrollable.restoreState();
+  }
+}, setBodyTop:function(bodyTop, skipStretchView) {
+  var me = this, view = me.view, rows = view.all, store = me.store, body = view.body;
+  if (!body.dom) {
+    return;
+  }
+  me.translateBody(body, bodyTop);
+  if (me.variableRowHeight) {
+    me.bodyHeight = me.grid.getElementHeight(body.dom);
+    if (rows.endIndex === store.getCount() - 1) {
+      me.scrollHeight = bodyTop + me.bodyHeight - 1;
+    } else {
+      me.scrollHeight = me.getScrollHeight();
+    }
+    if (!skipStretchView) {
+      me.stretchView(view, me.scrollHeight);
+    }
+  } else {
+    me.bodyHeight = rows.getCount() * me.rowHeight;
+  }
+}, translateBody:function(body, bodyTop) {
+  body.translate(null, this.bodyTop = bodyTop);
+}, getFirstVisibleRowIndex:function(startRow, endRow, viewportTop, viewportBottom) {
+  var me = this, view = me.view, rows = view.all, elements = rows.elements, clientHeight = me.viewClientHeight, target, targetTop, bodyTop = me.bodyTop;
+  if (rows.getCount() && me.variableRowHeight) {
+    if (!arguments.length) {
+      startRow = rows.startIndex;
+      endRow = rows.endIndex;
+      viewportTop = me.scrollTop;
+      viewportBottom = viewportTop + clientHeight;
+      if (bodyTop > viewportBottom || bodyTop + me.bodyHeight < viewportTop) {
+        me.teleported = true;
+        return Math.floor(me.scrollTop / me.rowHeight);
+      }
+      target = startRow + Math.min(me.numFromEdge + (me.lastScrollDirection === -1 ? me.leadingBufferZone : me.trailingBufferZone), Math.floor((endRow - startRow) / 2));
+    } else {
+      if (startRow === endRow) {
+        return endRow;
+      }
+      target = startRow + Math.floor((endRow - startRow) / 2);
+    }
+    targetTop = bodyTop + elements[target].offsetTop;
+    if (targetTop + me.grid.getElementHeight(elements[target]) <= viewportTop) {
+      return me.getFirstVisibleRowIndex(target + 1, endRow, viewportTop, viewportBottom);
+    }
+    if (targetTop <= viewportTop) {
+      return target;
+    } else {
+      if (target !== startRow) {
+        return me.getFirstVisibleRowIndex(startRow, target - 1, viewportTop, viewportBottom);
+      }
+    }
+  }
+  return Math.floor(me.scrollTop / me.rowHeight);
+}, getLastVisibleRowIndex:function(startRow, endRow, viewportTop, viewportBottom) {
+  var me = this, view = me.view, rows = view.all, elements = rows.elements, clientHeight = me.viewClientHeight, target, targetTop, targetBottom, bodyTop = me.bodyTop;
+  if (rows.getCount() && me.variableRowHeight) {
+    if (!arguments.length) {
+      startRow = rows.startIndex;
+      endRow = rows.endIndex;
+      viewportTop = me.scrollTop;
+      viewportBottom = viewportTop + clientHeight;
+      if (bodyTop > viewportBottom || bodyTop + me.bodyHeight < viewportTop) {
+        me.teleported = true;
+        return Math.floor(me.scrollTop / me.rowHeight) + Math.ceil(clientHeight / me.rowHeight);
+      }
+      target = endRow - Math.min(me.numFromEdge + (me.lastScrollDirection === 1 ? me.leadingBufferZone : me.trailingBufferZone), Math.floor((endRow - startRow) / 2));
+    } else {
+      if (startRow === endRow) {
+        return endRow;
+      }
+      target = startRow + Math.floor((endRow - startRow) / 2);
+    }
+    targetTop = bodyTop + elements[target].offsetTop;
+    if (targetTop > viewportBottom) {
+      return me.getLastVisibleRowIndex(startRow, target - 1, viewportTop, viewportBottom);
+    }
+    targetBottom = targetTop + me.grid.getElementHeight(elements[target]);
+    if (targetBottom >= viewportBottom) {
+      return target;
+    } else {
+      if (target !== endRow) {
+        return me.getLastVisibleRowIndex(target + 1, endRow, viewportTop, viewportBottom);
+      }
+    }
+  }
+  return Math.min(me.getFirstVisibleRowIndex() + Math.ceil(clientHeight / me.rowHeight), rows.endIndex);
+}, getScrollHeight:function() {
+  var me = this, view = me.view, rows = view.all, store = me.store, recCount = store.getCount(), rowCount = rows.getCount(), row, rowHeight, borderWidth, scrollHeight;
+  if (!recCount) {
+    return 0;
+  }
+  if (!me.hasOwnProperty('rowHeight')) {
+    if (rowCount) {
+      if (me.variableRowHeight) {
+        me.rowHeight = Math.floor(me.bodyHeight / rowCount);
+      } else {
+        row = rows.first();
+        rowHeight = row.getHeight();
+        if (Ext.isIE8) {
+          borderWidth = row.getBorderWidth('b');
+          if (borderWidth > 0) {
+            rowHeight -= borderWidth;
+          }
+        }
+        me.rowHeight = rowHeight;
+      }
+    } else {
+      delete me.rowHeight;
+    }
+  }
+  if (me.variableRowHeight) {
+    if (rows.endIndex === recCount - 1) {
+      scrollHeight = me.bodyTop + me.bodyHeight - 1;
+    } else {
+      scrollHeight = Math.floor((recCount - rowCount) * me.rowHeight) + me.bodyHeight;
+      scrollHeight += me.bodyTop - rows.startIndex * me.rowHeight;
+    }
+  } else {
+    scrollHeight = Math.floor(recCount * me.rowHeight);
+  }
+  return me.scrollHeight = scrollHeight;
+}, getThemeRowHeight:function() {
+  var me = this, testEl;
+  if (!me.themeRowHeight) {
+    testEl = Ext.getBody().createChild({cls:Ext.baseCSSPrefix + 'theme-row-height-el'});
+    me.self.prototype.themeRowHeight = testEl.dom.offsetHeight;
+    testEl.destroy();
+  }
+  return me.themeRowHeight;
+}, attemptLoad:function(start, end, loadScrollPosition) {
+  var me = this;
+  if (me.scrollToLoadBuffer) {
+    if (!me.loadTask) {
+      me.loadTask = new Ext.util.DelayedTask;
+    }
+    me.loadTask.delay(me.scrollToLoadBuffer, me.doAttemptLoad, me, [start, end, loadScrollPosition]);
+  } else {
+    me.doAttemptLoad(start, end, loadScrollPosition);
+  }
+}, cancelLoad:function() {
+  if (this.loadTask) {
+    this.loadTask.cancel();
+  }
+}, doAttemptLoad:function(start, end, loadScrollPosition) {
+  var me = this;
+  if (!me.destroyed) {
+    me.store.getRange(start, end, {loadId:++me.loadId, callback:function(range, start, end, options) {
+      if (options.loadId === me.loadId && me.scrollTop === loadScrollPosition) {
+        me.onRangeFetched(range, start, end);
+      }
+    }, fireEvent:false});
+  }
+}, destroy:function() {
+  var me = this;
+  me.cancelLoad();
+  if (me.store) {
+    me.unbindStore();
+  }
+  Ext.destroy(me.viewListeners, me.stretcher, me.gridListeners, me.scrollListeners);
+  me.callParent();
 }});
 Ext.define('Ext.util.Queue', {constructor:function() {
   this.clear();
@@ -66518,6 +79190,47 @@ Ext.define('Ext.layout.Context', {remainingLayouts:0, state:0, cycleWatchDog:200
   me.timesByType[type] = (me.timesByType[type] || 0) + time;
   return ret;
 }}});
+Ext.define('Ext.layout.component.Body', {alias:['layout.body'], extend:Ext.layout.component.Auto, type:'body', beginLayout:function(ownerContext) {
+  this.callParent(arguments);
+  ownerContext.bodyContext = ownerContext.getEl('body');
+}, beginLayoutCycle:function(ownerContext, firstCycle) {
+  var me = this, lastWidthModel = me.lastWidthModel, lastHeightModel = me.lastHeightModel, body = me.owner.body;
+  me.callParent(arguments);
+  if (lastWidthModel && lastWidthModel.fixed && ownerContext.widthModel.shrinkWrap) {
+    body.setWidth(null);
+  }
+  if (lastHeightModel && lastHeightModel.fixed && ownerContext.heightModel.shrinkWrap) {
+    body.setHeight(null);
+  }
+}, calculateOwnerHeightFromContentHeight:function(ownerContext, contentHeight) {
+  var height = this.callParent(arguments);
+  if (ownerContext.targetContext !== ownerContext) {
+    height += ownerContext.getPaddingInfo().height;
+  }
+  return height;
+}, calculateOwnerWidthFromContentWidth:function(ownerContext, contentWidth) {
+  var width = this.callParent(arguments);
+  if (ownerContext.targetContext !== ownerContext) {
+    width += ownerContext.getPaddingInfo().width;
+  }
+  return width;
+}, measureContentWidth:function(ownerContext) {
+  return ownerContext.bodyContext.setWidth(ownerContext.bodyContext.el.dom.offsetWidth, false);
+}, measureContentHeight:function(ownerContext) {
+  return ownerContext.bodyContext.setHeight(ownerContext.bodyContext.el.dom.offsetHeight, false);
+}, publishInnerHeight:function(ownerContext, height) {
+  var innerHeight = height - ownerContext.getFrameInfo().height, targetContext = ownerContext.targetContext;
+  if (targetContext !== ownerContext) {
+    innerHeight -= ownerContext.getPaddingInfo().height;
+  }
+  return ownerContext.bodyContext.setHeight(innerHeight, !ownerContext.heightModel.natural);
+}, publishInnerWidth:function(ownerContext, width) {
+  var innerWidth = width - ownerContext.getFrameInfo().width, targetContext = ownerContext.targetContext;
+  if (targetContext !== ownerContext) {
+    innerWidth -= ownerContext.getPaddingInfo().width;
+  }
+  ownerContext.bodyContext.setWidth(innerWidth, !ownerContext.widthModel.natural);
+}});
 Ext.define('Ext.layout.container.Card', {extend:Ext.layout.container.Fit, alternateClassName:'Ext.layout.CardLayout', alias:'layout.card', type:'card', hideInactive:true, deferredRender:false, getRenderTree:function() {
   var me = this, activeItem = me.getActiveItem();
   if (activeItem) {
@@ -67025,6 +79738,1213 @@ minWidth:20, maxHeight:10000, maxWidth:10000, pinned:false, preserveRatio:false,
   }
   me.callParent();
 }});
+Ext.define('Ext.selection.CellModel', {extend:Ext.selection.DataViewModel, alias:'selection.cellmodel', isCellModel:true, deselectOnContainerClick:false, enableKeyNav:true, preventWrap:false, bindComponent:function(view) {
+  var me = this, grid;
+  if (me.view && me.gridListeners) {
+    me.gridListeners.destroy();
+  }
+  me.callParent([view]);
+  if (view) {
+    grid = view.grid || view.ownerCt;
+    if (grid.optimizedColumnMove !== false) {
+      me.gridListeners = grid.on({columnmove:me.onColumnMove, scope:me, destroyable:true});
+    }
+  }
+}, getViewListeners:function() {
+  var result = this.callParent();
+  result.refresh = this.onViewRefresh;
+  return result;
+}, getHeaderCt:function() {
+  var selection = this.navigationModel.getPosition(), view = selection ? selection.view : this.primaryView;
+  return view.headerCt;
+}, onNavigate:function(e) {
+  if (!e.record || e.keyEvent.stopSelection) {
+    return;
+  }
+  this.setPosition(e.position);
+}, selectWithEvent:function(record, e) {
+  this.select(record);
+}, select:function(pos, keepExisting, suppressEvent) {
+  var me = this, row, oldPos = me.getPosition(), store = me.view.store;
+  if (pos || pos === 0) {
+    if (pos.isModel) {
+      row = store.indexOf(pos);
+      if (row !== -1) {
+        pos = {row:row, column:oldPos ? oldPos.column : 0};
+      } else {
+        pos = null;
+      }
+    } else {
+      if (typeof pos === 'number') {
+        pos = {row:pos, column:0};
+      }
+    }
+  }
+  if (pos) {
+    me.selectByPosition(pos, suppressEvent);
+  } else {
+    me.deselect();
+  }
+}, getCurrentPosition:function() {
+  var position = this.selecting ? this.nextSelection : this.selection;
+  return position ? {view:position.view, record:position.record, row:position.rowIdx, columnHeader:position.column, column:position.view.getColumnManager().indexOf(position.column)} : position;
+}, getPosition:function() {
+  return (this.selecting ? this.nextSelection : this.selection) || null;
+}, setCurrentPosition:function(pos, suppressEvent, preventCheck) {
+  if (pos && !pos.isCellContext) {
+    pos = (new Ext.grid.CellContext(this.view)).setPosition({row:pos.row, column:typeof pos.column === 'number' ? this.view.getColumnManager().getColumns()[pos.column] : pos.column});
+  }
+  return this.setPosition(pos, suppressEvent, preventCheck);
+}, setPosition:function(pos, suppressEvent, preventCheck) {
+  var me = this, last = me.selection;
+  if (pos) {
+    pos = pos.isCellContext ? pos.clone() : (new Ext.grid.CellContext(me.view)).setPosition(pos);
+  }
+  if (!preventCheck && last) {
+    if (pos && (pos.record === last.record && pos.column === last.column && pos.view === last.view)) {
+      pos = null;
+    } else {
+      me.onCellDeselect(me.selection, suppressEvent);
+    }
+  }
+  if (pos) {
+    me.nextSelection = pos;
+    me.selecting = true;
+    me.onCellSelect(me.nextSelection, suppressEvent);
+    me.selecting = false;
+    return me.selection = pos;
+  }
+  return null;
+}, isCellSelected:function(view, row, column) {
+  var me = this, testPos, pos = me.getPosition();
+  if (pos && pos.view === view) {
+    testPos = (new Ext.grid.CellContext(view)).setPosition({row:row, column:typeof column === 'number' ? view.getColumnManager().getColumns()[column] : column});
+    return testPos.record === pos.record && testPos.column === pos.column;
+  }
+}, onStoreRemove:function(store, records, indices) {
+  var me = this, pos = me.getPosition();
+  me.callParent(arguments);
+  if (pos && store.isMoving(pos.record)) {
+    return;
+  }
+  if (pos && store.getCount() && store.indexOf(pos.record) !== -1) {
+    pos.setRow(pos.record);
+  } else {
+    me.selection = null;
+  }
+}, onStoreClear:function() {
+  this.callParent(arguments);
+  this.selection = null;
+}, onStoreAdd:function() {
+  var me = this, pos = me.getPosition();
+  me.callParent(arguments);
+  if (pos) {
+    pos.setRow(pos.record);
+  } else {
+    me.selection = null;
+  }
+}, updateSelectedInstances:function(selected) {
+  var pos = this.getPosition(), selRec = selected.getAt(0);
+  if (selRec && pos && pos.record.id === selRec.id) {
+    pos.setRow(selRec);
+  }
+  this.callParent([selected]);
+  if (selected.length === 0 && selRec) {
+    this.selection = null;
+  }
+}, onCellClick:function(view, cell, cellIndex, record, row, recordIndex, e) {
+  if (recordIndex !== -1) {
+    this.setPosition(e.position);
+  }
+}, onCellSelect:function(position, supressEvent) {
+  if (position && position.rowIdx !== undefined && position.rowIdx > -1) {
+    this.doSelect(position.record, false, supressEvent);
+  }
+}, onCellDeselect:function(position, supressEvent) {
+  if (position && position.rowIdx !== undefined) {
+    this.doDeselect(position.record, supressEvent);
+  }
+}, onSelectChange:function(record, isSelected, suppressEvent, commitFn) {
+  var me = this, pos, eventName, view;
+  if (isSelected) {
+    pos = me.nextSelection;
+    eventName = 'select';
+  } else {
+    pos = me.selection;
+    eventName = 'deselect';
+  }
+  view = pos.view || me.primaryView;
+  if ((suppressEvent || me.fireEvent('before' + eventName, me, record, pos.rowIdx, pos.colIdx)) !== false && commitFn() !== false) {
+    if (isSelected) {
+      view.onCellSelect(pos);
+    } else {
+      view.onCellDeselect(pos);
+      delete me.selection;
+    }
+    if (!suppressEvent) {
+      me.fireEvent(eventName, me, record, pos.rowIdx, pos.colIdx);
+    }
+  }
+}, refresh:function() {
+  var pos = this.getPosition(), selRowIdx;
+  if (pos && (selRowIdx = this.store.indexOf(this.selected.last())) !== -1) {
+    pos.rowIdx = selRowIdx;
+  }
+}, onColumnMove:function(headerCt, header, fromIdx, toIdx) {
+  var grid = headerCt.up('tablepanel');
+  if (grid) {
+    this.onViewRefresh(grid.view);
+  }
+}, onUpdate:function(record) {
+  var me = this, pos;
+  if (me.isSelected(record)) {
+    pos = me.selecting ? me.nextSelection : me.selection;
+    me.view.onCellSelect(pos);
+  }
+}, onViewRefresh:function(view) {
+  var me = this, pos = me.getPosition(), newPos, headerCt = view.headerCt, record, column;
+  if (pos && pos.view === view) {
+    record = pos.record;
+    column = view.getColumnByPosition(pos);
+    if (column && !column.isDescendantOf(headerCt)) {
+      column = headerCt.queryById(column.id) || headerCt.down('[text\x3d"' + column.text + '"]') || headerCt.down('[dataIndex\x3d"' + column.dataIndex + '"]');
+    }
+    if (column && record) {
+      if (view.store.indexOfId(record.getId()) !== -1) {
+        newPos = (new Ext.grid.CellContext(view)).setPosition({row:record, column:column});
+        me.setPosition(newPos);
+      }
+    } else {
+      me.selection = null;
+    }
+  }
+}, selectByPosition:function(position, suppressEvent) {
+  this.setPosition(position, suppressEvent);
+}});
+Ext.define('Ext.selection.RowModel', {extend:Ext.selection.DataViewModel, alias:'selection.rowmodel', enableKeyNav:true, isRowModel:true, deselectOnContainerClick:false, onUpdate:function(record) {
+  var me = this, view = me.view, index;
+  if (view && me.isSelected(record)) {
+    index = view.indexOf(record);
+    view.onRowSelect(index);
+    if (record === me.lastFocused) {
+      view.onRowFocus(index, true);
+    }
+  }
+}, onSelectChange:function(record, isSelected, suppressEvent, commitFn) {
+  var me = this, views = me.views || [me.view], viewsLn = views.length, recordIndex = me.store.indexOf(record), eventName = isSelected ? 'select' : 'deselect', i, view;
+  if ((suppressEvent || me.fireEvent('before' + eventName, me, record, recordIndex)) !== false && commitFn() !== false) {
+    for (i = 0; i < viewsLn; i++) {
+      view = views[i];
+      recordIndex = view.indexOf(record);
+      if (view.indexOf(record) !== -1) {
+        if (isSelected) {
+          view.onRowSelect(recordIndex, suppressEvent);
+        } else {
+          view.onRowDeselect(recordIndex, suppressEvent);
+        }
+      }
+    }
+    if (!suppressEvent) {
+      me.fireEvent(eventName, me, record, recordIndex);
+    }
+  }
+}, getCurrentPosition:function() {
+  var firstSelection = this.selected.getAt(0);
+  if (firstSelection) {
+    return (new Ext.grid.CellContext(this.view)).setPosition(this.store.indexOf(firstSelection), 0);
+  }
+}, selectByPosition:function(position, keepExisting) {
+  if (!position.isCellContext) {
+    position = (new Ext.grid.CellContext(this.view)).setPosition(position.row, position.column);
+  }
+  this.select(position.record, keepExisting);
+}, selectNext:function(keepExisting, suppressEvent) {
+  var me = this, store = me.store, selection = me.getSelection(), record = selection[selection.length - 1], index = me.view.indexOf(record) + 1, success;
+  if (index === store.getCount() || index === 0) {
+    success = false;
+  } else {
+    me.doSelect(index, keepExisting, suppressEvent);
+    success = true;
+  }
+  return success;
+}, selectPrevious:function(keepExisting, suppressEvent) {
+  var me = this, selection = me.getSelection(), record = selection[0], index = me.view.indexOf(record) - 1, success;
+  if (index < 0) {
+    success = false;
+  } else {
+    me.doSelect(index, keepExisting, suppressEvent);
+    success = true;
+  }
+  return success;
+}, isRowSelected:function(record) {
+  return this.isSelected(record);
+}, isCellSelected:function(view, record, columnHeader) {
+  return this.isSelected(record);
+}, vetoSelection:function(e) {
+  var navModel = this.view.getNavigationModel(), key = e.getKey(), isLeftRight = key === e.RIGHT || key === e.LEFT;
+  return isLeftRight && navModel.previousRecord === navModel.record || this.callParent([e]);
+}});
+Ext.define('Ext.selection.CheckboxModel', {alias:'selection.checkboxmodel', extend:Ext.selection.RowModel, mode:'MULTI', injectCheckbox:0, checkOnly:false, locked:false, showHeaderCheckbox:undefined, headerText:undefined, headerAriaLabel:'Row selector', headerSelectText:'Press Space to select all rows', headerDeselectText:'Press Space to deselect all rows', rowSelectText:'Press Space to select this row', rowDeselectText:'Press Space to deselect this row', allowDeselect:true, headerWidth:24, checkerOnCls:Ext.baseCSSPrefix + 
+'grid-hd-checker-on', tdCls:Ext.baseCSSPrefix + 'grid-cell-special ' + Ext.baseCSSPrefix + 'selmodel-column', constructor:function() {
+  var me = this;
+  me.callParent(arguments);
+  if (me.mode === 'SINGLE') {
+    if (me.showHeaderCheckbox) {
+      Ext.Error.raise('The header checkbox is not supported for SINGLE mode selection models.');
+    }
+    me.showHeaderCheckbox = false;
+  }
+}, beforeViewRender:function(view) {
+  var me = this, ownerLockable = view.grid.ownerLockable, isLocked = me.locked || me.config && me.config.locked;
+  me.callParent(arguments);
+  if (me.injectCheckbox !== false) {
+    if (ownerLockable && !me.lockListeners) {
+      me.lockListeners = ownerLockable.mon(ownerLockable, {lockcolumn:me.onColumnLock, unlockcolumn:me.onColumnUnlock, scope:me, destroyable:true});
+    }
+    if (!ownerLockable || view.isLockedView && (me.hasLockedHeader() || isLocked) || view.isNormalView && !me.column) {
+      me.addCheckbox(view);
+      me.mon(view.ownerGrid, {beforereconfigure:me.onBeforeReconfigure, reconfigure:me.onReconfigure, scope:me});
+    }
+  }
+}, onColumnUnlock:function(lockable, column) {
+  var me = this, checkbox = me.injectCheckbox, lockedColumns = lockable.lockedGrid.visibleColumnManager.getColumns();
+  if (lockedColumns.length === 1 && lockedColumns[0] === me.column) {
+    if (checkbox === 'first') {
+      checkbox = 0;
+    } else {
+      if (checkbox === 'last') {
+        checkbox = lockable.normalGrid.visibleColumnManager.getColumns().length;
+      }
+    }
+    lockable.unlock(me.column, checkbox);
+  }
+}, onColumnLock:function(lockable, column) {
+  var me = this, checkbox = me.injectCheckbox, lockedColumns = lockable.lockedGrid.visibleColumnManager.getColumns();
+  if (lockedColumns.length === 1) {
+    if (checkbox === 'first') {
+      checkbox = 0;
+    } else {
+      if (checkbox === 'last') {
+        checkbox = lockable.lockedGrid.visibleColumnManager.getColumns().length;
+      }
+    }
+    lockable.lock(me.column, checkbox);
+  }
+}, bindComponent:function(view) {
+  this.sortable = false;
+  this.callParent(arguments);
+}, hasLockedHeader:function() {
+  var columns = this.view.ownerGrid.getVisibleColumnManager().getColumns(), len = columns.length, i;
+  for (i = 0; i < len; i++) {
+    if (columns[i].locked) {
+      return true;
+    }
+  }
+  return false;
+}, addCheckbox:function(view) {
+  var me = this, checkboxIndex = me.injectCheckbox, headerCt = view.headerCt;
+  if (checkboxIndex !== false) {
+    if (checkboxIndex === 'first') {
+      checkboxIndex = 0;
+    } else {
+      if (checkboxIndex === 'last') {
+        checkboxIndex = headerCt.getColumnCount();
+      }
+    }
+    Ext.suspendLayouts();
+    if (view.getStore().isBufferedStore) {
+      me.showHeaderCheckbox = false;
+    }
+    me.column = headerCt.add(checkboxIndex, me.column || me.getHeaderConfig());
+    Ext.resumeLayouts();
+  }
+}, onBeforeReconfigure:function(grid, store, columns, oldStore, oldColumns) {
+  var column = this.column, headerCt = column.ownerCt;
+  if (columns && headerCt) {
+    headerCt.remove(column, false);
+  }
+}, onReconfigure:function(grid, store, columns) {
+  var me = this;
+  if (columns) {
+    if (grid.lockable) {
+      if (grid.lockedGrid.isVisible()) {
+        grid.lock(me.column, 0);
+      } else {
+        grid.unlock(me.column, 0);
+      }
+    } else {
+      me.addCheckbox(me.view);
+    }
+    grid.view.refreshView();
+  }
+}, onHeaderClick:function(headerCt, header, e) {
+  var me = this, store = me.store, isChecked, records, i, len, selections, selection;
+  if (me.showHeaderCheckbox !== false && header === me.column && me.mode !== 'SINGLE') {
+    e.stopEvent();
+    isChecked = header.el.hasCls(Ext.baseCSSPrefix + 'grid-hd-checker-on');
+    if (isChecked) {
+      records = [];
+      selections = this.getSelection();
+      for (i = 0, len = selections.length; i < len; ++i) {
+        selection = selections[i];
+        if (store.indexOf(selection) > -1) {
+          records.push(selection);
+        }
+      }
+      if (records.length > 0) {
+        me.deselect(records);
+      }
+    } else {
+      me.selectAll();
+    }
+  }
+}, getHeaderConfig:function() {
+  var me = this, showCheck = me.showHeaderCheckbox !== false, htmlEncode = Ext.String.htmlEncode, config;
+  config = {xtype:'checkcolumn', headerCheckbox:showCheck, isCheckerHd:showCheck, ignoreExport:true, text:me.headerText, width:me.headerWidth, sortable:false, draggable:false, resizable:false, hideable:false, menuDisabled:true, checkOnly:me.checkOnly, checkboxAriaRole:'presentation', tdCls:Ext.baseCSSPrefix + 'selmodel-checkbox ' + me.tdCls, cls:Ext.baseCSSPrefix + 'selmodel-column', editRenderer:me.editRenderer || me.renderEmpty, locked:me.hasLockedHeader(), processEvent:Ext.emptyFn, toggleAll:Ext.emptyFn, 
+  setRecordCheck:Ext.emptyFn, isRecordChecked:me.isRowSelected.bind(me)};
+  if (!me.checkOnly) {
+    config.tabIndex = undefined;
+    config.ariaRole = 'presentation';
+    config.focusable = false;
+  } else {
+    config.useAriaElements = true;
+    config.ariaLabel = htmlEncode(me.headerAriaLabel);
+    config.headerSelectText = htmlEncode(me.headerSelectText);
+    config.headerDeselectText = htmlEncode(me.headerDeselectText);
+    config.rowSelectText = htmlEncode(me.rowSelectText);
+    config.rowDeselectText = htmlEncode(me.rowDeselectText);
+  }
+  return config;
+}, toggleRecord:function(record, recordIndex, checked, cell) {
+  this[checked ? 'select' : 'deselect']([record], this.mode !== 'SINGLE');
+}, renderEmpty:function() {
+  return '\x26#160;';
+}, refresh:function() {
+  this.callParent(arguments);
+  this.updateHeaderState();
+}, selectByPosition:function(position, keepExisting) {
+  if (!position.isCellContext) {
+    position = (new Ext.grid.CellContext(this.view)).setPosition(position.row, position.column);
+  }
+  if (!this.checkOnly || position.column === this.column) {
+    this.callParent([position, keepExisting]);
+  }
+}, onSelectChange:function(record, isSelected) {
+  var me = this;
+  me.callParent(arguments);
+  if (me.column) {
+    me.column.updateCellAriaDescription(record, isSelected);
+  }
+  if (!me.suspendChange) {
+    me.updateHeaderState();
+  }
+}, onStoreLoad:function() {
+  this.callParent(arguments);
+  this.updateHeaderState();
+}, onStoreAdd:function() {
+  this.callParent(arguments);
+  this.updateHeaderState();
+}, onStoreRemove:function() {
+  this.callParent(arguments);
+  this.updateHeaderState();
+}, onStoreRefresh:function() {
+  this.callParent(arguments);
+  this.updateHeaderState();
+}, maybeFireSelectionChange:function(fireEvent) {
+  if (fireEvent && !this.suspendChange) {
+    this.updateHeaderState();
+  }
+  this.callParent(arguments);
+}, resumeChanges:function() {
+  this.callParent();
+  if (!this.suspendChange) {
+    this.updateHeaderState();
+  }
+}, updateHeaderState:function() {
+  var me = this, store = me.store, storeCount = store.getCount(), views = me.views, hdSelectStatus = false, selectedCount = 0, selected, len, i;
+  if (!store.isBufferedStore && storeCount > 0) {
+    selected = me.selected;
+    hdSelectStatus = true;
+    for (i = 0, len = selected.getCount(); i < len; ++i) {
+      if (store.indexOfId(selected.getAt(i).id) > -1) {
+        ++selectedCount;
+      }
+    }
+    hdSelectStatus = storeCount === selectedCount;
+  }
+  if (views && views.length) {
+    me.column.setHeaderStatus(hdSelectStatus);
+  }
+}, vetoSelection:function(e) {
+  var me = this, column = me.column, veto, isClick, isSpace;
+  if (me.checkOnly) {
+    isClick = e.type === column.triggerEvent && e.getTarget(me.column.getCellSelector());
+    isSpace = e.getKey() === e.SPACE && e.position.column === column;
+    veto = !(isClick || isSpace);
+  }
+  return veto || me.callParent([e]);
+}, privates:{onBeforeNavigate:function(metaEvent) {
+  var e = metaEvent.keyEvent;
+  if (this.selectionMode !== 'SINGLE') {
+    metaEvent.ctrlKey = metaEvent.ctrlKey || e.ctrlKey || e.type === this.column.triggerEvent && !e.shiftKey || e.getKey() === e.SPACE;
+  }
+}, selectWithEventMulti:function(record, e, isSelected) {
+  var me = this;
+  if (!e.shiftKey && !e.ctrlKey && e.getTarget(me.column.getCellSelector())) {
+    if (isSelected) {
+      me.doDeselect(record);
+    } else {
+      me.doSelect(record, true);
+    }
+  } else {
+    me.callParent([record, e, isSelected]);
+  }
+}}}, function(CheckboxModel) {
+  CheckboxModel.prototype.checkSelector = '.' + Ext.grid.column.Check.prototype.checkboxCls;
+});
+Ext.define('Ext.theme.triton.selection.CheckboxModel', {override:'Ext.selection.CheckboxModel', headerWidth:32, onHeaderClick:function(headerCt, header, e) {
+  this.callParent([headerCt, header, e]);
+  if (Ext.isIE8) {
+    header.getView().ownerGrid.el.syncRepaint();
+  }
+}});
+Ext.define('Ext.tab.Tab', {extend:Ext.button.Button, alias:'widget.tab', isTab:true, baseCls:Ext.baseCSSPrefix + 'tab', closeElOverCls:Ext.baseCSSPrefix + 'tab-close-btn-over', closeElPressedCls:Ext.baseCSSPrefix + 'tab-close-btn-pressed', config:{rotation:'default', tabPosition:'top'}, closable:true, closeText:'removable', active:false, childEls:['closeEl'], scale:false, ariaRole:'tab', tabIndex:-1, keyMap:{scope:'this', DELETE:'onDeleteKey'}, _btnWrapCls:Ext.baseCSSPrefix + 'tab-wrap', _btnCls:Ext.baseCSSPrefix + 
+'tab-button', _baseIconCls:Ext.baseCSSPrefix + 'tab-icon-el', _glyphCls:Ext.baseCSSPrefix + 'tab-glyph', _innerCls:Ext.baseCSSPrefix + 'tab-inner', _textCls:Ext.baseCSSPrefix + 'tab-text', _noTextCls:Ext.baseCSSPrefix + 'tab-no-text', _hasIconCls:Ext.baseCSSPrefix + 'tab-icon', _activeCls:Ext.baseCSSPrefix + 'tab-active', _closableCls:Ext.baseCSSPrefix + 'tab-closable', overCls:Ext.baseCSSPrefix + 'tab-over', _pressedCls:Ext.baseCSSPrefix + 'tab-pressed', _disabledCls:Ext.baseCSSPrefix + 'tab-disabled', 
+_rotateClasses:{1:Ext.baseCSSPrefix + 'tab-rotate-right', 2:Ext.baseCSSPrefix + 'tab-rotate-left'}, _positions:{top:{'default':'top', 0:'top', 1:'left', 2:'right'}, right:{'default':'top', 0:'right', 1:'top', 2:'bottom'}, bottom:{'default':'bottom', 0:'bottom', 1:'right', 2:'left'}, left:{'default':'top', 0:'left', 1:'bottom', 2:'top'}}, _defaultRotations:{top:0, right:1, bottom:0, left:2}, initComponent:function() {
+  var me = this;
+  if (me.closable) {
+    Ext.ariaWarn(me, 'Closable tabs can be confusing to users relying on Assistive Technologies ' + 'such as Screen Readers, and are not recommended in accessible applications. ' + 'Please consider setting ' + me.title + ' tab (' + me.id + ') to closable: false.');
+  }
+  if (me.card) {
+    me.setCard(me.card);
+  }
+  me.callParent(arguments);
+}, getActualRotation:function() {
+  var rotation = this.getRotation();
+  return rotation !== 'default' ? rotation : this._defaultRotations[this.getTabPosition()];
+}, updateRotation:function() {
+  this.syncRotationAndPosition();
+}, updateTabPosition:function() {
+  this.syncRotationAndPosition();
+}, syncRotationAndPosition:function() {
+  var me = this, rotateClasses = me._rotateClasses, position = me.getTabPosition(), rotation = me.getActualRotation(), oldRotateCls = me._rotateCls, rotateCls = me._rotateCls = rotateClasses[rotation], oldPositionCls = me._positionCls, positionCls = me._positionCls = me._positions[position][rotation];
+  if (oldRotateCls !== rotateCls) {
+    if (oldRotateCls) {
+      me.removeCls(oldRotateCls);
+    }
+    if (rotateCls) {
+      me.addCls(rotateCls);
+    }
+  }
+  if (oldPositionCls !== positionCls) {
+    if (oldPositionCls) {
+      me.removeClsWithUI(oldPositionCls);
+    }
+    if (positionCls) {
+      me.addClsWithUI(positionCls);
+    }
+    if (me.rendered) {
+      me.updateFrame();
+    }
+  }
+  if (me.rendered) {
+    me.setElOrientation();
+  }
+}, onAdded:function(container, pos, instanced) {
+  this.callParent([container, pos, instanced]);
+  this.syncRotationAndPosition();
+}, getTemplateArgs:function() {
+  var me = this, result = me.callParent();
+  result.closable = me.closable;
+  result.closeText = me.closeText;
+  return result;
+}, beforeRender:function() {
+  var me = this, tabBar = me.up('tabbar'), tabPanel = me.up('tabpanel');
+  me.callParent();
+  me.ariaRenderAttributes = me.ariaRenderAttributes || {};
+  if (me.active) {
+    me.ariaRenderAttributes['aria-selected'] = true;
+    me.addCls(me._activeCls);
+  } else {
+    me.ariaRenderAttributes['aria-selected'] = false;
+  }
+  me.syncClosableCls();
+  if (!me.minWidth) {
+    me.minWidth = tabBar ? tabBar.minTabWidth : me.minWidth;
+    if (!me.minWidth && tabPanel) {
+      me.minWidth = tabPanel.minTabWidth;
+    }
+    if (me.minWidth && me.iconCls) {
+      me.minWidth += 25;
+    }
+  }
+  if (!me.maxWidth) {
+    me.maxWidth = tabBar ? tabBar.maxTabWidth : me.maxWidth;
+    if (!me.maxWidth && tabPanel) {
+      me.maxWidth = tabPanel.maxTabWidth;
+    }
+  }
+}, onRender:function() {
+  var me = this;
+  me.setElOrientation();
+  me.callParent(arguments);
+  if (me.closable) {
+    me.closeEl.addClsOnOver(me.closeElOverCls);
+    me.closeEl.addClsOnClick(me.closeElPressedCls);
+  }
+}, setElOrientation:function() {
+  var me = this, rotation = me.getActualRotation(), el = me.el;
+  if (rotation) {
+    el.setVertical(rotation === 1 ? 90 : 270);
+  } else {
+    el.setHorizontal();
+  }
+}, enable:function(silent) {
+  var me = this;
+  me.callParent(arguments);
+  me.removeCls(me._disabledCls);
+  return me;
+}, disable:function(silent) {
+  var me = this;
+  me.callParent(arguments);
+  me.addCls(me._disabledCls);
+  return me;
+}, setClosable:function(closable) {
+  var me = this;
+  closable = !arguments.length || !!closable;
+  if (me.closable !== closable) {
+    me.closable = closable;
+    if (me.card) {
+      me.card.closable = closable;
+    }
+    me.syncClosableCls();
+    if (me.rendered) {
+      me.syncClosableElements();
+      me.updateLayout();
+    }
+  }
+}, syncClosableElements:function() {
+  var me = this, closeEl = me.closeEl;
+  if (me.closable) {
+    if (!closeEl) {
+      closeEl = me.closeEl = me.btnWrap.insertSibling({tag:'span', id:me.id + '-closeEl', cls:me.baseCls + '-close-btn', html:me.closeText}, 'after');
+    }
+    closeEl.addClsOnOver(me.closeElOverCls);
+    closeEl.addClsOnClick(me.closeElPressedCls);
+  } else {
+    if (closeEl) {
+      closeEl.destroy();
+      delete me.closeEl;
+    }
+  }
+}, syncClosableCls:function() {
+  var me = this, closableCls = me._closableCls;
+  if (me.closable) {
+    me.addCls(closableCls);
+  } else {
+    me.removeCls(closableCls);
+  }
+}, setCard:function(card) {
+  var me = this;
+  me.card = card;
+  if (card.iconAlign) {
+    me.setIconAlign(card.iconAlign);
+  }
+  if (card.textAlign) {
+    me.setTextAlign(card.textAlign);
+  }
+  me.setText(me.title || card.title);
+  me.setIconCls(me.iconCls || card.iconCls);
+  me.setIcon(me.icon || card.icon);
+  me.setGlyph(me.glyph || card.glyph);
+}, onCloseClick:function() {
+  var me = this;
+  if (me.fireEvent('beforeclose', me) !== false) {
+    if (me.tabBar) {
+      if (me.tabBar.closeTab(me) === false) {
+        return;
+      }
+    } else {
+      me.fireClose();
+    }
+  }
+}, fireClose:function() {
+  this.fireEvent('close', this);
+}, onEnterKey:function(e) {
+  var me = this;
+  if (me.tabBar) {
+    me.tabBar.onClick(e, me.el);
+    e.stopEvent();
+    return false;
+  }
+}, onDeleteKey:function(e) {
+  if (this.closable) {
+    this.onCloseClick();
+    e.stopEvent();
+    return false;
+  }
+}, beforeClick:function(isCloseClick) {
+  if (!isCloseClick) {
+    this.focus();
+  }
+}, activate:function(supressEvent) {
+  var me = this, card = me.card, ariaDom = me.ariaEl.dom;
+  me.active = true;
+  me.addCls(me._activeCls);
+  if (ariaDom) {
+    ariaDom.setAttribute('aria-selected', true);
+  } else {
+    me.ariaRenderAttributes = me.ariaRenderAttributes || {};
+    me.ariaRenderAttributes['aria-selected'] = true;
+  }
+  if (card) {
+    if (card.ariaEl.dom) {
+      card.ariaEl.dom.setAttribute('aria-expanded', true);
+    } else {
+      card.ariaRenderAttributes = card.ariaRenderAttributes || {};
+      card.ariaRenderAttributes['aria-expanded'] = true;
+    }
+  }
+  if (supressEvent !== true) {
+    me.fireEvent('activate', me);
+  }
+}, deactivate:function(supressEvent) {
+  var me = this, card = me.card, ariaDom = me.ariaEl.dom;
+  me.active = false;
+  me.removeCls(me._activeCls);
+  if (ariaDom) {
+    ariaDom.setAttribute('aria-selected', false);
+  } else {
+    me.ariaRenderAttributes = me.ariaRenderAttributes || {};
+    me.ariaRenderAttributes['aria-selected'] = false;
+  }
+  if (card) {
+    if (card.ariaEl.dom) {
+      card.ariaEl.dom.setAttribute('aria-expanded', false);
+    } else {
+      card.ariaRenderAttributes = card.ariaRenderAttributes || {};
+      card.ariaRenderAttributes['aria-expanded'] = false;
+    }
+  }
+  if (supressEvent !== true) {
+    me.fireEvent('deactivate', me);
+  }
+}, privates:{getFramingInfoCls:function() {
+  return this.baseCls + '-' + this.ui + '-' + this._positionCls;
+}, wrapPrimaryEl:function(dom) {
+  Ext.Button.superclass.wrapPrimaryEl.call(this, dom);
+}}});
+Ext.define('Ext.tab.Bar', {extend:Ext.panel.Bar, xtype:'tabbar', baseCls:Ext.baseCSSPrefix + 'tab-bar', componentLayout:'body', isTabBar:true, config:{tabRotation:'default', tabStretchMax:true, activateOnFocus:true}, defaultType:'tab', plain:false, ensureActiveVisibleOnChange:true, ariaRole:'tablist', focusableContainer:true, childEls:['body', 'strip'], _stripCls:Ext.baseCSSPrefix + 'tab-bar-strip', _baseBodyCls:Ext.baseCSSPrefix + 'tab-bar-body', renderTpl:'\x3ctpl if\x3d"hasTabGuard"\x3e{% this.renderTabGuard(out, values, \'before\'); %}\x3c/tpl\x3e' + 
+'\x3cdiv id\x3d"{id}-body" data-ref\x3d"body" role\x3d"presentation" class\x3d"{baseBodyCls} {baseBodyCls}-{ui} ' + '{bodyCls} {bodyTargetCls}{childElCls}"\x3ctpl if\x3d"bodyStyle"\x3e style\x3d"{bodyStyle}"\x3c/tpl\x3e\x3e' + '{%this.renderContainer(out,values)%}' + '\x3c/div\x3e' + '\x3ctpl if\x3d"hasTabGuard"\x3e{% this.renderTabGuard(out, values, \'after\'); %}\x3c/tpl\x3e' + '\x3cdiv id\x3d"{id}-strip" data-ref\x3d"strip" role\x3d"presentation" class\x3d"{stripCls} {stripCls}-{ui}{childElCls}"\x3e\x3c/div\x3e', 
+_reverseDockNames:{left:'right', right:'left'}, _layoutAlign:{top:'end', right:'begin', bottom:'begin', left:'end'}, initComponent:function() {
+  var me = this, initialLayout = me.initialConfig.layout, initialAlign = initialLayout && initialLayout.align, initialOverflowHandler = initialLayout && initialLayout.overflowHandler;
+  if (me.plain) {
+    me.addCls(me.baseCls + '-plain');
+  }
+  me.layout = Ext.apply({align:initialAlign || (me.getTabStretchMax() ? 'stretchmax' : me._layoutAlign[me.dock]), overflowHandler:initialOverflowHandler || 'scroller'}, me.layout);
+  me.callParent();
+  me.on({click:me.onClick, element:'el', scope:me});
+}, ensureTabVisible:function(tab) {
+  var me = this, tabPanel = me.tabPanel, overflowHandler = me.layout.overflowHandler;
+  if (me.rendered && overflowHandler && me.tooNarrow && overflowHandler.scrollToItem) {
+    if (tab || tab === 0) {
+      if (!tab.isTab) {
+        if (Ext.isNumber(tab)) {
+          tab = this.items.getAt(tab);
+        } else {
+          if (tab.isComponent && tabPanel && tabPanel.items.contains(tab)) {
+            tab = tab.tab;
+          }
+        }
+      }
+    }
+    if (!tab) {
+      tab = me.activeTab;
+    }
+    if (tab) {
+      overflowHandler.scrollToItem(tab);
+    }
+  }
+}, initRenderData:function() {
+  var me = this;
+  return Ext.apply(me.callParent(), {bodyCls:me.bodyCls, baseBodyCls:me._baseBodyCls, bodyTargetCls:me.bodyTargetCls, stripCls:me._stripCls, dock:me.dock});
+}, setDock:function(dock) {
+  var me = this, items = me.items, ownerCt = me.ownerCt, item, i, ln;
+  items = items && items.items;
+  if (items) {
+    for (i = 0, ln = items.length; i < ln; i++) {
+      item = items[i];
+      if (item.isTab) {
+        item.setTabPosition(dock);
+      }
+    }
+  }
+  if (me.rendered) {
+    me.resetItemMargins();
+    if (ownerCt && ownerCt.isHeader) {
+      ownerCt.resetItemMargins();
+    }
+    me.needsScroll = true;
+  }
+  me.callParent([dock]);
+}, updateTabRotation:function(tabRotation) {
+  var me = this, items = me.items, i, ln, item;
+  items = items && items.items;
+  if (items) {
+    for (i = 0, ln = items.length; i < ln; i++) {
+      item = items[i];
+      if (item.isTab) {
+        item.setRotation(tabRotation);
+      }
+    }
+  }
+  if (me.rendered) {
+    me.resetItemMargins();
+    me.needsScroll = true;
+    me.updateLayout();
+  }
+}, onRender:function() {
+  var me = this, overflowHandler = this.layout.overflowHandler;
+  me.callParent();
+  if (Ext.isIE8 && me.vertical) {
+    me.el.on({mousemove:me.onMouseMove, scope:me});
+  }
+  if (overflowHandler && overflowHandler.type === 'menu') {
+    overflowHandler.menu.on('click', 'onOverflowMenuItemClick', me);
+  }
+}, afterLayout:function() {
+  this.adjustTabPositions();
+  this.callParent(arguments);
+}, onAdd:function(tab, pos) {
+  var fn = this.onTabContentChange;
+  if (this.ensureActiveVisibleOnChange) {
+    tab.barListeners = tab.on({scope:this, destroyable:true, glyphchange:fn, iconchange:fn, textchange:fn});
+  }
+  this.callParent([tab, pos]);
+}, onAdded:function(container, pos, instanced) {
+  if (container.isHeader) {
+    this.addCls(container.baseCls + '-' + container.ui + '-tab-bar');
+  }
+  this.callParent([container, pos, instanced]);
+}, onRemove:function(tab, destroying) {
+  var me = this;
+  if (me.ensureActiveVisibleOnChange) {
+    if (!destroying) {
+      tab.barListeners.destroy();
+    }
+    tab.barListeners = null;
+  }
+  if (tab === me.previousTab) {
+    me.previousTab = null;
+  }
+  me.callParent([tab, destroying]);
+}, onRemoved:function(destroying) {
+  var ownerCt = this.ownerCt;
+  if (ownerCt.isHeader) {
+    this.removeCls(ownerCt.baseCls + '-' + ownerCt.ui + '-tab-bar');
+  }
+  this.callParent([destroying]);
+}, onTabContentChange:function(tab) {
+  if (tab === this.activeTab) {
+    this.ensureTabVisible(tab);
+  }
+}, afterComponentLayout:function(width) {
+  var me = this, needsScroll = me.needsScroll, overflowHandler = me.layout.overflowHandler;
+  me.callParent(arguments);
+  if (overflowHandler && needsScroll && me.tooNarrow && overflowHandler.scrollToItem) {
+    overflowHandler.scrollToItem(me.activeTab);
+  }
+  delete me.needsScroll;
+}, onMouseMove:function(e) {
+  var me = this, overTab = me._overTab, tabInfo, tab;
+  if (e.getTarget('.' + Ext.baseCSSPrefix + 'box-scroller')) {
+    return;
+  }
+  tabInfo = me.getTabInfoFromPoint(e.getXY());
+  tab = tabInfo.tab;
+  if (tab !== overTab) {
+    if (overTab && overTab.rendered) {
+      overTab.onMouseLeave(e);
+      me._overTab = null;
+    }
+    if (tab) {
+      tab.onMouseEnter(e);
+      me._overTab = tab;
+      if (!tab.disabled) {
+        me.el.setStyle('cursor', 'pointer');
+      }
+    } else {
+      me.el.setStyle('cursor', 'default');
+    }
+  }
+}, onMouseLeave:function(e) {
+  var overTab = this._overTab;
+  if (overTab && overTab.rendered) {
+    overTab.onMouseLeave(e);
+  }
+}, getTabInfoFromPoint:function(xy) {
+  var me = this, tabs = me.items.items, length = tabs.length, innerCt = me.layout.innerCt, innerCtXY = innerCt.getXY(), point = new Ext.util.Point(xy[0], xy[1]), i = 0, lastBox, tabRegion, closeEl, close, closeXY, closeX, closeY, closeWidth, closeHeight, tabX, tabY, tabWidth, tabHeight, closeRegion, isTabReversed, direction, tab;
+  for (; i < length; i++) {
+    tab = tabs[i];
+    lastBox = tab.lastBox;
+    if (!lastBox || !tab.isTab) {
+      continue;
+    }
+    tabX = innerCtXY[0] + lastBox.x;
+    tabY = innerCtXY[1] - innerCt.dom.scrollTop + lastBox.y;
+    tabWidth = lastBox.width;
+    tabHeight = lastBox.height;
+    tabRegion = new Ext.util.Region(tabY, tabX + tabWidth, tabY + tabHeight, tabX);
+    if (tabRegion.contains(point)) {
+      closeEl = tab.closeEl;
+      if (closeEl) {
+        if (me._isTabReversed === undefined) {
+          me._isTabReversed = isTabReversed = tab.btnWrap.dom.currentStyle.filter.indexOf('rotation\x3d2') !== -1;
+        }
+        direction = isTabReversed ? this._reverseDockNames[me.dock] : me.dock;
+        closeWidth = closeEl.getWidth();
+        closeHeight = closeEl.getHeight();
+        closeXY = me.getCloseXY(closeEl, tabX, tabY, tabWidth, tabHeight, closeWidth, closeHeight, direction);
+        closeX = closeXY[0];
+        closeY = closeXY[1];
+        closeRegion = new Ext.util.Region(closeY, closeX + closeWidth, closeY + closeHeight, closeX);
+        close = closeRegion.contains(point);
+      }
+      break;
+    }
+  }
+  return {tab:tab, close:close};
+}, getCloseXY:function(closeEl, tabX, tabY, tabWidth, tabHeight, closeWidth, closeHeight, direction) {
+  var closeXY = closeEl.getXY(), closeX, closeY;
+  if (direction === 'right') {
+    closeX = tabX + tabWidth - (closeXY[1] - tabY + closeHeight);
+    closeY = tabY + (closeXY[0] - tabX);
+  } else {
+    closeX = tabX + (closeXY[1] - tabY);
+    closeY = tabY + tabX + tabHeight - closeXY[0] - closeWidth;
+  }
+  return [closeX, closeY];
+}, closeTab:function(toClose) {
+  var me = this, card = toClose.card, tabPanel = me.tabPanel, toActivate;
+  if (card && card.fireEvent('beforeclose', card) === false) {
+    return false;
+  }
+  toActivate = me.findNextActivatable(toClose);
+  Ext.suspendLayouts();
+  if (toActivate) {
+    if (tabPanel) {
+      tabPanel.setActiveTab(toActivate.card);
+    } else {
+      me.setActiveTab(toActivate);
+    }
+    toActivate.focus();
+  }
+  if (tabPanel && card) {
+    delete toClose.ownerCt;
+    card.fireEvent('close', card);
+    tabPanel.remove(card);
+    if (card.ownerCt !== tabPanel) {
+      toClose.fireClose();
+      me.remove(toClose);
+    } else {
+      toClose.ownerCt = me;
+      Ext.resumeLayouts(true);
+      return false;
+    }
+  }
+  Ext.resumeLayouts(true);
+}, findNextActivatable:function(toClose) {
+  var me = this, previousTab = me.previousTab, nextTab;
+  if (toClose.active && me.items.getCount() > 1) {
+    if (previousTab && previousTab !== toClose && !previousTab.disabled) {
+      nextTab = previousTab;
+    } else {
+      nextTab = toClose.next('tab[disabled\x3dfalse]') || toClose.prev('tab[disabled\x3dfalse]');
+    }
+  }
+  return nextTab || me.activeTab;
+}, setActiveTab:function(tab, initial) {
+  var me = this;
+  if (!tab.disabled && tab !== me.activeTab) {
+    if (me.activeTab) {
+      if (me.activeTab.destroyed) {
+        me.previousTab = null;
+      } else {
+        me.previousTab = me.activeTab;
+        me.activeTab.deactivate();
+        me.deactivateFocusable(me.activeTab);
+      }
+    }
+    tab.activate();
+    me.activateFocusable(tab);
+    me.activeTab = tab;
+    me.needsScroll = true;
+    if (!initial) {
+      me.fireEvent('change', me, tab, tab.card);
+      me.updateLayout();
+    }
+  }
+}, privates:{adjustTabPositions:function() {
+  var me = this, items = me.items.items, i = items.length, tab, lastBox, el, rotation, prop;
+  if (!Ext.isIE8) {
+    prop = me._getTabAdjustProp();
+    while (i--) {
+      tab = items[i];
+      el = tab.el;
+      lastBox = tab.lastBox;
+      rotation = tab.isTab ? tab.getActualRotation() : 0;
+      if (rotation === 1 && tab.isVisible()) {
+        el.setStyle(prop, lastBox.x + lastBox.width + 'px');
+      } else {
+        if (rotation === 2 && tab.isVisible()) {
+          el.setStyle(prop, lastBox.x - lastBox.height + 'px');
+        }
+      }
+    }
+  }
+}, applyTargetCls:function(targetCls) {
+  this.bodyTargetCls = targetCls;
+}, _getTabAdjustProp:function() {
+  return 'left';
+}, getTargetEl:function() {
+  return this.body || this.frameBody || this.el;
+}, onClick:function(e, target) {
+  var me = this, tabEl, tab, isCloseClick, tabInfo;
+  if (e.getTarget('.' + Ext.baseCSSPrefix + 'box-scroller')) {
+    return;
+  }
+  if (Ext.isIE8 && me.vertical) {
+    tabInfo = me.getTabInfoFromPoint(e.getXY());
+    tab = tabInfo.tab;
+    isCloseClick = tabInfo.close;
+  } else {
+    tabEl = e.getTarget('.' + Ext.tab.Tab.prototype.baseCls);
+    tab = tabEl && Ext.getCmp(tabEl.id);
+    isCloseClick = tab && tab.closeEl && target === tab.closeEl.dom;
+  }
+  if (isCloseClick) {
+    e.preventDefault();
+  }
+  if (tab && tab.isDisabled && !tab.isDisabled()) {
+    tab.beforeClick(isCloseClick);
+    if (tab.closable && isCloseClick) {
+      tab.onCloseClick();
+    } else {
+      me.doActivateTab(tab);
+    }
+  }
+}, onOverflowMenuItemClick:function(menu, item, e, eOpts) {
+  var tab = item && item.masterComponent, overflowHandler = this.layout.overflowHandler;
+  if (tab && !tab.isDisabled()) {
+    this.doActivateTab(tab);
+    if (overflowHandler.menuTrigger) {
+      overflowHandler.menuTrigger.focus();
+    }
+  }
+}, doActivateTab:function(tab) {
+  var tabPanel = this.tabPanel;
+  if (tabPanel) {
+    if (!tab.disabled) {
+      tabPanel.setActiveTab(tab.card);
+    }
+  } else {
+    this.setActiveTab(tab);
+  }
+}, onFocusableContainerFocus:function(e) {
+  var me = this, mixin = me.mixins.focusablecontainer, child;
+  child = mixin.onFocusableContainerFocus.call(me, e);
+  if (child && child.isTab) {
+    me.doActivateTab(child);
+  }
+}, onFocusableContainerFocusEnter:function(e) {
+  var me = this, mixin = me.mixins.focusablecontainer, child;
+  child = mixin.onFocusableContainerFocusEnter.call(me, e);
+  if (child && child.isTab) {
+    me.doActivateTab(child);
+  }
+}, focusChild:function(child, forward) {
+  var me = this, mixin = me.mixins.focusablecontainer, nextChild;
+  nextChild = mixin.focusChild.call(me, child, forward);
+  if (me.activateOnFocus && nextChild && nextChild.isTab) {
+    me.doActivateTab(nextChild);
+  }
+}}});
+Ext.define('Ext.tab.Panel', {extend:Ext.panel.Panel, alias:'widget.tabpanel', alternateClassName:['Ext.TabPanel'], config:{tabBar:undefined, tabPosition:'top', tabRotation:'default', tabStretchMax:true}, removePanelHeader:true, plain:false, itemCls:Ext.baseCSSPrefix + 'tabpanel-child', minTabWidth:undefined, maxTabWidth:undefined, deferredRender:true, _defaultTabRotation:{top:0, right:1, bottom:0, left:2}, initComponent:function() {
+  var me = this, activeTab = me.activeTab !== null ? me.activeTab || 0 : null, dockedItems = me.dockedItems, header = me.header, tabBarHeaderPosition = me.tabBarHeaderPosition, tabBar = me.getTabBar(), headerItems;
+  me.layout = Ext.apply({type:'card', deferredRender:me.deferredRender, itemCls:me.itemCls, activeItem:activeTab}, me.layout);
+  if (tabBarHeaderPosition != null) {
+    header = me.header = Ext.apply({}, header);
+    headerItems = header.items = header.items ? header.items.slice() : [];
+    header.itemPosition = tabBarHeaderPosition;
+    headerItems.push(tabBar);
+    header.hasTabBar = true;
+  } else {
+    dockedItems = [].concat(me.dockedItems || []);
+    dockedItems.push(tabBar);
+    me.dockedItems = dockedItems;
+  }
+  me.callParent(arguments);
+  activeTab = me.activeTab = me.getComponent(activeTab);
+  if (activeTab) {
+    tabBar.setActiveTab(activeTab.tab, true);
+  }
+}, onRender:function() {
+  var items = this.items.items, len = items.length, i;
+  this.callParent(arguments);
+  for (i = 0; i < len; ++i) {
+    items[i].getBind();
+  }
+}, setActiveTab:function(card) {
+  var me = this, previous;
+  if (!Ext.isObject(card) || card.isComponent) {
+    card = me.getComponent(card);
+  }
+  previous = me.getActiveTab();
+  if (card) {
+    Ext.suspendLayouts();
+    if (!card.isComponent) {
+      card = me.add(card);
+    }
+    if (previous === card || me.fireEvent('beforetabchange', me, card, previous) === false) {
+      Ext.resumeLayouts(true);
+      return previous;
+    }
+    me.activeTab = card;
+    me.layout.setActiveItem(card);
+    card = me.activeTab = me.layout.getActiveItem();
+    if (card && card !== previous) {
+      me.tabBar.setActiveTab(card.tab);
+      Ext.resumeLayouts(true);
+      if (previous !== card) {
+        me.fireEvent('tabchange', me, card, previous);
+      }
+    } else {
+      Ext.resumeLayouts(true);
+    }
+    return card;
+  }
+  return previous;
+}, setActiveItem:function(item) {
+  return this.setActiveTab(item);
+}, getActiveTab:function() {
+  var me = this, result = me.getComponent(me.activeTab);
+  if (result && me.items.indexOf(result) !== -1) {
+    me.activeTab = result;
+  } else {
+    me.activeTab = undefined;
+  }
+  return me.activeTab;
+}, applyTabBar:function(tabBar) {
+  var me = this, dock = me.tabBarHeaderPosition != null ? me.getHeaderPosition() : me.getTabPosition();
+  return new Ext.tab.Bar(Ext.apply({ui:me.ui, dock:dock, tabRotation:me.getTabRotation(), vertical:dock === 'left' || dock === 'right', plain:me.plain, tabStretchMax:me.getTabStretchMax(), tabPanel:me}, tabBar));
+}, updateHeaderPosition:function(headerPosition, oldHeaderPosition) {
+  var tabBar = this.getTabBar();
+  if (tabBar && this.tabBarHeaderPosition != null) {
+    tabBar.setDock(headerPosition);
+  }
+  this.callParent([headerPosition, oldHeaderPosition]);
+}, updateTabPosition:function(tabPosition) {
+  var tabBar = this.getTabBar();
+  if (tabBar && this.tabBarHeaderPosition == null) {
+    tabBar.setDock(tabPosition);
+  }
+}, updateTabRotation:function(tabRotation) {
+  var tabBar = this.getTabBar();
+  if (tabBar) {
+    tabBar.setTabRotation(tabRotation);
+  }
+}, onAdd:function(item, index) {
+  var me = this, cfg = Ext.apply({}, item.tabConfig), tabBar = me.getTabBar(), ariaDom, defaultConfig = {xtype:'tab', title:item.title, icon:item.icon, iconCls:item.iconCls, glyph:item.glyph, ui:tabBar.ui, card:item, disabled:item.disabled, closable:item.closable, hidden:item.hidden && !item.hiddenByLayout, tooltip:item.tooltip, tabBar:tabBar, tabPosition:tabBar.dock, rotation:tabBar.getTabRotation()};
+  if (item.closeText !== undefined) {
+    defaultConfig.closeText = item.closeText;
+  }
+  cfg = Ext.applyIf(cfg, defaultConfig);
+  item.tab = me.tabBar.insert(index, cfg);
+  item.ariaRole = 'tabpanel';
+  ariaDom = item.ariaEl.dom;
+  if (ariaDom) {
+    ariaDom.setAttribute('aria-labelledby', item.tab.id);
+  } else {
+    item.ariaRenderAttributes = item.ariaRenderAttributes || {};
+    item.ariaRenderAttributes['aria-labelledby'] = item.tab.id;
+  }
+  item.on({scope:me, enable:me.onItemEnable, disable:me.onItemDisable, beforeshow:me.onItemBeforeShow, iconchange:me.onItemIconChange, iconclschange:me.onItemIconClsChange, glyphchange:me.onItemGlyphChange, titlechange:me.onItemTitleChange});
+  if (item.isPanel) {
+    if (me.removePanelHeader) {
+      if (item.rendered) {
+        if (item.header) {
+          item.header.hide();
+        }
+      } else {
+        item.header = false;
+      }
+    }
+    if (item.isPanel && me.border) {
+      item.setBorder(false);
+    }
+  }
+  if (me.rendered) {
+    item.getBind();
+  }
+  if (me.rendered && me.loader && me.activeTab === undefined && me.layout.activeItem !== null) {
+    me.setActiveTab(0);
+  }
+}, onMove:function(item, fromIdx, toIdx) {
+  var tabBar = this.getTabBar();
+  this.callParent([item, fromIdx, toIdx]);
+  if (tabBar.items.indexOf(item.tab) !== toIdx) {
+    tabBar.move(item.tab, toIdx);
+  }
+}, onItemEnable:function(item) {
+  item.tab.enable();
+}, onItemDisable:function(item) {
+  item.tab.disable();
+}, onItemBeforeShow:function(item) {
+  if (item !== this.activeTab) {
+    this.setActiveTab(item);
+    return false;
+  }
+}, onItemGlyphChange:function(item, newGlyph) {
+  item.tab.setGlyph(newGlyph);
+}, onItemIconChange:function(item, newIcon) {
+  item.tab.setIcon(newIcon);
+}, onItemIconClsChange:function(item, newIconCls) {
+  item.tab.setIconCls(newIconCls);
+}, onItemTitleChange:function(item, newTitle) {
+  item.tab.setText(newTitle);
+}, onRemove:function(item, destroying) {
+  var me = this;
+  item.un({scope:me, enable:me.onItemEnable, disable:me.onItemDisable, beforeshow:me.onItemBeforeShow, iconchange:me.onItemIconChange, iconclschange:me.onItemIconClsChange, glyphchange:me.onItemGlyphChange, titlechange:me.onItemTitleChange});
+  if (item.tab && !me.destroying && item.tab.ownerCt === me.tabBar) {
+    me.tabBar.remove(item.tab);
+  }
+}, enable:function() {
+  var me = this, activeTab = me.activeTab !== null ? me.activeTab || 0 : null, wasDisabled = me.disabled;
+  me.callParent(arguments);
+  if (wasDisabled) {
+    activeTab = activeTab.isComponent ? activeTab : me.getComponent(activeTab);
+    if (activeTab) {
+      me.getTabBar().setActiveTab(activeTab.tab);
+    }
+  }
+  return me;
+}, privates:{doRemove:function(item, autoDestroy) {
+  var me = this, toActivate;
+  Ext.suspendLayouts();
+  if (me.removingAll || me.destroying || me.items.getCount() === 1) {
+    me.activeTab = null;
+  } else {
+    if (item.tab && (toActivate = me.tabBar.items.indexOf(me.tabBar.findNextActivatable(item.tab))) !== -1) {
+      me.setActiveTab(toActivate);
+    }
+  }
+  me.callParent([item, autoDestroy]);
+  Ext.resumeLayouts();
+  if (item.tab) {
+    delete item.tab.card;
+    delete item.tab;
+  }
+}}});
 Ext.define('Ext.toolbar.Fill', {extend:Ext.Component, alias:'widget.tbfill', alternateClassName:'Ext.Toolbar.Fill', ariaRole:'presentation', isFill:true, flex:1});
 Ext.define('Ext.toolbar.Spacer', {extend:Ext.Component, alias:'widget.tbspacer', alternateClassName:'Ext.Toolbar.Spacer', baseCls:Ext.baseCSSPrefix + 'toolbar-spacer', ariaRole:'presentation'});
 Ext.define(null, {override:'Ext.ux.gauge.needle.Abstract', compatibility:Ext.isIE10p, setTransform:function(centerX, centerY, rotation) {
@@ -67087,7 +81007,10 @@ Ext.define('Ext.ux.layout.ResponsiveColumn', {extend:Ext.layout.container.Auto, 
   }
 });
 Ext.define('Admin.model.Base', {extend:Ext.data.Model, schema:{namespace:'Admin.model'}});
-Ext.define('Admin.store.NavigationTree', {extend:Ext.data.TreeStore, storeId:'NavigationTree', fields:[{name:'text'}], root:{expanded:true, children:[{text:'Dashboard', iconCls:'x-fa fa-desktop', rowCls:'nav-tree-badge nav-tree-badge-new', viewType:'admindashboard', routeId:'dashboard', leaf:true}]}});
+Ext.define('Admin.model.finance.SalaryOrderModel', {extend:Admin.model.Base, idProperty:'salaryOrderId', fields:[{type:'int', name:'salaryOrderId'}, {type:'string', name:'deptId'}, {type:'string', name:'userId'}, {type:'string', name:'userName'}, {type:'float', name:'basicwage'}, {type:'float', name:'overtimefee'}, {type:'float', name:'allowance'}, {type:'float', name:'bonus'}, {type:'float', name:'reducemoney'}, {type:'float', name:'realwage'}, {type:'int', name:'month'}], proxy:{type:'rest', url:'/salaryOrder'}});
+Ext.define('Admin.store.NavigationTree', {extend:Ext.data.TreeStore, storeId:'NavigationTree', fields:[{name:'text'}], root:{expanded:true, children:[{text:'Dashboard', iconCls:'x-fa fa-desktop', rowCls:'nav-tree-badge nav-tree-badge-new', viewType:'admindashboard', routeId:'dashboard', leaf:true}, {text:'财务管理', iconCls:'x-fa fa-leanpub', expanded:false, selectable:false, children:[{text:'财务收入管理', iconCls:'x-fa fa-file-o', viewType:'income', leaf:true}, {text:'财务支出管理', iconCls:'x-fa fa-exclamation-triangle', 
+viewType:'cost', leaf:true}, {text:'季度报表', iconCls:'x-fa fa-times-circle', viewType:'order', leaf:true}]}]}});
+Ext.define('Admin.store.finance.SalaryOrderGridStroe', {extend:Ext.data.Store, alias:'store.salaryOrderGridStroe', storeId:'salaryOrderGridStroe', model:'Admin.model.finance.SalaryOrderModel', proxy:{type:'rest', url:'/salaryOrder', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:25, sorters:{direction:'DESC', property:'salaryOrderId'}});
 Ext.define('Admin.view.dashboard.DashboardController', {extend:Ext.app.ViewController, alias:'controller.dashboard', onRefreshToggle:function(tool, e, owner) {
   var store, runner;
   if (tool.toggleValue) {
@@ -67127,6 +81050,103 @@ Ext.define('Admin.Application', {extend:Ext.app.Application, name:'Admin', store
   });
 }});
 Ext.define('Admin.view.dashboard.Dashboard', {extend:Ext.container.Container, xtype:'admindashboard', controller:'dashboard', viewModel:{type:'dashboard'}, layout:'responsivecolumn', listeners:{hide:'onHideView'}, html:'admindashboard'});
+Ext.define('Admin.view.finance.cost.Cost', {extend:Ext.tab.Panel, xtype:'cost', viewModel:{type:'logisticstOrderViewModel'}, items:[{iconCls:'x-fa fa-plus', xtype:'logisticsPanel', title:'后勤支出'}, {iconCls:'x-fa fa-plus', title:'工资支出'}]});
+Ext.define('Admin.view.finance.cost.salary.OrderViewController', {extend:Ext.app.ViewController, alias:'controller.orderViewController', openEditWindow:function(grid, rowIndex, colIndex) {
+  var records = grid.getStore().getAt(rowIndex);
+  if (records) {
+    var win = grid.up('container').add(Ext.widget('orderEditWindow'));
+    win.show();
+    win.down('form').getForm().loadRecord(records);
+  }
+}, orderEditFormSubmit:function(btn) {
+  var win = btn.up('window');
+  var store = Ext.data.StoreManager.lookup('orderGridStroe');
+  var values = win.down('form').getValues();
+  var record = store.getById(values.orderId);
+  record.set(values);
+  win.close();
+}, openAddWindow:function(grid, rowIndex, colIndex) {
+  var win = grid.up('container').add(Ext.widget('orderAddWindow')).show();
+}, orderAddFormSubmit:function(btn) {
+  var win = btn.up('window');
+  var form = win.down('form');
+  var record = Ext.create('Admin.model.order.OrderModel');
+  console.log(record);
+  var values = form.getValues();
+  record.set(values);
+  record.save();
+  Ext.data.StoreManager.lookup('orderGridStroe').load();
+  win.close();
+}, searchComboboxSelectChuang:function(combo, record, index) {
+  var searchField = this.lookupReference('searchFieldName').getValue();
+  if (searchField === 'comeDate') {
+    this.lookupReference('searchId').hide();
+    this.lookupReference('searchcomeDateFrom').show();
+    this.lookupReference('searchcomeDateTo').show();
+  } else {
+    this.lookupReference('searchId').show();
+    this.lookupReference('searchcomeDateFrom').hide();
+    this.lookupReference('searchcomeDateTo').hide();
+  }
+}, quickSearch:function(btn) {
+  var searchField = this.lookupReference('searchFieldName').getValue();
+  var searchorderId = this.lookupReference('searchId').getValue();
+  var searchcomeDateFrom = this.lookupReference('searchcomeDateFrom').getValue();
+  var searchcomeDateTo = this.lookupReference('searchcomeDateTo').getValue();
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {orderId:'', comeDateFrom:'', comeDateTo:''});
+  if (searchField === 'orderId') {
+    Ext.apply(store.proxy.extraParams, {orderId:searchorderId});
+  }
+  if (searchField === 'comeDate') {
+    Ext.apply(store.proxy.extraParams, {comeDateFrom:Ext.util.Format.date(searchcomeDateFrom, 'Y/m/d H:i:s'), comeDateTo:Ext.util.Format.date(searchcomeDateTo, 'Y/m/d H:i:s')});
+  }
+  store.load({params:{start:0, limit:20, page:1}});
+}, openSearchWindow:function(toolbar, rowIndex, colIndex) {
+  toolbar.up('grid').up('container').add(Ext.widget('orderSearchWindow')).show();
+}, orderSearchFormSubmit:function(btn) {
+  var form = btn.up('window').down('form');
+}, deleteOneOrder:function(grid, rowIndex, colIndex) {
+  Ext.MessageBox.confirm('提示', '确定要进行删除操作吗？数据将无法还原！', function(btn, text) {
+    if (btn == 'yes') {
+      var store = grid.getStore();
+      var record = store.getAt(rowIndex);
+      store.remove(record);
+    }
+  }, this);
+}, deleteMoreRows:function(btn, rowIndex, colIndex) {
+  var grid = btn.up('gridpanel');
+  var selModel = grid.getSelectionModel();
+  if (selModel.hasSelection()) {
+    Ext.Msg.confirm('警告', '确定要删除吗？', function(button) {
+      if (button == 'yes') {
+        var rows = selModel.getSelection();
+        var selectIds = [];
+        Ext.each(rows, function(row) {
+          selectIds.push(row.data.orderId);
+        });
+        Ext.Ajax.request({url:'/order/deletes', method:'post', params:{ids:selectIds}, success:function(response, options) {
+          var json = Ext.util.JSON.decode(response.responseText);
+          if (json.success) {
+            Ext.Msg.alert('操作成功', json.msg, function() {
+              grid.getStore().reload();
+            });
+          } else {
+            Ext.Msg.alert('操作失败', json.msg);
+          }
+        }});
+      }
+    });
+  } else {
+    Ext.Msg.alert('错误', '没有任何行被选中，无法进行删除操作！');
+  }
+}});
+Ext.define('Admin.view.finance.cost.salary.SalaryPanel', {extend:Ext.panel.Panel, xtype:'salaryPanel', layout:'fit', items:[{xtype:'gridpanel', selType:'checkboxmodel', headerBorders:true, bind:'{orderLists}', scrollable:true, columns:[{text:'id', flex:1, name:'salaryOrderId', dataIndex:'salaryOrderId'}, {text:'部门', name:'deptName', flex:1, dataIndex:'deptName'}, {text:'员工编号', name:'userId', flex:1, dataIndex:'userId'}, {text:'员工姓名', xtype:'userName', flex:1, dataIndex:'userName'}, {text:'工     资     项     目', 
+flex:3, columns:[{text:'基本工资', flex:1, dataIndex:'basicwage'}, {text:'加班费', flex:1, dataIndex:'overtimefee'}, {text:'出差费', flex:1, dataIndex:'allowance'}, {text:'奖金', flex:1, dataIndex:'bonus'}]}, {text:'扣发款项(请假)', flex:1, dataIndex:'reducemoney'}, {text:'实际工资', flex:1, dataIndex:'reducemoney'}, {text:'扣发款项(请假)', flex:1, dataIndex:'realwage'}, {text:'月份', flex:1, dataIndex:'month'}, {text:'操作', align:'center', flex:2, cls:'content-column', xtype:'actioncolumn', items:[{iconCls:'x-fa fa-pencil', tooltip:'修改', 
+handler:'openEditWindow'}, {iconCls:'x-fa fa-trash-o', tooltip:'删除', handler:'deleteOneOrder'}]}], tbar:[{xtype:'combobox', reference:'searchFieldName', store:Ext.create('Ext.data.Store', {fields:['name', 'value'], data:[{name:'订单编号', value:'orderId'}, {name:'入住时间', value:'comeDate'}]}), displayField:'name', valueField:'value', value:'orderId', editable:false, queryMode:'local', triggerAction:'all', width:135, listeners:{select:'searchComboboxSelectChuang'}}, '-', {xtype:'textfield', reference:'searchId'}, 
+{xtype:'datefield', hidden:true, format:'Y/m/d H:i:s', reference:'searchcomeDateFrom', fieldLabel:'From', labelWidth:'4'}, {xtype:'datefield', hidden:true, format:'Y/m/d H:i:s', reference:'searchcomeDateTo', fieldLabel:'To', labelWidth:'2'}, '-', {text:'Search', cls:'order-tbar', iconCls:'x-fa fa-search', handler:'quickSearch'}, '-', {cls:'order-tbar', text:'Search More', iconCls:'x-fa fa-search-plus', handler:'openSearchWindow'}, '-\x3e', {text:'手动添加订单', cls:'order-tbar', tooltip:'Add a new row', 
+iconCls:'x-fa fa-plus', handler:'openAddWindow'}, '-', {text:'Removes', cls:'order-tbar', tooltip:'删除选中的多条订单', iconCls:'x-fa fa-trash', handler:'deleteMoreRows'}], dockedItems:[{xtype:'pagingtoolbar', dock:'bottom', displayInfo:true, bind:'{orderLists}'}]}]});
+Ext.define('Admin.view.finance.cost.salary.LogisticstOrderViewModel', {extend:Ext.app.ViewModel, alias:'viewmodel.logisticstOrderViewModel', stores:{orderLists:{type:'salaryOrderGridStroe'}}});
 Ext.define('Admin.view.main.MainContainerWrap', {extend:Ext.container.Container, xtype:'maincontainerwrap', scrollable:'y', layout:{type:'hbox', align:'stretchmax', animate:true, animatePolicy:{x:true, width:true}}, beforeLayout:function() {
   var me = this, height = Ext.Element.getViewportHeight() - 64, navTree = me.getComponent('navigationTreeList');
   me.minHeight = height;
