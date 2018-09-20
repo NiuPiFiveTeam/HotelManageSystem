@@ -1,0 +1,480 @@
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:2991 */
+.x-btn-over .x-btn-header-small-tl,
+.x-btn-over .x-btn-header-small-bl,
+.x-btn-over .x-btn-header-small-tr,
+.x-btn-over .x-btn-header-small-br,
+.x-btn-over .x-btn-header-small-tc,
+.x-btn-over .x-btn-header-small-bc {
+    background-image: url(images/btn/btn-header-small-over-corners.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:2999 */
+.x-btn-over .x-btn-header-small-ml,
+.x-btn-over .x-btn-header-small-mr {
+    background-image: url(images/btn/btn-header-small-over-sides.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3003 */
+.x-btn-over .x-btn-header-small-mc {
+    background-color: transparent;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3016 */
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-br,
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-bc {
+    background-image: url(images/btn/btn-header-small-focus-over-corners.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3024 */
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-mr {
+    background-image: url(images/btn/btn-header-small-focus-over-sides.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3028 */
+.x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-header-small-mc {
+    background-color: transparent;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3043 */
+.x-btn.x-btn-menu-active .x-btn-header-small-tl,
+.x-btn.x-btn-menu-active .x-btn-header-small-bl,
+.x-btn.x-btn-menu-active .x-btn-header-small-tr,
+.x-btn.x-btn-menu-active .x-btn-header-small-br,
+.x-btn.x-btn-menu-active .x-btn-header-small-tc,
+.x-btn.x-btn-menu-active .x-btn-header-small-bc,
+.x-btn.x-btn-pressed .x-btn-header-small-tl,
+.x-btn.x-btn-pressed .x-btn-header-small-bl,
+.x-btn.x-btn-pressed .x-btn-header-small-tr,
+.x-btn.x-btn-pressed .x-btn-header-small-br,
+.x-btn.x-btn-pressed .x-btn-header-small-tc,
+.x-btn.x-btn-pressed .x-btn-header-small-bc {
+    background-image: url(images/btn/btn-header-small-pressed-corners.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3051 */
+.x-btn.x-btn-menu-active .x-btn-header-small-ml,
+.x-btn.x-btn-menu-active .x-btn-header-small-mr,
+.x-btn.x-btn-pressed .x-btn-header-small-ml,
+.x-btn.x-btn-pressed .x-btn-header-small-mr {
+    background-image: url(images/btn/btn-header-small-pressed-sides.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3055 */
+.x-btn.x-btn-menu-active .x-btn-header-small-mc,
+.x-btn.x-btn-pressed .x-btn-header-small-mc {
+    background-color: transparent;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3069 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-br,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-bc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-br,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-bc {
+    background-image: url(images/btn/btn-header-small-focus-pressed-corners.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3077 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-mr,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-mr {
+    background-image: url(images/btn/btn-header-small-focus-pressed-sides.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3081 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-header-small-mc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-header-small-mc {
+    background-color: transparent;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3095 */
+.x-btn.x-btn-disabled .x-btn-header-small-tl,
+.x-btn.x-btn-disabled .x-btn-header-small-bl,
+.x-btn.x-btn-disabled .x-btn-header-small-tr,
+.x-btn.x-btn-disabled .x-btn-header-small-br,
+.x-btn.x-btn-disabled .x-btn-header-small-tc,
+.x-btn.x-btn-disabled .x-btn-header-small-bc {
+    background-image: url(images/btn/btn-header-small-disabled-corners.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3103 */
+.x-btn.x-btn-disabled .x-btn-header-small-ml,
+.x-btn.x-btn-disabled .x-btn-header-small-mr {
+    background-image: url(images/btn/btn-header-small-disabled-sides.gif);
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3107 */
+.x-btn.x-btn-disabled .x-btn-header-small-mc {
+    background-color: transparent;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3117 */
+.x-nbr .x-btn-header-small {
+    background-image: none;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3123 */
+.x-btn-disabled.x-btn-header-small {
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3142 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-first {
+    border-right-width: 0 !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3144 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-first .x-btn-header-small-mc {
+    padding-right: 7px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3148 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-middle {
+    border-right-width: 0 !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3150 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-middle .x-btn-header-small-mc {
+    padding-right: 7px !important;
+    padding-left: 7px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3156 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-last .x-btn-header-small-mc {
+    padding-left: 7px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3163 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-first {
+    border-bottom-width: 0 !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3165 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-first .x-btn-header-small-mc {
+    padding-bottom: 7px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3169 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-middle {
+    border-bottom-width: 0 !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3171 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-middle .x-btn-header-small-mc {
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3177 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-last .x-btn-header-small-mc {
+    padding-top: 7px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3183 */
+.x-nbr .x-segmented-button-item.x-btn-header-small:after {
+    content: ' ';
+    border-style: solid;
+    border-width: 0;
+    position: absolute;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3201 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small:after {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3207 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-first:after {
+    left: 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3210 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-header-small.x-segmented-button-last:after {
+    right: 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3216 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small:after {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3222 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-first:after {
+    top: 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3225 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-header-small.x-segmented-button-last:after {
+    bottom: 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3233 */
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-header-small:after {
+    border-width: 1px;
+    border-color: #cbe5f1;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3249 */
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-header-small:after {
+    border-width: 1px;
+    border-color: #cae2ed;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3267 */
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-header-small:after,
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-header-small:after {
+    border-width: 1px;
+    border-color: #c8dce5;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:39 */
+.x-menu-header {
+    z-index: 0 !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:43 */
+.x-css-shadow {
+    box-shadow: none !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:51 */
+.x-fa {
+    display: inline-block;
+    font: normal normal normal 14px/1 'Open Sans', 'Helvetica Neue', helvetica, arial, verdana, sans-serif;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:56 */
+.alignRight {
+    float: right;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:60 */
+.boldFont {
+    font-weight: bold;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:2 */
+.dashboard-main-chart .x-panel-body-default {
+    color: #404040;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:7 */
+.top-info-container {
+    color: #4590d3;
+    font-size: 13px;
+    font-family: "Open Sans";
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:12 */
+.top-info-container .inner {
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:19 */
+.top-info-container .dashboard-analytics-percentage {
+    font-size: 14px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:24 */
+.graph-analysis-left .x-progress-bar {
+    background-color: #458fd2;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:29 */
+.quick-graph-panel .x-panel-header {
+    padding-left: 22px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:33 */
+.quick-graph-panel .x-title-icon {
+    position: relative;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:36 */
+.quick-graph-panel .x-title-icon:before {
+    position: absolute;
+    height: 30px;
+    width: 30px;
+    top: -7px;
+    left: -7px;
+    border-radius: 15px;
+    background-color: #f1f1f1;
+    line-height: 30px;
+    text-align: center;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:49 */
+.quick-graph-panel .x-title-text {
+    padding-left: 8px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:54 */
+.graph-analysis-right {
+    border-left: 1px solid #ddd;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:57 */
+.graph-analysis-right .right-value {
+    text-align: right;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:62 */
+.dashboard-member-grid .x-fa,
+.user-grid .x-fa {
+    height: 20px;
+    width: 20px;
+    background: #e9e9e9;
+    line-height: 20px;
+    float: left;
+    margin-right: 10px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:71 */
+.dashboard-member-grid .x-fa:before,
+.user-grid .x-fa:before {
+    display: block;
+    line-height: 20px;
+    text-align: center;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:77 */
+.dashboard-member-grid .x-fa.fa-close,
+.user-grid .x-fa.fa-close {
+    background-color: #fc8999;
+    color: #fff;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:82 */
+.dashboard-member-grid .x-fa.fa-ban,
+.user-grid .x-fa.fa-ban {
+    background-color: #ffc000;
+    color: #fff;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:87 */
+.dashboard-member-grid .x-fa.x-action-col-icon,
+.user-grid .x-fa.x-action-col-icon {
+    font-size: 13px !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:92 */
+.overflow-ellipsis {
+    overflow: hidden;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:95 */
+.pie-legend-container {
+    font-size: 11px;
+    text-overflow: ellipsis;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:99 */
+.pie-legend-container .quick-graph-pie-legend {
+    height: 15px;
+    width: 15px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:104 */
+.pie-legend-container .x-autocontainer-innerCt {
+    padding-left: 10px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    line-height: 14px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:112 */
+.bottom-indent {
+    margin-bottom: 16px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:116 */
+.left-aligned-div {
+    float: left;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:120 */
+.right-aligned-div {
+    float: right;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:123 */
+.services-text {
+    margin: 0 0 10px 5px;
+    height: 86px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:130 */
+.services-legend {
+    min-width: 240px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:133 */
+.services-legend div {
+    width: 15px;
+    height: 15px;
+    float: left;
+    margin: 1px 5px 0 0;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:140 */
+.services-legend span {
+    font-size: 11px;
+    width: 33%;
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:149 */
+.service-finance .x-progress-bar,
+.legend-finance {
+    background-color: #ffc000;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:153 */
+.service-research .x-progress-bar,
+.legend-research,
+.widget-progressbar .x-progress-bar {
+    background-color: #6aa5db;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:159 */
+.service-marketing .x-progress-bar,
+.legend-marketing {
+    background-color: #ee929c;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:164 */
+.force-notext-button,
+.force-notext-button .x-frame-mc {
+    background-color: #56b750;
+    border-color: #56b750 !important;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:5 */
+.force-notext-button .x-btn-inner-default-toolbar-small,
+.force-notext-button .x-frame-mc .x-btn-inner-default-toolbar-small {
+    color: #fff;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:9 */
+.force-notext-button:hover,
+.force-notext-button .x-frame-mc:hover {
+    background-color: transparent;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:12 */
+.force-notext-button:hover .x-btn-inner-default-toolbar-small,
+.force-notext-button:hover .x-btn-inner-default-small,
+.force-notext-button .x-frame-mc:hover .x-btn-inner-default-toolbar-small,
+.force-notext-button .x-frame-mc:hover .x-btn-inner-default-small {
+    color: #56b750;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/Application.scss:17 */
+.force-notext-button:hover .x-btn-icon-el-default-small,
+.force-notext-button:hover .x-btn-icon-el-default-toolbar-small,
+.force-notext-button .x-frame-mc:hover .x-btn-icon-el-default-small,
+.force-notext-button .x-frame-mc:hover .x-btn-icon-el-default-toolbar-small {
+    color: #56b750;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:169 */
+.white-panel {
+    background: #fff;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/classic/src/view/dashboard/Dashboard.scss:174 */
+.x-tool-wrench {
+    font: 16px/1 FontAwesome;
+    background: none;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/ext/classic/theme-neutral/sass/etc/mixins/font-icon.scss:132 */
+.x-tool-wrench:before {
+    content: "\f0ad";
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/sass/src/view/main/Main.scss:1 */
+.nav-tree-badge:after {
+    position: absolute;
+    height: 18px;
+    width: 3.3em;
+    display: inline-block;
+    text-align: center;
+    top: 50%;
+    margin-top: -9px;
+    right: 12px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 10px;
+    line-height: 18px;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/sass/src/view/main/Main.scss:16 */
+.nav-tree-badge-hot:after {
+    content: "HOT";
+    background-color: #e3495a;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/sass/src/view/main/Main.scss:21 */
+.nav-tree-badge-new:after {
+    content: "NEW";
+    background-color: #2eadf5;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/sass/src/view/main/Main.scss:30 */
+.circular {
+    border-radius: 50%;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/sass/src/view/main/Main.scss:35 */
+.x-fa.fa-google-plus {
+    min-width: 16px;
+    width: auto;
+}
+/* D:/Program Files/Java/workspace/HotelMessManaSystem/admin-dashboard/sass/src/Application.scss:3 */
+body.x-ios.x-webview.x-portrait {
+    margin-top: 20px;
+}
