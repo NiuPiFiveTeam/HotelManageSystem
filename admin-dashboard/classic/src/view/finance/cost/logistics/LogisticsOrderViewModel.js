@@ -13,6 +13,6 @@ Ext.define('Admin.view.finance.cost.logisticst.LogisticstOrderViewModel', {
     ],
 
     stores: {
-		orderLists: {type: 'logisticstOrderGridStroe'}
+		logisticsOrderLists: {type: 'logisticstOrderGridStroe'}
     }
 });
