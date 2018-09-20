@@ -1,12 +1,12 @@
-Ext.define('Admin.view.finance.cost.salary.OrderViewController', {
+Ext.define('Admin.view.finance.income.room.RoomOrderViewController', {
     extend: 'Ext.app.ViewController',
-    alias: 'controller.orderViewController',
+    alias: 'controller.roomOrderViewController',
     
     //编辑窗口
 	openEditWindow:function(grid, rowIndex, colIndex){
 		var records = grid.getStore().getAt(rowIndex);
 			if(records){
-				var win = grid.up('container').add(Ext.widget('orderEditWindow'));
+				var win = grid.up('container').add(Ext.widget('roomOrderEditWindow'));
 				win.show();
 				win.down('form').getForm().loadRecord(records);
 			}		
@@ -23,12 +23,12 @@ Ext.define('Admin.view.finance.cost.salary.OrderViewController', {
 	
 	//添加窗口
 	openAddWindow:function(grid, rowIndex, colIndex){
-			var win = grid.up('container').add(Ext.widget('orderAddWindow')).show();
+			var win = grid.up('container').add(Ext.widget('roomOrderAddWindow')).show();
 	},
 	orderAddFormSubmit:function(btn){
 		var win = btn.up('window');
 	    var form = win.down('form');
-	    var record = Ext.create('Admin.model.order.OrderModel');
+	    var record = Ext.create('Admin.model.finance.RoomOrderModel');
 	    console.log(record);
 	    var values = form.getValues();//获取form数据
 	    record.set(values);
@@ -75,7 +75,7 @@ Ext.define('Admin.view.finance.cost.salary.OrderViewController', {
 
 	/*多条件查询*/	
 	openSearchWindow:function(toolbar, rowIndex, colIndex){
-		toolbar.up('grid').up('container').add(Ext.widget('orderSearchWindow')).show();
+		toolbar.up('grid').up('container').add(Ext.widget('roomOrderSearchWindow')).show();
 	},
 	orderSearchFormSubmit:function(btn){
 		var form = btn.up('window').down('form');
@@ -128,7 +128,7 @@ Ext.define('Admin.view.finance.cost.salary.OrderViewController', {
 			            }
 					});
                 }
-            });
+            }); 
         }else {
             Ext.Msg.alert("错误", "没有任何行被选中，无法进行删除操作！");
         }

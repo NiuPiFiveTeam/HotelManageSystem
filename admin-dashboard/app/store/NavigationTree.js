@@ -38,7 +38,7 @@
                     {
                         text: '季度报表',
                         iconCls: 'x-fa fa-times-circle',
-                        viewType: 'order',
+                        // viewType: 'order',
                         leaf: true
                     }
                 ]
