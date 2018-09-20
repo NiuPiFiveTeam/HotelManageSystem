@@ -1,3 +1,280 @@
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3043 */
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-tl,
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-bl,
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-tr,
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-br,
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-tc,
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-bc,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-tl,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-bl,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-tr,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-br,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-tc,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-bc {
+    background-image: url(images/btn/btn-gray-toolbar-small-pressed-corners.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3051 */
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-ml,
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-mr,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-ml,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-mr {
+    background-image: url(images/btn/btn-gray-toolbar-small-pressed-sides.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3055 */
+.x-btn.x-btn-menu-active .x-btn-gray-toolbar-small-mc,
+.x-btn.x-btn-pressed .x-btn-gray-toolbar-small-mc {
+    background-color: #888889;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3069 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-br,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-bc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-br,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-bc {
+    background-image: url(images/btn/btn-gray-toolbar-small-focus-pressed-corners.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3077 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-mr,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-mr {
+    background-image: url(images/btn/btn-gray-toolbar-small-focus-pressed-sides.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3081 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-toolbar-small-mc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-toolbar-small-mc {
+    background-color: #888889;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3095 */
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-tl,
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-bl,
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-tr,
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-br,
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-tc,
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-bc {
+    background-image: url(images/btn/btn-gray-toolbar-small-disabled-corners.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3103 */
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-ml,
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-mr {
+    background-image: url(images/btn/btn-gray-toolbar-small-disabled-sides.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3107 */
+.x-btn.x-btn-disabled .x-btn-gray-toolbar-small-mc {
+    background-color: #949495;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3117 */
+.x-nbr .x-btn-gray-toolbar-small {
+    background-image: none;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3123 */
+.x-btn-disabled.x-btn-gray-toolbar-small {
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3142 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-first {
+    border-right-width: 1px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3144 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-first .x-btn-gray-toolbar-small-mc {
+    padding-right: 7px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3148 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-middle {
+    border-right-width: 1px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3150 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-middle .x-btn-gray-toolbar-small-mc {
+    padding-right: 7px !important;
+    padding-left: 7px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3156 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-last .x-btn-gray-toolbar-small-mc {
+    padding-left: 7px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3163 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-first {
+    border-bottom-width: 1px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3165 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-first .x-btn-gray-toolbar-small-mc {
+    padding-bottom: 7px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3169 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-middle {
+    border-bottom-width: 1px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3171 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-middle .x-btn-gray-toolbar-small-mc {
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3177 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-last .x-btn-gray-toolbar-small-mc {
+    padding-top: 7px !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3183 */
+.x-nbr .x-segmented-button-item.x-btn-gray-toolbar-small:after {
+    content: ' ';
+    border-style: solid;
+    border-width: 0;
+    position: absolute;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3201 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small:after {
+    top: 1px;
+    right: 0;
+    bottom: 1px;
+    left: 0;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3207 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-first:after {
+    left: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3210 */
+.x-nbr .x-segmented-button-item-horizontal.x-btn-gray-toolbar-small.x-segmented-button-last:after {
+    right: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3216 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small:after {
+    top: 0;
+    right: 1px;
+    bottom: 0;
+    left: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3222 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-first:after {
+    top: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3225 */
+.x-nbr .x-segmented-button-item-vertical.x-btn-gray-toolbar-small.x-segmented-button-last:after {
+    bottom: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3233 */
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-gray-toolbar-small:after {
+    border-width: 1px;
+    border-color: #35baf6;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3249 */
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-gray-toolbar-small:after {
+    border-width: 1px;
+    border-color: #35baf6;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3267 */
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-gray-toolbar-small:after,
+.x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-gray-toolbar-small:after {
+    border-width: 1px;
+    border-color: #35baf6;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:187 */
+.x-btn-green-small {
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    -ms-border-radius: 0;
+    -o-border-radius: 0;
+    border-radius: 0;
+    padding: 7px 7px 7px 7px;
+    border-width: 1px;
+    border-style: solid;
+    background-color: #16b603;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:237 */
+.x-btn-green-small-mc {
+    background-color: #16b603;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:264 */
+.x-nbr .x-btn-green-small {
+    padding: 0 !important;
+    border-width: 0 !important;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    -ms-border-radius: 0px;
+    -o-border-radius: 0px;
+    border-radius: 0px;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:281 */
+.x-btn-green-small-frameInfo {
+    font-family: th-1-1-1-1-1-1-1-1-7-7-7-7;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:347 */
+.x-btn-green-small-tl {
+    background-position: 0 -2px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:351 */
+.x-btn-green-small-tr {
+    background-position: right -3px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:355 */
+.x-btn-green-small-bl {
+    background-position: 0 -4px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:359 */
+.x-btn-green-small-br {
+    background-position: right -5px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:363 */
+.x-btn-green-small-ml {
+    background-position: 0 top;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:371 */
+.x-btn-green-small-mr {
+    background-position: right top;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:379 */
+.x-btn-green-small-tc {
+    background-position: 0 0;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:383 */
+.x-btn-green-small-bc {
+    background-position: 0 -1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:388 */
+.x-btn-green-small-tr,
+.x-btn-green-small-br,
+.x-btn-green-small-mr {
+    padding-right: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:394 */
+.x-btn-green-small-tl,
+.x-btn-green-small-bl,
+.x-btn-green-small-ml {
+    padding-left: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:400 */
+.x-btn-green-small-tc {
+    height: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:403 */
+.x-btn-green-small-bc {
+    height: 1px;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:407 */
+.x-btn-green-small-tl,
+.x-btn-green-small-bl,
+.x-btn-green-small-tr,
+.x-btn-green-small-br,
+.x-btn-green-small-tc,
+.x-btn-green-small-bc,
+.x-btn-green-small-ml,
+.x-btn-green-small-mr {
+    background-image: url(images/btn/btn-green-small-corners.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:453 */
+.x-btn-green-small-ml,
+.x-btn-green-small-mr {
+    background-image: url(images/btn/btn-green-small-sides.gif);
+    background-repeat: repeat-y;
+}
 /* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/etc/mixins/frame.scss:464 */
 .x-btn-green-small-mc {
     padding: 7px 7px 7px 7px;

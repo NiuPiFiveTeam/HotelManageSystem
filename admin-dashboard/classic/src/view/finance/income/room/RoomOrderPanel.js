@@ -1,6 +1,6 @@
-Ext.define('Admin.view.finance.cost.salary.SalaryPanel', {
+Ext.define('Admin.view.finance.income.room.RoomOrderPanel', {
     extend: 'Ext.panel.Panel',
-    xtype: 'salaryPanel',
+    xtype: 'roomOrderPanel',
 
     requires: [
         'Ext.grid.Panel',
@@ -9,78 +9,64 @@ Ext.define('Admin.view.finance.cost.salary.SalaryPanel', {
 
         'Ext.form.field.ComboBox',  //下拉列表框
         'Ext.selection.CheckboxModel',
-        'Ext.grid.column.RowNumberer'
+        'Ext.grid.column.RowNumberer',
     ],
 
     layout: 'fit',
     items: [{
             xtype: 'gridpanel',
             selType: 'checkboxmodel',   //复选框
-            // cls: 'order-grid',
-
+            cls: 'order-grid',
+            // title: '订单管理模块',
             headerBorders: true, //边框
-
-            bind: '{orderLists}',
+            //routeId: 'user',
+            bind: '{roomOrderLists}',
             scrollable: true,  //可滚动的
             columns: [{             //hidden:true
-                text: 'id',
+                text: '订单Id',
                 flex:1,
-                name:'salaryOrderId',
-                dataIndex: 'salaryOrderId'
+                name:'orderId',
+                dataIndex: 'orderId'
             }, {
-                text: '部门',
-                name:'deptName',
+                text: '客户编号',   
                 flex:1,
-                dataIndex: 'deptName'
-            },{
-                text: '员工编号',
-                name:'userId',
-                flex:1,
+                formatter: 'usMoney',
                 dataIndex: 'userId'
-            },{
-                text: '员工姓名',
-                xtype:'userName',
-                flex:1,
-                dataIndex: 'userName'
             }, {
-                text: '工     资     项     目',
-                flex:3,
+                text: '客房号',
+                name:'roomId',
+                flex:1,
+                // renderer: 'renderChange',
+                dataIndex: 'roomId'
+            },{
+                text: '住     房     时     间',
+                flex:4,
                 columns:[{
-                    text: '基本工资',
+                    text: '入住日期',
+                    xtype:'datecolumn',
                     flex:1,
-                    dataIndex: 'basicwage'
-                },{
-                    text: '加班费',
-                    flex:1,
-                    dataIndex: 'overtimefee'
+                    // renderer: 'renderPercent',
+                    formatter: 'date("Y/m/d H:i:s")',
+                    dataIndex: 'comeDate'
                 }, {
-                    text: '出差费',
+                    text: '结算日期',
+                    xtype:'datecolumn',
                     flex:1,
-                    dataIndex: 'allowance'
+                    formatter: 'date("Y/m/d H:i:s")',
+                    dataIndex: 'leftDate'
                 },  {
-                    text: '奖金',
+                    text: '总天数',
                     flex:1,
-                    dataIndex: 'bonus'
+                    // formatter: 'date("m/d/Y")',
+                    dataIndex: 'time'
                 }]
-            },  {
-                text: '扣发款项(请假)',
+            }, {
+                text: '房费',
                 flex:1,
-                dataIndex: 'reducemoney'
-            },{
-                text: '实际工资',
-                flex:1,
-                dataIndex: 'reducemoney'
-            },{
-                text: '扣发款项(请假)',
-                flex:1,
-                dataIndex: 'realwage'
-            },{
-                text: '月份',
-                flex:1,
-                dataIndex: 'month'
-            },{
+                dataIndex: 'amount'
+            }, {
                 text: '操作',
-                align: 'center', 
+                align: 'center',
                 flex:2,
                 cls:'content-column',
                 xtype: 'actioncolumn',
@@ -97,7 +83,7 @@ Ext.define('Admin.view.finance.cost.salary.SalaryPanel', {
             }],
 
         
-            tbar: [{      //Short for 'Top Bar'.
+            tbar: [{      
                 xtype: 'combobox',
                 reference:'searchFieldName',  //重要
                 // hideLabel: true,
@@ -148,7 +134,7 @@ Ext.define('Admin.view.finance.cost.salary.SalaryPanel', {
                 //,id:'to_date',
                 //vtype: 'daterange',
                 //startDateField: 'from_date'
-            },'-',{
+         },'-',{
                 text: 'Search',
                 cls: 'order-tbar',
                 iconCls: 'x-fa fa-search',
@@ -172,11 +158,12 @@ Ext.define('Admin.view.finance.cost.salary.SalaryPanel', {
                 handler: 'deleteMoreRows'   
             }],  
 
-            dockedItems: [{
+            dockedItems: [ 
+            {
                 xtype: 'pagingtoolbar',
                 dock: 'bottom',
                 displayInfo: true,
-                bind: '{orderLists}'
+                bind: '{roomOrderLists}'
             }]
 
         }]

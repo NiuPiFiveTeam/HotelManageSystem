@@ -1,14 +1,13 @@
-Ext.define('Admin.store.finance.SalaryOrderGridStroe', {
+Ext.define('Admin.store.finance.RoomOrderGridStroe', {
     extend: 'Ext.data.Store',
-    
-    alias: 'store.salaryOrderGridStroe',
-    storeId:'salaryOrderGridStroe',
-	model:'Admin.model.finance.SalaryOrderModel',
 
+    alias: 'store.roomOrderGridStroe',
+    storeId:'roomOrderGridStroe',
+	model:'Admin.model.finance.RoomOrderModel',
+	
     proxy: {
-        // type: 'memory', 	//内存代理
         type: 'rest',
-        url: '/salaryOrder',	//mvc url  xxx.json
+        url: '/roomOrder',	
 	    reader:{
 	    	type:'json',	
 	    	rootProperty:'content',//对应后台返回的结果集名称
@@ -28,6 +27,6 @@ Ext.define('Admin.store.finance.SalaryOrderGridStroe', {
     
     sorters: {
         direction: 'DESC',
-        property: 'salaryOrderId'
+        property: 'orderId'
     }
 });

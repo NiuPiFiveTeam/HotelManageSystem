@@ -1,6 +1,6 @@
-Ext.define('Admin.view.finance.cost.salary.LogisticstOrderViewModel', {
+Ext.define('Admin.view.finance.income.RoomOrderViewModel', {
     extend: 'Ext.app.ViewModel',
-    alias: 'viewmodel.logisticstOrderViewModel',
+    alias: 'viewmodel.roomOrderViewModel',
 
     requires: [
         'Ext.data.Store',
@@ -13,6 +13,6 @@ Ext.define('Admin.view.finance.cost.salary.LogisticstOrderViewModel', {
     ],
 
     stores: {
-		orderLists: {type: 'salaryOrderGridStroe'}
+		roomOrderLists: {type: 'roomOrderGridStroe'}
     }
 });
