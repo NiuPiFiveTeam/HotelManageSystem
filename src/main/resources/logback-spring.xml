@@ -27,7 +27,7 @@
     </root>
 
     <!-- logback为java中的包-->
-    <logger name="com..controller" level="INFO" additivity="false">
+    <logger name="com.hmm" level="INFO" additivity="false">
         <appender-ref ref="file"/>
     </logger>
 
