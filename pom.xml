@@ -64,6 +64,23 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!--================activiti start================-->
+		 <dependency>
+	        <groupId>org.activiti</groupId>
+	        <artifactId>activiti-spring-boot-starter-basic</artifactId>
+	        <version>6.0.0</version>
+	    </dependency>
+	   <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+		<dependency>
+		    <groupId>commons-beanutils</groupId>
+		    <artifactId>commons-beanutils</artifactId>
+		    <version>1.8.3</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.jodd</groupId>
+		    <artifactId>jodd-core</artifactId>
+		    <version>5.0.4</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -71,6 +88,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<fork>true</fork>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
