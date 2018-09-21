@@ -20,17 +20,17 @@ import com.hmm.employee.domain.Employee;
 @Entity
 @Table(name="t_in_All")
 public class InAll {
-	private String inallid;//入库单编号,inAllId+16位随机数
+	private String inAllId;//入库单编号,inAllId+16位随机数
 	private Date date;//入库日期，例:2018/9/16
 	private String vender;//采购商家，例：DJDU有限公司
-	private float inallsum;//采购总金额
+	private float inAllSum;//采购总金额
 	private List<InDetailed> indetaileds = new ArrayList<InDetailed>();//子详细入库记录
 	private Employee employee;//父入库员工
 	
 	
 	@Id
 	public String getInAllId() {
-		return inallid;
+		return inAllId;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 	public Date getDate() {
@@ -40,7 +40,7 @@ public class InAll {
 		return vender;
 	}
 	public float getInAllSum() {
-		return inallsum;
+		return inAllSum;
 	}
 	@OneToMany(cascade=CascadeType.ALL,mappedBy="inAll",fetch=FetchType.LAZY)
 	public List<InDetailed> getInDetaileds() {
@@ -53,7 +53,7 @@ public class InAll {
 	
 	
 	public void setInAllId(String inAllId) {
-		this.inallid = inAllId;
+		this.inAllId = inAllId;
 	}
 	public void setDate(Date date) {
 		this.date = date;
@@ -62,7 +62,7 @@ public class InAll {
 		this.vender = vender;
 	}
 	public void setInAllSum(float inAllSum) {
-		this.inallsum = inAllSum;
+		this.inAllSum = inAllSum;
 	}
 	public void setInDetaileds(List<InDetailed> inDetaileds) {
 		this.indetaileds = inDetaileds;
