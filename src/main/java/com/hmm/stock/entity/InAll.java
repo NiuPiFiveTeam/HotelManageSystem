@@ -98,7 +98,5 @@ public class InAll {
 	public void setEmployee(Employee employee) {
 		this.employee = employee;
 	}
-	
-
 
 }
