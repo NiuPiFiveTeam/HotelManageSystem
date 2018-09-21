@@ -10,6 +10,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import com.hmm.finance.logisticst.domain.InStorage;
 /**
  * 
 * @Title: InDetailed.java
@@ -28,7 +30,7 @@ public class InDetailed {
 	private String unit;//单位，例：只
 	private float price;//单价，例：10元/只
 	private float amount;//数量，例:100只
-	private InAll inAll;//父入库记录
+	private InStorage inAll;//父入库记录
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -48,7 +50,7 @@ public class InDetailed {
 		return amount;
 	}
 	@ManyToOne//多对一级联删除，使用ALL建议先移除关系（update）再delete
-	public InAll getInAll() {
+	public InStorage getInAll() {
 		return inAll;
 	}
 	
@@ -68,7 +70,7 @@ public class InDetailed {
 	public void setAmount(float amount) {
 		this.amount = amount;
 	}
-	public void setInAll(InAll inAll) {
+	public void setInAll(InStorage inAll) {
 		this.inAll = inAll;
 	}
 	

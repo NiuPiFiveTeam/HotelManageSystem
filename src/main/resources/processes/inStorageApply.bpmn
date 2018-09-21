@@ -2,7 +2,7 @@
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
   <process id="inStorageApply" name="入库流程" isExecutable="true">
     <documentation>入库流程演示</documentation>
-    <startEvent id="startevent1" name="Start" activiti:initiator="applyUserId"></startEvent>
+    <startEvent id="startevent1" name="Start" activiti:initiator="applyEmployeeId"></startEvent>
     <userTask id="logisticstAudit" name="后勤审批" activiti:candidateGroups="${deptLeader}"></userTask>
     <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="logisticstAudit"></sequenceFlow>
     <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
@@ -73,21 +73,21 @@
         <omgdi:waypoint x="502.0" y="300.0"></omgdi:waypoint>
         <omgdi:waypoint x="371.0" y="228.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="412.0" y="259.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="48.0" x="412.0" y="259.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
         <omgdi:waypoint x="371.0" y="133.0"></omgdi:waypoint>
         <omgdi:waypoint x="371.0" y="193.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="371.0" y="133.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="36.0" x="371.0" y="133.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
         <omgdi:waypoint x="482.0" y="210.0"></omgdi:waypoint>
         <omgdi:waypoint x="389.0" y="210.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="424.0" y="190.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="36.0" x="424.0" y="190.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

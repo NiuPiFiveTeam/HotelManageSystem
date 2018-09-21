@@ -1,4 +1,4 @@
-package com.hmm.stock.entity;
+package com.hmm.finance.logisticst.domain;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +17,7 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.domain.Employee;
+import com.hmm.stock.entity.InDetailed;
 
 /**
  * 
@@ -25,25 +26,27 @@ import com.hmm.employee.domain.Employee;
 * @Description: 入库总表实体类
 * @author DJDU
 * @date 2018年9月21日
-* @version V1.4
+* @version V1.5
  */
 
 @Entity
-@Table(name="t_inAll")
-public class InAll {
-	private String inAllId;//入库单编号,inAllId+16位随机数
-	private Date date;//入库日期，例:2018/9/16
-	private String vender;//采购商家，例：DJDU有限公司
-	private float inAllSum;//采购总金额
-	private List<InDetailed> inDetaileds = new ArrayList<InDetailed>();//子详细入库记录
-	private Employee employee;//父入库员工
+@Table(name="t_inStorage")
+public class InStorage {
+	private String inStorageId;
+	private Date date;
+	private String vender;//采购商家
+	private float amount;
+	private Date applyTime;
 	
-	 private ProcessStatus processStatus;//流程状态 
-	 private String processInstanceId;
+	private List<InDetailed> inDetaileds = new ArrayList<InDetailed>();
+	private Employee employee;
+	
+	private ProcessStatus processStatus;//流程状态 
+	private String processInstanceId;
 	
 	@Id
-	public String getInAllId() {
-		return inAllId;
+	public String getInStorageId() {
+		return inStorageId;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 	public Date getDate() {
@@ -52,9 +55,14 @@ public class InAll {
 	public String getVender() {
 		return vender;
 	}
-	public float getInAllSum() {
-		return inAllSum;
+	public float getAmount() {
+		return amount;
 	}
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
+	public Date getApplyTime() {
+		return applyTime;
+	}
+	
 	@OneToMany(cascade=CascadeType.ALL,mappedBy="inAll",fetch=FetchType.LAZY)
 	public List<InDetailed> getInDetaileds() {
 		return inDetaileds;
@@ -66,8 +74,8 @@ public class InAll {
 	}
 	
 	
-	public void setInAllId(String inAllId) {
-		this.inAllId = inAllId;
+	public void setInStorageId(String inStorageId) {
+		this.inStorageId = inStorageId;
 	}
 	public void setDate(Date date) {
 		this.date = date;
@@ -75,10 +83,13 @@ public class InAll {
 	public void setVender(String vender) {
 		this.vender = vender;
 	}
-	public void setInAllSum(float inAllSum) {
-		this.inAllSum = inAllSum;
+	public void setAmount(float amount) {
+		this.amount = amount;
 	}
-
+	public void setApplyTime(Date applyTime) {
+		this.applyTime = applyTime;
+	}
+	
 	public void setInDetaileds(List<InDetailed> inDetaileds) {
 		this.inDetaileds = inDetaileds;
 	}
