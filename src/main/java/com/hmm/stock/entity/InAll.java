@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -13,6 +15,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.domain.Employee;
 
 /**
@@ -32,9 +35,11 @@ public class InAll {
 	private Date date;//入库日期，例:2018/9/16
 	private String vender;//采购商家，例：DJDU有限公司
 	private float inAllSum;//采购总金额
-	private List<InDetailed> indetaileds = new ArrayList<InDetailed>();//子详细入库记录
+	private List<InDetailed> inDetaileds = new ArrayList<InDetailed>();//子详细入库记录
 	private Employee employee;//父入库员工
 	
+	 private ProcessStatus processStatus;//流程状态 
+	 private String processInstanceId;
 	
 	@Id
 	public String getInAllId() {
@@ -52,8 +57,9 @@ public class InAll {
 	}
 	@OneToMany(cascade=CascadeType.ALL,mappedBy="inAll",fetch=FetchType.LAZY)
 	public List<InDetailed> getInDetaileds() {
-		return indetaileds;
+		return inDetaileds;
 	}
+	
 	@ManyToOne
 	public Employee getEmployee() {
 		return employee;
@@ -72,8 +78,22 @@ public class InAll {
 	public void setInAllSum(float inAllSum) {
 		this.inAllSum = inAllSum;
 	}
+
 	public void setInDetaileds(List<InDetailed> inDetaileds) {
-		this.indetaileds = inDetaileds;
+		this.inDetaileds = inDetaileds;
+	}
+	@Enumerated(EnumType.STRING)
+	public ProcessStatus getProcessStatus() {
+		return processStatus;
+	}
+	public String getProcessInstanceId() {
+		return processInstanceId;
+	}
+	public void setProcessStatus(ProcessStatus processStatus) {
+		this.processStatus = processStatus;
+	}
+	public void setProcessInstanceId(String processInstanceId) {
+		this.processInstanceId = processInstanceId;
 	}
 	public void setEmployee(Employee employee) {
 		this.employee = employee;
