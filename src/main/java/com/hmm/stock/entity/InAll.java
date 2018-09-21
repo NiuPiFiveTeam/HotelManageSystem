@@ -15,7 +15,15 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.employee.domain.Employee;
 
-
+/**
+ * 
+* @Title: InAll.java
+* @Package com.hmm.stock.entity
+* @Description: 入库总表实体类
+* @author DJDU
+* @date 2018年9月21日
+* @version V1.4
+ */
 
 @Entity
 @Table(name="t_inAll")

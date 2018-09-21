@@ -10,8 +10,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-
+/**
+ * 
+* @Title: InDetailed.java
+* @Package com.hmm.stock.entity
+* @Description: 入库详细表实体类
+* @author DJDU
+* @date 2018年9月21日
+* @version V1.4
+ */
 
 @Entity
 @Table(name="t_inDetailed")
