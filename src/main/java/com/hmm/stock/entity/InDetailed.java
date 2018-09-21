@@ -14,7 +14,7 @@ import javax.persistence.Table;
 
 
 @Entity
-@Table(name="t_in_detailed")
+@Table(name="t_inDetailed")
 public class InDetailed {
 	private int id;
 	private String goodsName;//商品名，例：牙刷

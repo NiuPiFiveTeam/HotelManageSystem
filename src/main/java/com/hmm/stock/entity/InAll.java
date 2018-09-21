@@ -18,7 +18,7 @@ import com.hmm.employee.domain.Employee;
 
 
 @Entity
-@Table(name="t_in_All")
+@Table(name="t_inAll")
 public class InAll {
 	private String inAllId;//入库单编号,inAllId+16位随机数
 	private Date date;//入库日期，例:2018/9/16
