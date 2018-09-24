@@ -33,7 +33,7 @@ import com.hmm.stock.entity.InDetailed;
 @Table(name="t_inStorage")
 public class InStorage {
 	private String inStorageId;
-	private Date date;
+	private Date inStorageDate;//入库日期
 	private String vender;//采购商家
 	private float amount;
 	private Date applyTime;
@@ -49,8 +49,8 @@ public class InStorage {
 		return inStorageId;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
-	public Date getDate() {
-		return date;
+	public Date getInStorageDate() {
+		return inStorageDate;
 	}
 	public String getVender() {
 		return vender;
@@ -77,8 +77,8 @@ public class InStorage {
 	public void setInStorageId(String inStorageId) {
 		this.inStorageId = inStorageId;
 	}
-	public void setDate(Date date) {
-		this.date = date;
+	public void setInStorageDate(Date inStorageDate) {
+		this.inStorageDate = inStorageDate;
 	}
 	public void setVender(String vender) {
 		this.vender = vender;

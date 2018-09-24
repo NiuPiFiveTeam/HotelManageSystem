@@ -52,44 +52,41 @@ public class WorkflowService implements IWorkflowService {
 		return processInstance;
 	}
 
-	@Override
-	public List<WorkflowDTO> findTodoTasks(String userId) 
-	{
-		List<WorkflowDTO> results=null;
-        // 根据当前人的ID查询
-        TaskQuery taskQuery = taskService.createTaskQuery().taskCandidateOrAssigned(userId);
-        List<Task> tasks = taskQuery.list();
-        if(null!=tasks) {
-        	results= new ArrayList<WorkflowDTO>();
-        	 // 根据流程的业务ID查询实体并关联
-            for (Task task : tasks) {
-                String processInstanceId = task.getProcessInstanceId();
-                ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).active().singleResult();
-                String businessKey = processInstance.getBusinessKey();
-                if (businessKey == null) {
-                    continue;
-                }
-            	WorkflowDTO dto = new WorkflowDTO();
-            	dto.setProcessInstanceId(processInstanceId);
-            	dto.setBusinessKey(processInstance.getBusinessKey());
-            	
-            	dto.setTaskId(task.getId());
-            	dto.setTaskName(task.getName());
-            	dto.setTaskCreateTime(task.getCreateTime());
-            	dto.setAssignee(task.getAssignee());
-            	dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
-            	dto.setSuspended(processInstance.isSuspended());
 
-            	ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
-            	dto.setProcessDefinitionId(processDefinition.getId());
-            	dto.setVersion(processDefinition.getVersion());
-            	
-                results.add(dto);
-            }
-        }
+	public List<WorkflowDTO> findTodoTasks(String employeeId){
+		List<WorkflowDTO> results = null;
+		//根据act_ru_identitylink中对应的用户 查找act_ru_task表中对应的任务
+		TaskQuery  taskQuery = taskService.createTaskQuery().taskCandidateOrAssigned(employeeId);
+		List<Task> tasks = taskQuery.list();
+		if(tasks!=null) {
+			results = new ArrayList<WorkflowDTO>();
+			for(Task task : tasks) {
+				String processInstanceId = task.getProcessDefinitionId();
+				ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().
+						processDefinitionId(processInstanceId).active().singleResult();
+				String businessKey = processInstance.getBusinessKey();//获得入库申请的id
+				if(businessKey == null) {
+					continue;
+				}
+				WorkflowDTO dto = new WorkflowDTO();
+				dto.setProcessInstanceId(processInstanceId);
+				dto.setBusinessKey(processInstance.getBusinessKey());
+				
+				dto.setTaskId(task.getId());
+				dto.setTaskName(task.getName());
+				dto.setTaskCreateTime(task.getCreateTime());
+				dto.setAssignee(task.getAssignee());
+				
+				dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
+				dto.setSuspended(processInstance.isSuspended());
+				ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
+				dto.setProcessDefinitionId(processDefinition.getId());
+				dto.setVersion(processDefinition.getVersion());
+				results.add(dto);
+			}
+		}
 		return results;
 	}
-
 
     /**
      * 签收流程任务

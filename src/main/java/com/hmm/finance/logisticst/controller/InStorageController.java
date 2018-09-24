@@ -1,5 +1,6 @@
 package com.hmm.finance.logisticst.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +12,9 @@ import org.activiti.engine.TaskService;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,8 +22,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hmm.activiti.util.WorkflowVariable;
 import com.hmm.common.web.ExtAjaxResponse;
+import com.hmm.common.web.ExtjsPageRequest;
 import com.hmm.finance.logisticst.domain.InStorage;
+import com.hmm.finance.logisticst.domain.InStorageDTO;
 import com.hmm.finance.logisticst.service.IInStorageService;
 
 @RestController
@@ -51,7 +58,7 @@ public class InStorageController {
 	 * @return
 	 */
 	@RequestMapping(value = "/start")
-    public @ResponseBody ExtAjaxResponse start() {
+    public ExtAjaxResponse start() {
     	try {
     		String employeeId = "admin";
     		Map<String, Object> variables = new HashMap<String, Object>();
@@ -62,6 +69,50 @@ public class InStorageController {
 	    } catch (Exception e) {
 	    	e.printStackTrace();
 	        return new ExtAjaxResponse(false,"操作失败!");
+	    }
+    }
+	
+	@RequestMapping(value = "/tasks")
+	public Page<InStorageDTO> findTodoTasks(ExtjsPageRequest pageable){
+		Page<InStorageDTO> page = new PageImpl<InStorageDTO>(new ArrayList<InStorageDTO>(),pageable.getPageable(),0);
+		try {
+			page = inStorageService.findTodoTasks("user4", pageable.getPageable());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return page;
+	}
+	
+	/**
+     * 签收任务
+     */
+    @RequestMapping(value = "claim/{id}")
+    public ExtAjaxResponse claim(@PathVariable("id") String taskId) {
+    	try{
+    		inStorageService.claim(taskId, "user4");
+	    	return new ExtAjaxResponse(true,"任务签收成功!");
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	        return new ExtAjaxResponse(false,"任务签收失败!");
+	    }
+    }
+    
+    /**
+     * 完成任务
+     * @param id
+     * @return
+     */
+    @RequestMapping(value = "complete/{id}")
+    public @ResponseBody ExtAjaxResponse complete(@PathVariable("id") String taskId, WorkflowVariable var) {
+    	try{
+    		
+    		Map<String, Object> variables = var.getVariableMap();
+    		System.out.println(variables);
+    		inStorageService.complete(taskId, variables);
+	    	return new ExtAjaxResponse(true,"审批成功!");
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	        return new ExtAjaxResponse(false,"审批失败!");
 	    }
     }
 }

@@ -4,8 +4,9 @@ import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+
 import com.hmm.finance.logisticst.domain.InStorage;
+import com.hmm.finance.logisticst.domain.InStorageDTO;
 
 
 public interface IInStorageService {
@@ -18,11 +19,11 @@ public interface IInStorageService {
 	//1.启动流程
 	public void startWorkflow(String employeeId,String inStorageId, Map<String, Object> variables);
 //	//2.查询流程任务
-//	public Page<LeaveDTO> findTodoTasks(String userId, Pageable pageable);
+	public Page<InStorageDTO> findTodoTasks(String employeeId, Pageable pageable);
 //	//3.签收流程任务
-//	public void claim(String taskId,String userId);
+	public void claim(String taskId,String employeeId);
 //	//4.完成流程任务
-//	public void complete(String taskId, Map<String, Object> variables);  
+	public void complete(String taskId, Map<String, Object> variables);  
 	//5.结束(终止)流程实例
 	//6.查询运行中的流程
 	//public Page<LeaveDTO> findRunningProcessInstaces(Page<Leave> page, int[] pageParams);
