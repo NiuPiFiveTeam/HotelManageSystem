@@ -2785,6 +2785,22 @@ the height of a multi-line element */
 .x-grid-inner-locked.x-border-region-slide-in > .x-panel-bodyWrap > .x-grid-body > .x-tree-view {
     overflow-y: hidden !important;
 }
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/src/layout/container/Border.scss:1 */
+.x-border-layout-ct {
+    overflow: hidden;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/src/layout/container/Border.scss:5 */
+.x-border-layout-ct {
+    position: relative;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/src/layout/container/Border.scss:9 */
+.x-border-region-slide-in {
+    z-index: 6;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/src/layout/container/Border.scss:13 */
+.x-region-collapsed-placeholder {
+    z-index: 4;
+}
 /* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-base/sass/src/resizer/Resizer.scss:2 */
 .x-resizable-wrapped {
     box-sizing: border-box;
@@ -12475,6 +12491,11 @@ a.x-color-picker-item:hover {
 .x-grid-scroll-container {
     background-color: #fff;
 }
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/src/layout/container/Border.scss:5 */
+body.x-border-layout-ct,
+div.x-border-layout-ct {
+    background-color: #ececec;
+}
 /* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/src/resizer/Resizer.scss:1 */
 .x-resizable-handle {
     position: absolute;
@@ -15460,13 +15481,4 @@ a.x-color-picker-item:hover {
 /* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:2978 */
 .x-keyboard-mode .x-btn-focus .x-btn-plain-toolbar-large-mc {
     background-color: transparent;
-}
-/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:2991 */
-.x-btn-over .x-btn-plain-toolbar-large-tl,
-.x-btn-over .x-btn-plain-toolbar-large-bl,
-.x-btn-over .x-btn-plain-toolbar-large-tr,
-.x-btn-over .x-btn-plain-toolbar-large-br,
-.x-btn-over .x-btn-plain-toolbar-large-tc,
-.x-btn-over .x-btn-plain-toolbar-large-bc {
-    background-image: url(images/btn/btn-plain-toolbar-large-over-corners.gif);
 }

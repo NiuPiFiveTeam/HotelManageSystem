@@ -1,3 +1,52 @@
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3043 */
+.x-btn.x-btn-menu-active .x-btn-gray-large-tl,
+.x-btn.x-btn-menu-active .x-btn-gray-large-bl,
+.x-btn.x-btn-menu-active .x-btn-gray-large-tr,
+.x-btn.x-btn-menu-active .x-btn-gray-large-br,
+.x-btn.x-btn-menu-active .x-btn-gray-large-tc,
+.x-btn.x-btn-menu-active .x-btn-gray-large-bc,
+.x-btn.x-btn-pressed .x-btn-gray-large-tl,
+.x-btn.x-btn-pressed .x-btn-gray-large-bl,
+.x-btn.x-btn-pressed .x-btn-gray-large-tr,
+.x-btn.x-btn-pressed .x-btn-gray-large-br,
+.x-btn.x-btn-pressed .x-btn-gray-large-tc,
+.x-btn.x-btn-pressed .x-btn-gray-large-bc {
+    background-image: url(images/btn/btn-gray-large-pressed-corners.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3051 */
+.x-btn.x-btn-menu-active .x-btn-gray-large-ml,
+.x-btn.x-btn-menu-active .x-btn-gray-large-mr,
+.x-btn.x-btn-pressed .x-btn-gray-large-ml,
+.x-btn.x-btn-pressed .x-btn-gray-large-mr {
+    background-image: url(images/btn/btn-gray-large-pressed-sides.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3055 */
+.x-btn.x-btn-menu-active .x-btn-gray-large-mc,
+.x-btn.x-btn-pressed .x-btn-gray-large-mc {
+    background-color: #6f6f70;
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3069 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-br,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-bc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-tl,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-bl,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-tr,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-br,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-tc,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-bc {
+    background-image: url(images/btn/btn-gray-large-focus-pressed-corners.gif);
+}
+/* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3077 */
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-mr,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-ml,
+.x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-mr {
+    background-image: url(images/btn/btn-gray-large-focus-pressed-sides.gif);
+}
 /* C:/Users/chenzida/git/HotelManageSystem/admin-dashboard/ext/classic/theme-neutral/sass/var/button/Button.scss:3081 */
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active .x-btn-gray-large-mc,
 .x-keyboard-mode .x-btn-focus.x-btn-pressed .x-btn-gray-large-mc {

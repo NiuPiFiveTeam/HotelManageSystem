@@ -34,11 +34,24 @@
                         iconCls: 'x-fa fa-exclamation-triangle',
                         viewType: 'cost',
                         leaf: true
+                    }
+                ]
+            },{
+                text: '酒店报表',
+                iconCls: 'x-fa fa-times-circle',
+                expanded: false,
+                selectable: false,
+                children: [
+                    {
+                        text: '财务报表',
+                        iconCls: 'x-fa fa-file-o',
+                        viewType: 'financeReport',
+                        leaf: true
                     },
                     {
-                        text: '季度报表',
-                        iconCls: 'x-fa fa-times-circle',
-                        // viewType: 'order',
+                        text: '财务详细',
+                        iconCls: 'x-fa fa-exclamation-triangle',
+                        viewType: 'financeReportDaily',
                         leaf: true
                     }
                 ]
