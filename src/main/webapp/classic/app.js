@@ -102940,8 +102940,8 @@ Ext.define('Admin.view.finance.financeReportDaily.FinanceReportDailyViewControll
     }
   }
 }});
-Ext.define('Admin.view.finance.financeReport.ButtonShowFinanceReport', {extend:Ext.panel.Panel, xtype:'buttonShowFinanceReport', profiles:{classic:{bodyStyle:''}, neptune:{bodyStyle:''}, graphite:{bodyStyle:'background-color: #6d6d6d'}}, width:500, height:400, layout:{type:'table', columns:3, tableAttrs:{style:{width:'100%'}}}, scrollable:true, defaults:{bodyPadding:'15 20', border:true, bodyStyle:''}, items:[{html:'总收入：'}, {html:'总支出：'}, {html:'总利润：'}]});
-Ext.define('Admin.view.finance.financeReport.FinanceReport', {extend:Ext.panel.Panel, xtype:'financeReport', layout:'border', height:800, defaults:{collapsible:false, split:true}, items:[{region:'north', height:50, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', flex:1, xtype:'yearSelect'}, {region:'center', flex:1, height:100, xtype:'buttonShowFinanceReport'}]}, {region:'center', height:550, html:'\x3cp\x3eFooter content\x3c/p\x3e', 
+Ext.define('Admin.view.finance.financeReport.ButtonShowFinanceReport', {extend:Ext.panel.Panel, xtype:'buttonShowFinanceReport', id:'ButtonShowFinanceReport', profiles:{classic:{bodyStyle:''}, neptune:{bodyStyle:''}, graphite:{bodyStyle:'background-color: #6d6d6d'}}, width:500, height:400, layout:{type:'table', columns:3, tableAttrs:{style:{width:'100%'}}}, scrollable:true, defaults:{bodyPadding:'15 20', border:true, bodyStyle:''}, items:[{html:'总收入：'}, {html:'总支出：'}, {html:'总利润：'}]});
+Ext.define('Admin.view.finance.financeReport.FinanceReport', {extend:Ext.panel.Panel, xtype:'financeReport', layout:'border', height:600, defaults:{collapsible:false, split:true}, items:[{region:'north', height:50, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', flex:1, xtype:'yearSelect'}, {region:'center', flex:1, height:100, xtype:'buttonShowFinanceReport'}]}, {region:'center', height:550, html:'\x3cp\x3eFooter content\x3c/p\x3e', 
 layout:'border', defaults:{collapsible:false, split:true}, items:[{region:'west', flex:3, xtype:'lineCharts'}, {region:'center', flex:2, xtype:'pieCharts'}]}]});
 Ext.define('Admin.view.finance.financeReport.LineCharts', {extend:Ext.panel.Panel, xtype:'lineCharts', controller:'lineChartsViewController', items:[{xtype:'cartesian', reference:'chart', id:'FinanceLineChart', width:'100%', height:500, captions:{title:'2018年收支情况'}, legend:{type:'sprite', docked:'top'}, store:{type:'financeReportStore'}, axes:[{type:'numeric', fields:['roomIncome', 'logisticstCost', 'salaryCost', 'profit'], position:'left', minimum:0, renderer:'onAxisLabelRender'}, {type:'category', 
 fields:'month', position:'bottom', grid:true, label:{rotate:{degrees:-45}}}], series:[{type:'line', title:'客房收入', xField:'month', yField:'roomIncome', marker:{type:'square', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'后勤支出', xField:'month', yField:'logisticstCost', marker:{type:'triangle', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, 
@@ -102953,9 +102953,9 @@ Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {extend:
   tooltip.setHtml(record.get('month') + '月 ' + title + ': ' + record.get(item.series.getYField()));
   var chart = Ext.getCmp('FinanceRateChart'), store = chart.getStore();
   var searchField = Ext.getCmp('searchYearForFinanceReport').getValue();
-   if(searchField == '请选择时间'){
-            searchField = '2018';
-        }
+  if (searchField == '请选择时间') {
+    searchField = '2018';
+  }
   chart.setCaptions({title:searchField + '年' + record.get('month') + '月 ' + '收支情况'});
   var total = record.get('roomIncome') + record.get('logisticstCost') + record.get('salaryCost');
   var roomIncomePercent = (record.get('roomIncome') / total * 100).toFixed(2);
@@ -102985,6 +102985,17 @@ Ext.define('Admin.view.finance.financeReport.YearSelectController', {extend:Ext.
   chart.setCaptions({title:searchField + '年收支情况'});
   Ext.apply(store.proxy.extraParams, {year:searchField});
   store.load({params:{start:0, limit:20, page:1}});
+  var totalIncome = 0, totalCost = 0, profit = 0;
+  for (var i = 0; i < store.getCount(); i++) {
+    var record = store.getAt(i);
+    totalIncome = totalIncome + record.get('roomIncome');
+    totalCost = totalCost + record.get('logisticstCost') + record.get('salaryCost');
+  }
+  profit = totalIncome - totalCost;
+  var a = Ext.getCmp('ButtonShowFinanceReport');
+  a.items.items[0].setHtml('总收入：' + (totalIncome / 10000).toFixed(1) + '万');
+  a.items.items[1].setHtml('总支出：' + (totalCost / 10000).toFixed(1) + '万');
+  a.items.items[2].setHtml('总利润：' + (profit / 10000).toFixed(1) + '万');
 }});
 Ext.define('Admin.view.logistics.inventory.Inventory', {extend:Ext.container.Container, xtype:'inventory', layout:'fit', html:'库存管理模块'});
 Ext.define('Admin.view.logistics.roomCard.RoomCard', {extend:Ext.container.Container, xtype:'roomCard', layout:'fit', html:'房卡管理模块'});

@@ -5,7 +5,7 @@ Ext.define('Admin.view.finance.financeReport.ButtonShowFinanceReport', {
     requires: [
         'Ext.layout.container.Table'
     ],
-
+    id : 'ButtonShowFinanceReport',
     profiles: {
         classic: {
             bodyStyle: ''
@@ -41,10 +41,10 @@ Ext.define('Admin.view.finance.financeReport.ButtonShowFinanceReport', {
 
     items: [ 
         {
-            html: '总收入：'
+            html: '总收入：',
         },  
         {
-            html: '总支出：',
+            html: '总支出：'
         },
         {
             html: '总利润：'

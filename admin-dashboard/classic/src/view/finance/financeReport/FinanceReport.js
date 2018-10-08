@@ -6,7 +6,7 @@ Ext.define('Admin.view.finance.financeReport.FinanceReport', {
     ],
 
     layout: 'border',
-    height: 800,
+    height: 600,
 
     defaults: {
         collapsible: false,
