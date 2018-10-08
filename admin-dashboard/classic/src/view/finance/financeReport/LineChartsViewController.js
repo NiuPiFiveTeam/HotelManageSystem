@@ -3,7 +3,7 @@ Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {
     alias: 'controller.lineChartsViewController',
 
     onAxisLabelRender: function (axis, label, layoutContext) {
-        return label/10000 + '万';
+        return (label/10000).toFixed(2) + '万';
     },
 
     onSeriesTooltipRender: function (tooltip, record, item) {
@@ -13,6 +13,12 @@ Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {
 
         var chart = Ext.getCmp("FinanceRateChart"),
             store = chart.getStore();
+        var searchField = this.lookupReference('searchYearForFinanceReport').getValue();//获取年份
+        chart.setCaptions({
+            title: searchField + '年' + record.get('month') + '月 ' + '收支情况'
+        });
+
+
         var total = record.get('roomIncome') + record.get('logisticstCost') + record.get('salaryCost');
         var roomIncomePercent = (record.get('roomIncome') / total * 100).toFixed(2);
         var logisticstCostPercent = (record.get('logisticstCost') / total *100).toFixed(2);

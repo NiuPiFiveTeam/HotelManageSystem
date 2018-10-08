@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,6 @@ public class FinanceReportService implements IFinanceReportService{
 			list.sort(new Comparator<FinanceReport>() {
 				@Override
 				public int compare(FinanceReport stu1, FinanceReport stu2) {
-					//以下如果改变顺序则调换一下参数位置
 					return stu1.getMonth().compareTo(stu2.getMonth());
 				}
 			});
@@ -52,6 +52,11 @@ public class FinanceReportService implements IFinanceReportService{
 		}
 		
 		return list;
+	}
+
+	@Override
+	public List<Map<String,Integer>> findAllYearInFinanceReport() {
+		return financeReportDailyRepository.findAllYearInFinanceReport();
 	}
 
 }

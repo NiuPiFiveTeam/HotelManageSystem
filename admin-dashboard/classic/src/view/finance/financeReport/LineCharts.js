@@ -8,6 +8,7 @@ Ext.define('Admin.view.finance.financeReport.LineCharts', {
     items: [{
         xtype: 'cartesian',
         reference: 'chart',
+        id: 'FinanceLineChart',
         width: '100%',
         height: 500,
         captions: {

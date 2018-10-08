@@ -10,10 +10,10 @@ Ext.define('Admin.view.finance.financeReport.FinanceReport', {
 
     defaults: {
         collapsible: false,
-        // split: true,
+        split: true,
     },
 
-     items: [
+    items: [
         {
             region: 'north',
             height: 50,
@@ -22,18 +22,17 @@ Ext.define('Admin.view.finance.financeReport.FinanceReport', {
 
             defaults: {
                 collapsible: false
-            },
+            }, 
             items:[{
                 region: 'west',
-                flex:2,
-                height: 100,
-                // xtype:'dateSelect'
-                // html:'a'
+                flex:1,
+                xtype:'yearSelect',
+                
             },{
                 region: 'center',
                 flex:1,
                 height: 100,
-                // xtype:'dateSelect'
+                xtype:'buttonShowFinanceReport'
             }]
         },
         {
@@ -43,7 +42,7 @@ Ext.define('Admin.view.finance.financeReport.FinanceReport', {
             layout: 'border',
             defaults: {
                 collapsible: false,
-                // split: true,
+                split: true,
             },
             items:[{
                 region: 'west',

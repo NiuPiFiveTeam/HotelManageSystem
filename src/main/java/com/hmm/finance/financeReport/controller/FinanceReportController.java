@@ -1,5 +1,6 @@
 package com.hmm.finance.financeReport.controller;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hmm.finance.financeReport.domain.FinanceReport;
 import com.hmm.finance.financeReport.service.IFinanceReportService;
-import com.hmm.finance.financeReportDaily.domain.FinanceReportDaily;
 
 @RestController
 @RequestMapping(value="/financeReport")
@@ -19,12 +19,21 @@ public class FinanceReportController {
 	@Autowired
 	private IFinanceReportService financeReportService;
 	
-	@GetMapping("{year}")
+	@GetMapping()
 	public List<FinanceReport> findFinanceReportDailyByYearGroupByMonth(Integer year){
-		year=2018;
+		if(year==null) {
+			 Calendar date = Calendar.getInstance();
+		     year = date.get(Calendar.YEAR);
+		}
+		List<FinanceReport> list = financeReportService.findFinanceReportDailyByYearGroupByMonth(year);
 		System.out.println(year);
-		List<FinanceReport> b = financeReportService.findFinanceReportDailyByYearGroupByMonth(year);
-		return b;
+		
+		return list;
 	}
-	
+
+	@GetMapping("/findAllYear")
+	public List<Map<String,Integer>> findAllYearInFinanceReport(){
+		List<Map<String,Integer>> list = financeReportService.findAllYearInFinanceReport();
+		return list;
+	}
 }

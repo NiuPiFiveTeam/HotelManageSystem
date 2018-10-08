@@ -8,7 +8,7 @@ Ext.define('Admin.store.finance.financeReport.FinanceReportStore', {
     proxy: {
         // type: 'memory',  //内存代理
         type: 'rest',
-        url: '/financeReport/2',  //mvc url  xxx.json
+        url: '/financeReport',  //mvc url  xxx.json
         reader:{
             type:'json',
             rootProperty:'content',//对应后台返回的结果集名称

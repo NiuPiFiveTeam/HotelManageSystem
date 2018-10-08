@@ -60784,6 +60784,160 @@ Ext.define('Ext.theme.neptune.panel.Panel', {override:'Ext.panel.Panel', border:
     this.callParent();
   }
 }});
+Ext.define('Ext.layout.container.Table', {alias:['layout.table'], extend:Ext.layout.container.Container, alternateClassName:'Ext.layout.TableLayout', type:'table', createsInnerCt:true, targetCls:Ext.baseCSSPrefix + 'table-layout-ct', tableCls:Ext.baseCSSPrefix + 'table-layout', cellCls:Ext.baseCSSPrefix + 'table-layout-cell', childEls:['table', 'tbody'], tableAttrs:null, getItemSizePolicy:function(item) {
+  return this.autoSizePolicy;
+}, initInheritedState:function(inheritedState, inheritedStateInner) {
+  inheritedStateInner.inShrinkWrapTable = true;
+}, getLayoutItems:function() {
+  var me = this, result = [], items = me.callParent(), len = items.length, item, i;
+  for (i = 0; i < len; i++) {
+    item = items[i];
+    if (!item.hidden) {
+      result.push(item);
+    }
+  }
+  return result;
+}, getHiddenItems:function() {
+  var result = [], items = this.owner.items.items, len = items.length, i, item;
+  for (i = 0; i < len; ++i) {
+    item = items[i];
+    if (item.rendered && item.hidden) {
+      result.push(item);
+    }
+  }
+  return result;
+}, renderChildren:function() {
+  var me = this, items = me.getLayoutItems(), tbody = me.tbody.dom, rows = tbody.rows, len = items.length, hiddenItems = me.getHiddenItems(), cells, curCell, rowIdx, cellIdx, item, trEl, tdEl, i;
+  cells = me.calculateCells(items);
+  for (i = 0; i < len; i++) {
+    curCell = cells[i];
+    rowIdx = curCell.rowIdx;
+    cellIdx = curCell.cellIdx;
+    item = items[i];
+    trEl = rows[rowIdx];
+    if (!trEl) {
+      trEl = tbody.insertRow(rowIdx);
+      if (me.trAttrs) {
+        trEl.set(me.trAttrs);
+      }
+    }
+    tdEl = Ext.get(trEl.cells[cellIdx] || trEl.insertCell(cellIdx));
+    if (!item.rendered) {
+      me.renderItem(item, tdEl, 0);
+    } else {
+      if (!me.isValidParent(item, tdEl, rowIdx, cellIdx, tbody)) {
+        me.moveItem(item, tdEl, 0);
+      }
+    }
+    if (me.tdAttrs) {
+      tdEl.set(me.tdAttrs);
+    }
+    if (item.tdAttrs) {
+      tdEl.set(item.tdAttrs);
+    }
+    tdEl.set({colSpan:item.colspan || 1, rowSpan:item.rowspan || 1, cls:me.cellCls + ' ' + (item.cellCls || '')});
+    if (!cells[i + 1] || cells[i + 1].rowIdx !== rowIdx) {
+      cellIdx++;
+      while (trEl.cells[cellIdx]) {
+        trEl.deleteCell(cellIdx);
+      }
+    }
+  }
+  rowIdx++;
+  while (tbody.rows[rowIdx]) {
+    tbody.deleteRow(rowIdx);
+  }
+  for (i = 0, len = hiddenItems.length; i < len; ++i) {
+    me.ensureInDocument(hiddenItems[i].getEl());
+  }
+}, ensureInDocument:function(el) {
+  var dom = el.dom.parentNode;
+  while (dom) {
+    if (dom.tagName.toUpperCase() === 'BODY') {
+      return;
+    }
+    dom = dom.parentNode;
+  }
+  Ext.getDetachedBody().appendChild(el, true);
+}, calculate:function(ownerContext) {
+  if (!ownerContext.hasDomProp('containerChildrenSizeDone')) {
+    this.done = false;
+  } else {
+    var targetContext = ownerContext.targetContext, widthShrinkWrap = ownerContext.widthModel.shrinkWrap, heightShrinkWrap = ownerContext.heightModel.shrinkWrap, shrinkWrap = heightShrinkWrap || widthShrinkWrap, table = shrinkWrap && this.table.dom, targetPadding = shrinkWrap && targetContext.getPaddingInfo();
+    if (widthShrinkWrap) {
+      ownerContext.setContentWidth(table.offsetWidth + targetPadding.width, true);
+    }
+    if (heightShrinkWrap) {
+      ownerContext.setContentHeight(table.offsetHeight + targetPadding.height, true);
+    }
+  }
+}, calculateCells:function(items) {
+  var cells = [], rowIdx = 0, colIdx = 0, cellIdx = 0, totalCols = this.columns || Infinity, rowspans = [], len = items.length, item, i, j;
+  for (i = 0; i < len; i++) {
+    item = items[i];
+    while (colIdx >= totalCols || rowspans[colIdx] > 0) {
+      if (colIdx >= totalCols) {
+        colIdx = 0;
+        cellIdx = 0;
+        rowIdx++;
+        for (j = 0; j < totalCols; j++) {
+          if (rowspans[j] > 0) {
+            rowspans[j]--;
+          }
+        }
+      } else {
+        colIdx++;
+      }
+    }
+    cells.push({rowIdx:rowIdx, cellIdx:cellIdx});
+    for (j = item.colspan || 1; j; --j) {
+      rowspans[colIdx] = item.rowspan || 1;
+      ++colIdx;
+    }
+    ++cellIdx;
+  }
+  return cells;
+}, getRenderTree:function() {
+  var me = this, items = me.getLayoutItems(), rows = [], result = Ext.apply({tag:'table', id:me.owner.id + '-table', 'data-ref':'table', role:'presentation', cls:me.tableCls, cellspacing:0, cellpadding:0, cn:{tag:'tbody', id:me.owner.id + '-tbody', 'data-ref':'tbody', role:'presentation', cn:rows}}, me.tableAttrs), tdAttrs = me.tdAttrs, i, len = items.length, item, curCell, tr, rowIdx, cellIdx, cell, cells;
+  cells = me.calculateCells(items);
+  for (i = 0; i < len; i++) {
+    item = items[i];
+    curCell = cells[i];
+    rowIdx = curCell.rowIdx;
+    cellIdx = curCell.cellIdx;
+    tr = rows[rowIdx];
+    if (!tr) {
+      tr = rows[rowIdx] = {tag:'tr', role:'presentation', cn:[]};
+      if (me.trAttrs) {
+        Ext.apply(tr, me.trAttrs);
+      }
+    }
+    cell = tr.cn[cellIdx] = {tag:'td', role:'presentation'};
+    if (tdAttrs) {
+      Ext.apply(cell, tdAttrs);
+    }
+    Ext.apply(cell, {colSpan:item.colspan || 1, rowSpan:item.rowspan || 1, cls:me.cellCls + ' ' + (item.cellCls || '')});
+    me.configureItem(item);
+    cell.cn = item.getRenderTree();
+  }
+  return result;
+}, isValidParent:function(item, target, rowIdx, cellIdx) {
+  if (arguments.length === 3) {
+    return this.table.isAncestor(item.el);
+  }
+  return item.el.dom.parentNode === this.tbody.dom.rows[rowIdx].cells[cellIdx];
+}, destroy:function() {
+  if (this.owner.rendered) {
+    var targetEl = this.getRenderTarget(), cells, i, len;
+    if (targetEl) {
+      cells = targetEl.query('.' + this.cellCls, false);
+      for (i = 0, len = cells.length; i < len; i++) {
+        cells[i].destroy();
+      }
+    }
+  }
+  this.callParent();
+}});
 Ext.define('Ext.container.Monitor', {target:null, selector:'', scope:null, addHandler:null, removeHandler:null, invalidateHandler:null, clearPropertiesOnDestroy:false, clearPrototypeOnDestroy:false, disabled:0, constructor:function(config) {
   Ext.apply(this, config);
 }, destroy:function() {
@@ -102529,6 +102683,7 @@ Ext.define('Admin.model.finance.RoomOrderModel', {extend:Admin.model.Base, idPro
 Ext.define('Admin.model.finance.SalaryOrderModel', {extend:Admin.model.Base, idProperty:'salaryOrderId', fields:[{type:'int', name:'salaryOrderId'}, {type:'string', name:'deptId'}, {type:'string', name:'userId'}, {type:'string', name:'userName'}, {type:'float', name:'basicwage'}, {type:'float', name:'overtimefee'}, {type:'float', name:'allowance'}, {type:'float', name:'bonus'}, {type:'float', name:'reducemoney'}, {type:'float', name:'realwage'}, {type:'int', name:'month'}], proxy:{type:'rest', url:'/salaryOrder'}});
 Ext.define('Admin.model.finance.financeReportDaily.FinanceReportDailyModel', {extend:Admin.model.Base, idProperty:'financeReportDailyId', fields:[{type:'int', name:'financeReportDailyId'}, {type:'date', name:'date'}, {type:'int', name:'roomIncome'}, {type:'int', name:'logisticstCost'}, {type:'int', name:'salaryCost'}, {type:'int', name:'totalIncome'}, {type:'int', name:'totalCost'}, {type:'int', name:'profit'}]});
 Ext.define('Admin.model.finance.financeReport.FinanceReportModel', {extend:Admin.model.Base, idProperty:'month', fields:[{type:'int', name:'month'}, {type:'int', name:'roomIncome'}, {type:'int', name:'logisticstCost'}, {type:'int', name:'salaryCost'}, {type:'int', name:'profit'}]});
+Ext.define('Admin.model.finance.financeReport.FinanceReportSelectYearModel', {extend:Admin.model.Base, idProperty:'year', fields:[{type:'int', name:'year'}]});
 Ext.define('Admin.model.logistics.roomClean.RoomCleanModel', {extend:Admin.model.Base, fields:[{type:'int', name:'id'}, {type:'string', name:'floor'}, {type:'int', name:'roomNumber'}, {type:'string', name:'roomState'}, {type:'string', name:'roomType'}, {type:'string', name:'roomOther'}, {type:'date', name:'roomDate', dateFormat:'Y/m/d H:i:s'}, {type:'string', name:'roomWorker'}], proxy:{type:'rest', url:'/roomClean'}});
 Ext.define('Admin.store.NavigationTree', {extend:Ext.data.TreeStore, storeId:'NavigationTree', fields:[{name:'text'}], root:{expanded:true, children:[{text:'Dashboard', iconCls:'x-fa fa-desktop', rowCls:'nav-tree-badge nav-tree-badge-new', viewType:'admindashboard', routeId:'dashboard', leaf:true}, {text:'财务管理', iconCls:'x-fa fa-leanpub', expanded:false, selectable:false, children:[{text:'财务收入管理', iconCls:'x-fa fa-file-o', viewType:'income', leaf:true}, {text:'财务支出管理', iconCls:'x-fa fa-exclamation-triangle', 
 viewType:'cost', leaf:true}]}, {text:'酒店报表', iconCls:'x-fa fa-times-circle', expanded:false, selectable:false, children:[{text:'财务报表', iconCls:'x-fa fa-file-o', viewType:'financeReport', leaf:true}, {text:'财务详细', iconCls:'x-fa fa-exclamation-triangle', viewType:'financeReportDaily', leaf:true}]}, {text:'酒店后勤', iconCls:'x-fa fa-building', rowCls:'nav-tree-badge nav-tree-badge-hot', leaf:false, children:[{text:'客房内务', iconCls:'x-fa fa-university', viewType:'roomClean', leaf:true}, {text:'房卡管理', iconCls:'x-fa fa-credit-card', 
@@ -102537,7 +102692,8 @@ Ext.define('Admin.store.finance.financeReport.FinanceReportDailyStore', {extend:
 Ext.define('Admin.store.finance.InStorageApplyStore', {extend:Ext.data.Store, storeId:'inStorageApplyStore', alias:'store.inStorageApplyStore', model:'Admin.model.finance.InStorageApplyModel', proxy:{type:'ajax', url:'/inStorage/tasks', reader:new Ext.data.JsonReader({type:'json', rootProperty:'content', totalProperty:'totalElements'}), simpleSortMode:true}, autoLoad:'true', remoteSort:true, sorters:{direction:'DESC', property:'inStorageApplyId'}});
 Ext.define('Admin.store.finance.RoomOrderGridStroe', {extend:Ext.data.Store, alias:'store.roomOrderGridStroe', storeId:'roomOrderGridStroe', model:'Admin.model.finance.RoomOrderModel', proxy:{type:'rest', url:'/roomOrder', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:25, sorters:{direction:'DESC', property:'orderId'}});
 Ext.define('Admin.store.finance.SalaryOrderGridStroe', {extend:Ext.data.Store, alias:'store.salaryOrderGridStroe', storeId:'salaryOrderGridStroe', model:'Admin.model.finance.SalaryOrderModel', proxy:{type:'rest', url:'/salaryOrder', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:25, sorters:{direction:'DESC', property:'salaryOrderId'}});
-Ext.define('Admin.store.finance.financeReport.FinanceReportStore', {extend:Ext.data.Store, alias:'store.financeReportStore', storeId:'financeReportStore', model:'Admin.model.finance.financeReport.FinanceReportModel', proxy:{type:'rest', url:'/financeReport/2', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:15, sorters:{direction:'DESC', property:'financeReportDailyId'}});
+Ext.define('Admin.store.finance.financeReport.FinanceReportSelectYearStore', {extend:Ext.data.Store, alias:'store.financeReportSelectYearStore', model:'Admin.model.finance.financeReport.FinanceReportSelectYearModel', storeId:'financeReportSelectYearStore', proxy:{type:'ajax', url:'financeReport/findAllYear', reader:{type:'json', rootProperty:'data'}}});
+Ext.define('Admin.store.finance.financeReport.FinanceReportStore', {extend:Ext.data.Store, alias:'store.financeReportStore', storeId:'financeReportStore', model:'Admin.model.finance.financeReport.FinanceReportModel', proxy:{type:'rest', url:'/financeReport', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:15, sorters:{direction:'DESC', property:'financeReportDailyId'}});
 Ext.define('Admin.store.finance.financeReport.FinanceReportStore2', {extend:Ext.data.Store, alias:'store.financeReportStore2', fields:['type', 'data'], data:[{type:'客房收入', data:33.33}, {type:'后勤支出', data:33.33}, {type:'工资支出', data:33.33}]});
 Ext.define('Admin.store.logistics.roomClean.RoomCleanGridStroe', {extend:Ext.data.Store, alias:'store.roomCleanGridStroe', model:'Admin.model.logistics.roomClean.RoomCleanModel', storeId:'roomCleanGridStroe', proxy:{type:'rest', url:'/roomClean', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:true, autoSync:true, remoteSort:true, pageSize:20, sorters:{direction:'ASC', property:'id'}});
 Ext.define('Admin.view.dashboard.DashboardController', {extend:Ext.app.ViewController, alias:'controller.dashboard', onRefreshToggle:function(tool, e, owner) {
@@ -102784,24 +102940,27 @@ Ext.define('Admin.view.finance.financeReportDaily.FinanceReportDailyViewControll
     }
   }
 }});
-Ext.define('Admin.view.finance.financeReport.FinanceReport', {extend:Ext.panel.Panel, xtype:'financeReport', layout:'border', height:800, defaults:{collapsible:false}, items:[{region:'north', height:50, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', flex:2, height:100}, {region:'center', flex:1, height:100}]}, {region:'center', height:550, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', 
-flex:3, xtype:'lineCharts'}, {region:'center', flex:2, xtype:'pieCharts'}]}]});
-Ext.define('Admin.view.finance.financeReport.LineCharts', {extend:Ext.panel.Panel, xtype:'lineCharts', controller:'lineChartsViewController', items:[{xtype:'cartesian', reference:'chart', width:'100%', height:500, captions:{title:'2018年收支情况'}, legend:{type:'sprite', docked:'top'}, store:{type:'financeReportStore'}, axes:[{type:'numeric', fields:['roomIncome', 'logisticstCost', 'salaryCost', 'profit'], position:'left', minimum:0, renderer:'onAxisLabelRender'}, {type:'category', fields:'month', position:'bottom', 
-grid:true, label:{rotate:{degrees:-45}}}], series:[{type:'line', title:'客房收入', xField:'month', yField:'roomIncome', marker:{type:'square', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'后勤支出', xField:'month', yField:'logisticstCost', marker:{type:'triangle', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', 
-title:'工资支出', xField:'month', yField:'salaryCost', marker:{type:'arrow', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'总利润', xField:'month', yField:'profit', marker:{type:'cross', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}]}]});
+Ext.define('Admin.view.finance.financeReport.ButtonShowFinanceReport', {extend:Ext.panel.Panel, xtype:'buttonShowFinanceReport', profiles:{classic:{bodyStyle:''}, neptune:{bodyStyle:''}, graphite:{bodyStyle:'background-color: #6d6d6d'}}, width:500, height:400, layout:{type:'table', columns:3, tableAttrs:{style:{width:'100%'}}}, scrollable:true, defaults:{bodyPadding:'15 20', border:true, bodyStyle:''}, items:[{html:'总收入：'}, {html:'总支出：'}, {html:'总利润：'}]});
+Ext.define('Admin.view.finance.financeReport.FinanceReport', {extend:Ext.panel.Panel, xtype:'financeReport', layout:'border', height:800, defaults:{collapsible:false, split:true}, items:[{region:'north', height:50, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', flex:1, xtype:'yearSelect'}, {region:'center', flex:1, height:100, xtype:'buttonShowFinanceReport'}]}, {region:'center', height:550, html:'\x3cp\x3eFooter content\x3c/p\x3e', 
+layout:'border', defaults:{collapsible:false, split:true}, items:[{region:'west', flex:3, xtype:'lineCharts'}, {region:'center', flex:2, xtype:'pieCharts'}]}]});
+Ext.define('Admin.view.finance.financeReport.LineCharts', {extend:Ext.panel.Panel, xtype:'lineCharts', controller:'lineChartsViewController', items:[{xtype:'cartesian', reference:'chart', id:'FinanceLineChart', width:'100%', height:500, captions:{title:'2018年收支情况'}, legend:{type:'sprite', docked:'top'}, store:{type:'financeReportStore'}, axes:[{type:'numeric', fields:['roomIncome', 'logisticstCost', 'salaryCost', 'profit'], position:'left', minimum:0, renderer:'onAxisLabelRender'}, {type:'category', 
+fields:'month', position:'bottom', grid:true, label:{rotate:{degrees:-45}}}], series:[{type:'line', title:'客房收入', xField:'month', yField:'roomIncome', marker:{type:'square', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'后勤支出', xField:'month', yField:'logisticstCost', marker:{type:'triangle', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, 
+{type:'line', title:'工资支出', xField:'month', yField:'salaryCost', marker:{type:'arrow', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'总利润', xField:'month', yField:'profit', marker:{type:'cross', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}]}]});
 Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {extend:Ext.app.ViewController, alias:'controller.lineChartsViewController', onAxisLabelRender:function(axis, label, layoutContext) {
-  return label / 10000 + '万';
+  return (label / 10000).toFixed(2) + '万';
 }, onSeriesTooltipRender:function(tooltip, record, item) {
   var title = item.series.getTitle();
   tooltip.setHtml(record.get('month') + '月 ' + title + ': ' + record.get(item.series.getYField()));
   var chart = Ext.getCmp('FinanceRateChart'), store = chart.getStore();
+  var searchField = this.lookupReference('searchYearForFinanceReport').getValue();
+  chart.setCaptions({title:searchField + '年' + record.get('month') + '月 ' + '收支情况'});
   var total = record.get('roomIncome') + record.get('logisticstCost') + record.get('salaryCost');
   var roomIncomePercent = (record.get('roomIncome') / total * 100).toFixed(2);
   var logisticstCostPercent = (record.get('logisticstCost') / total * 100).toFixed(2);
   var salaryCostPercent = (record.get('salaryCost') / total * 100).toFixed(2);
   store.setData([{type:'客房收入', data:roomIncomePercent}, {type:'后勤支出', data:logisticstCostPercent}, {type:'工资支出', data:salaryCostPercent}]);
 }});
-Ext.define('Admin.view.finance.financeReport.PieCharts', {extend:Ext.panel.Panel, xtype:'pieCharts', controller:'pieChartsViewController', items:[{xtype:'polar', reference:'chart', id:'FinanceRateChart', captions:{title:'2018年收支情况'}, width:'100%', height:550, insetPadding:{top:-40, right:-20}, innerPadding:30, store:{type:'financeReportStore2'}, legend:{docked:'top'}, interactions:['rotate'], series:[{type:'pie', angleField:'data', label:{field:'type', calloutLine:{length:60, width:3}}, highlight:true, 
+Ext.define('Admin.view.finance.financeReport.PieCharts', {extend:Ext.panel.Panel, xtype:'pieCharts', controller:'pieChartsViewController', items:[{xtype:'polar', reference:'chart', id:'FinanceRateChart', captions:{title:'收支情况 饼状图'}, width:'100%', height:550, insetPadding:{top:-40, right:-20}, innerPadding:30, store:{type:'financeReportStore2'}, legend:{docked:'top'}, interactions:['rotate'], series:[{type:'pie', angleField:'data', label:{field:'type', calloutLine:{length:60, width:3}}, highlight:true, 
 tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}]}]});
 Ext.define('Admin.view.finance.financeReport.PieChartsViewController', {extend:Ext.app.ViewController, alias:'controller.pieChartsViewController', onPreview:function() {
   if (Ext.isIE8) {
@@ -102814,6 +102973,15 @@ Ext.define('Admin.view.finance.financeReport.PieChartsViewController', {extend:E
   return v + '%';
 }, onSeriesTooltipRender:function(tooltip, record, item) {
   tooltip.setHtml(record.get('type') + ': ' + record.get('data') + '%');
+}});
+Ext.define('Admin.view.finance.financeReport.YearSelect', {extend:Ext.form.Panel, xtype:'yearSelect', controller:'yearSelectController', items:[{xtype:'combobox', fieldLabel:'可选择年份', labelAlign:'right', width:223, reference:'searchYearForFinanceReport', editable:false, queryMode:'remote', store:{type:'financeReportSelectYearStore'}, displayField:'year', valueField:'year', value:'请选择时间', listeners:{select:'searchFinanceReportByYear'}}]});
+Ext.define('Admin.view.finance.financeReport.YearSelectController', {extend:Ext.app.ViewController, alias:'controller.yearSelectController', searchFinanceReportByYear:function(combo, record, index) {
+  var searchField = this.lookupReference('searchYearForFinanceReport').getValue();
+  var chart = Ext.getCmp('FinanceLineChart');
+  var store = chart.getStore();
+  chart.setCaptions({title:searchField + '年收支情况'});
+  Ext.apply(store.proxy.extraParams, {year:searchField});
+  store.load({params:{start:0, limit:20, page:1}});
 }});
 Ext.define('Admin.view.logistics.inventory.Inventory', {extend:Ext.container.Container, xtype:'inventory', layout:'fit', html:'库存管理模块'});
 Ext.define('Admin.view.logistics.roomCard.RoomCard', {extend:Ext.container.Container, xtype:'roomCard', layout:'fit', html:'房卡管理模块'});

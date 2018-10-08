@@ -9,7 +9,7 @@ Ext.define('Admin.view.finance.financeReport.PieCharts', {
         reference: 'chart',
         id: 'FinanceRateChart',
         captions: {
-            title: '2018年收支情况',
+            title: '收支情况 饼状图',
         },
         // theme: 'default-gradients',
         width: '100%',
