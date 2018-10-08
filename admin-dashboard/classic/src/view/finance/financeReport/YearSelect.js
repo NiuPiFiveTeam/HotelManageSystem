@@ -9,6 +9,7 @@ Ext.define('Admin.view.finance.financeReport.YearSelect', {
         labelAlign: 'right',
         width: 223,
         reference:'searchYearForFinanceReport',
+        id:'searchYearForFinanceReport',
         editable: false,
         queryMode: 'remote',
         store: {

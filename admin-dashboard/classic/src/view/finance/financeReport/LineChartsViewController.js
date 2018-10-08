@@ -13,7 +13,10 @@ Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {
 
         var chart = Ext.getCmp("FinanceRateChart"),
             store = chart.getStore();
-        var searchField = this.lookupReference('searchYearForFinanceReport').getValue();//获取年份
+        var searchField = Ext.getCmp('searchYearForFinanceReport').getValue();
+        if(searchField == '请选择时间'){
+            searchField = '2018';
+        }
         chart.setCaptions({
             title: searchField + '年' + record.get('month') + '月 ' + '收支情况'
         });
