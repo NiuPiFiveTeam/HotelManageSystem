@@ -26,7 +26,6 @@ public class FinanceReportController {
 		     year = date.get(Calendar.YEAR);
 		}
 		List<FinanceReport> list = financeReportService.findFinanceReportDailyByYearGroupByMonth(year);
-		System.out.println(year);
 		
 		return list;
 	}

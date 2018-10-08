@@ -102952,7 +102952,10 @@ Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {extend:
   var title = item.series.getTitle();
   tooltip.setHtml(record.get('month') + '月 ' + title + ': ' + record.get(item.series.getYField()));
   var chart = Ext.getCmp('FinanceRateChart'), store = chart.getStore();
-  var searchField = this.lookupReference('searchYearForFinanceReport').getValue();
+  var searchField = Ext.getCmp('searchYearForFinanceReport').getValue();
+   if(searchField == '请选择时间'){
+            searchField = '2018';
+        }
   chart.setCaptions({title:searchField + '年' + record.get('month') + '月 ' + '收支情况'});
   var total = record.get('roomIncome') + record.get('logisticstCost') + record.get('salaryCost');
   var roomIncomePercent = (record.get('roomIncome') / total * 100).toFixed(2);
@@ -102974,7 +102977,7 @@ Ext.define('Admin.view.finance.financeReport.PieChartsViewController', {extend:E
 }, onSeriesTooltipRender:function(tooltip, record, item) {
   tooltip.setHtml(record.get('type') + ': ' + record.get('data') + '%');
 }});
-Ext.define('Admin.view.finance.financeReport.YearSelect', {extend:Ext.form.Panel, xtype:'yearSelect', controller:'yearSelectController', items:[{xtype:'combobox', fieldLabel:'可选择年份', labelAlign:'right', width:223, reference:'searchYearForFinanceReport', editable:false, queryMode:'remote', store:{type:'financeReportSelectYearStore'}, displayField:'year', valueField:'year', value:'请选择时间', listeners:{select:'searchFinanceReportByYear'}}]});
+Ext.define('Admin.view.finance.financeReport.YearSelect', {extend:Ext.form.Panel, xtype:'yearSelect', controller:'yearSelectController', items:[{xtype:'combobox', fieldLabel:'可选择年份', labelAlign:'right', width:223, reference:'searchYearForFinanceReport', id:'searchYearForFinanceReport', editable:false, queryMode:'remote', store:{type:'financeReportSelectYearStore'}, displayField:'year', valueField:'year', value:'请选择时间', listeners:{select:'searchFinanceReportByYear'}}]});
 Ext.define('Admin.view.finance.financeReport.YearSelectController', {extend:Ext.app.ViewController, alias:'controller.yearSelectController', searchFinanceReportByYear:function(combo, record, index) {
   var searchField = this.lookupReference('searchYearForFinanceReport').getValue();
   var chart = Ext.getCmp('FinanceLineChart');
