@@ -24,7 +24,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 * @version V1.0
  */
 public class RoomCleanQueryDTO {
-	private int roomNumber;//房间编号
+	private String roomNumber;//房间编号
 	private String floor;//楼层
 	private String roomState;//房间状态
 	private String roomType;//房间类型
@@ -36,7 +36,7 @@ public class RoomCleanQueryDTO {
 	public String getFloor() {
 		return floor;
 	}
-	public int getRoomNumber() {
+	public String getRoomNumber() {
 		return roomNumber;
 	}
 	public String getRoomState() {
@@ -61,7 +61,7 @@ public class RoomCleanQueryDTO {
 	public void setFloor(String floor) {
 		this.floor = floor;
 	}
-	public void setRoomNumber(int roomNumber) {
+	public void setRoomNumber(String roomNumber) {
 		this.roomNumber = roomNumber;
 	}
 	public void setRoomState(String roomState) {
@@ -89,9 +89,9 @@ public class RoomCleanQueryDTO {
 				List<Predicate> predicate = new ArrayList<>();
 	
 				//房间编号
-	   			if (0!=roomCleanQueryDTO.getRoomNumber()) {
-				predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("roomNumber").as(int.class),
-				roomCleanQueryDTO.getRoomNumber()));
+				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomNumber())) {
+					predicate.add(criteriaBuilder.like(root.get("roomNumber").as(String.class),
+							"%" +roomCleanQueryDTO.getRoomNumber() + "%"));
 				}
 	   			
 	   			//楼层

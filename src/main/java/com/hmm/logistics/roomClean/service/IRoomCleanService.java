@@ -25,7 +25,7 @@ public interface IRoomCleanService {
 	public long count();//得出记录总数
 	public Page<RoomClean> findAll(Specification<RoomClean> spec, Pageable pageable);//分页查找数据
 	public void deleteById(Long id);//删除记录
-//	public Optional<RoomClean> findById(Long id);
+	public RoomClean findById(Long id);
 //	public boolean existsById(Long id);
 //	public void deleteById(Long id);
 //	public void deleteAll(Long[] ids);

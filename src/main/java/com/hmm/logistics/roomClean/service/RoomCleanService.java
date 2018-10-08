@@ -1,5 +1,7 @@
 package com.hmm.logistics.roomClean.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,7 +55,12 @@ public class RoomCleanService implements IRoomCleanService{
 		roomCleanRepository.deleteById(id);
 		
 	}
-	
-	
 
+	@Override
+	@Transactional(readOnly=true)
+	public RoomClean findById(Long id) {
+		// TODO Auto-generated method stub
+		return roomCleanRepository.findById(id).get();
+	}
+	
 }

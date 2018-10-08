@@ -3,49 +3,6 @@
 	alias: 'store.roomCleanGridStroe',
 	model:'Admin.model.logistics.roomClean.RoomCleanModel',
 	storeId:'roomCleanGridStroe',//方便写事件时找到它
-	////假数据
-	// data: {
-	// 	'content':[{
-	//         "id": 1,
-	//         "roomNumber": 605,
-	//         "roomState": "清洁中",
-	// 		"roomType": "双人房",
-	// 		"roomDate":"2018/09/30 10:25:35",
-	// 		"roomWorker":"roomWorker5",
-	//     },{
-	//         "id": 2,
-	//         "roomNumber": 505,
-	//         "roomState": "未清洁",
-	// 		"roomType": "单人房",
-	// 		"roomDate":"2018/09/19 10:25:35",
-	// 		"roomWorker":"roomWorker1",
-	// 	},{
-	//         "id": 3,
-	//         "roomNumber": 305,
-	//         "roomState": "客人需要牙刷",
-	// 		"roomType": "单人房",
-	// 		"roomDate":"2018/09/20 10:25:35",
-	// 		"roomWorker":"roomWorker2",
-	// 	},
-	// 	{
-	//         "id": 4,
-	//         "roomNumber": 605,
-	//         "roomState": "未清洁",
-	// 		"roomType": "双人房",
-	// 		"roomDate":"2018/09/20 10:25:35",
-	// 		"roomWorker":"未分配",
-	//     },
-	// ]
-    // },
-	// proxy: {
-	// 	type: 'memory',//连后台可改为type: 'rest'
-	// 	reader:{
-	// 		type:'json',
-	// 		rootProperty:'content'
-	// 	}
-	// },
-	// autoLoad: 'true',
-
 	proxy: {
 		type: 'rest',
 		url: '/roomClean',
@@ -64,8 +21,9 @@
 	remoteSort: true,//全局（远程排序）排序，等于重新加载了数据
 	pageSize: 20,
 
-	sorters: {
+	sorters: [{
 		direction: 'ASC',
-		property: 'id'
-	}
+		property: 'floor'
+	}]
+	
 });

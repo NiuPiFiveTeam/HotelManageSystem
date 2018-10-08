@@ -21,21 +21,32 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
             scrollable: false,
             columns: [
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center', hidden :true,},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'floor',  text: '楼层', align:'center',flex: 1},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'floor',  text: '楼层', align:'center',flex: 1, hidden :true,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomNumber',text: '房间号码', align:'center',flex: 1},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomState', text: '房间状态', align:'center',flex: 1},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomState', text: '房间状态', align:'center',flex: 1,
+                renderer: function(val) {
+		            if (val =='退房清洁') {
+			            return '<span style="color:green;">退房清洁</span>';
+			        } else if (val =='房间服务') {
+			            return '<span style="color:red;">房间服务</span>';
+			        } else if (val =='清洁中') {
+			            return '<span style="color:blue;">清洁中</span>';
+			        }
+			        return val;
+	            }
+                },
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomType',  text: '房间类型', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomOther',  text: '备注', align:'center',flex: 1},
                 {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '房间操作',align:'center',
                 items: [
 /*********************************************************清洁人员按钮**********************************************************/
                 
-            //完成按钮
-                        {xtype: 'button', handler: 'onFinishButton',tooltip : '完成', //iconCls: 'x-fa fa-pencil' ,
+            //清洁完成按钮
+                        {xtype: 'button', handler: 'onFinishButton',tooltip : '清洁完成', //iconCls: 'x-fa fa-pencil' ,
                         getClass : function (v, metadata, r, rowIndex, colIndex, store) {
                             var roomState = r.data.roomState;
                             var roomWorker = r.data.roomWorker;
-                            if(roomState == '清洁中'||roomState == '房间服务'){
+                            if(roomState == '清洁中'){
                                  return 'x-fa fa-check';
                              }
                              else{
@@ -43,6 +54,19 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                             }
                         },
                     },
+             //客房服务完成按钮
+             {xtype: 'button', handler: 'onFinishServiceButton',tooltip : '客房服务完成', //iconCls: 'x-fa fa-pencil' ,
+             getClass : function (v, metadata, r, rowIndex, colIndex, store) {
+                 var roomState = r.data.roomState;
+                 var roomWorker = r.data.roomWorker;
+                 if(roomState == '房间服务'){
+                      return 'x-fa fa-check';
+                  }
+                  else{
+                     return 'x-hidden';
+                 }
+             },
+         },
 
             //清洁按钮
                         {xtype: 'button',handler: 'onCleanButton',tooltip : '清洁', //iconCls: 'x-fa fa-close'	,
@@ -101,7 +125,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                             //alert(btn.value);
                             var store =	btn.up('gridpanel').getStore();
                             Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                            Ext.apply(store.proxy.extraParams, {floor:"一楼",roomState:""});
+                            Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
                             store.load({params:{start:0, limit:20, page:1}});
                         }
                     }

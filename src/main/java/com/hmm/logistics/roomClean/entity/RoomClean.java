@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Table(name="t_roomclean")
 public class RoomClean {
-	private int id;//记录ID
+	private Long id;//记录ID
 	private String floor;//楼层
-	private int roomNumber;//房间编号
+	private String roomNumber;//房间编号
 	private String roomState;//房间状态
 	private String roomType;//房间类型
 	private String roomOther;//备注
@@ -35,13 +35,13 @@ public class RoomClean {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	public int getId() {
+	public Long getId() {
 		return id;
 	}
 	public String getFloor() {
 		return floor;
 	}
-	public int getRoomNumber() {
+	public String getRoomNumber() {
 		return roomNumber;
 	}
 	public String getRoomState() {
@@ -63,13 +63,13 @@ public class RoomClean {
 	
 	
 	
-	public void setId(int id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 	public void setFloor(String floor) {
 		this.floor = floor;
 	}
-	public void setRoomNumber(int roomNumber) {
+	public void setRoomNumber(String roomNumber) {
 		this.roomNumber = roomNumber;
 	}
 	public void setRoomState(String roomState) {
