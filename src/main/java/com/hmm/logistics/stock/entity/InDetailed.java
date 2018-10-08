@@ -1,4 +1,4 @@
-package com.hmm.stock.entity;
+package com.hmm.logistics.stock.entity;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -55,6 +55,31 @@
                         leaf: true
                     }
                 ]
+            },{
+                text: '酒店后勤',
+                iconCls: 'x-fa fa-building',
+                rowCls: 'nav-tree-badge nav-tree-badge-hot',
+                leaf: false,
+                children: [
+                    {
+                        text: '客房内务',
+                        iconCls: 'x-fa fa-university',
+                        viewType: 'roomClean',
+                        leaf: true,
+                    },
+                    {
+                        text: '房卡管理',
+                        iconCls: 'x-fa fa-credit-card',
+                        viewType: 'roomCard',
+                        leaf: true
+                    },
+                    {
+                        text: '库存管理',
+                        iconCls: 'x-fa fa-truck',
+                        viewType: 'inventory',
+                        leaf: true
+                    },
+                ]  
             }
         ]
     }

@@ -17,7 +17,8 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.domain.Employee;
-import com.hmm.stock.entity.InDetailed;
+import com.hmm.logistics.stock.entity.InDetailed;
+
 
 /**
  * 

@@ -85115,6 +85115,27 @@ Ext.define('Ext.layout.container.Card', {extend:Ext.layout.container.Fit, altern
   item.originalHideMode = item.hideMode;
   item.hideMode = 'offsets';
 }});
+Ext.define('Ext.layout.container.Form', {extend:Ext.layout.container.Auto, alternateClassName:'Ext.layout.FormLayout', alias:'layout.form', type:'form', formWrapCls:Ext.baseCSSPrefix + 'form-layout-wrap', formWrapAutoLabelCls:Ext.baseCSSPrefix + 'form-layout-auto-label', formWrapSizedLabelCls:Ext.baseCSSPrefix + 'form-layout-sized-label', formColGroupCls:Ext.baseCSSPrefix + 'form-layout-colgroup', formColumnCls:Ext.baseCSSPrefix + 'form-layout-column', formLabelColumnCls:Ext.baseCSSPrefix + 'form-layout-label-column', 
+childEls:['formWrap', 'labelColumn'], beforeBodyTpl:'\x3cdiv id\x3d"{ownerId}-formWrap" data-ref\x3d"formWrap" class\x3d"{formWrapCls}"' + '\x3ctpl if\x3d"itemSpacing"\x3e style\x3d"border-spacing:{itemSpacing}px"\x3c/tpl\x3e\x3e' + '\x3cdiv class\x3d"{formColGroupCls}"\x3e' + '\x3cdiv id\x3d"{ownerId}-labelColumn" data-ref\x3d"labelColumn" class\x3d"{formColumnCls} {formLabelColumnCls}"' + '\x3ctpl if\x3d"labelWidth"\x3e style\x3d"width:{labelWidth}"\x3c/tpl\x3e\x3e' + '\x3c/div\x3e' + '\x3cdiv class\x3d"{formColumnCls}"\x3e\x3c/div\x3e' + 
+'\x3c/div\x3e', afterBodyTpl:'\x3c/div\x3e', getRenderData:function() {
+  var me = this, labelWidth = me.labelWidth, formWrapCls = me.formWrapCls, data = me.callParent();
+  if (labelWidth) {
+    if (typeof labelWidth === 'number') {
+      labelWidth += 'px';
+    }
+    data.labelWidth = labelWidth;
+    formWrapCls += ' ' + me.formWrapSizedLabelCls;
+  } else {
+    formWrapCls += ' ' + me.formWrapAutoLabelCls;
+  }
+  data.formWrapCls = formWrapCls;
+  data.formColGroupCls = me.formColGroupCls;
+  data.formColumnCls = me.formColumnCls;
+  data.formLabelColumnCls = me.formLabelColumnCls;
+  return data;
+}, getRenderTarget:function() {
+  return this.formWrap;
+}});
 Ext.define('Ext.resizer.BorderSplitterTracker', {extend:Ext.resizer.SplitterTracker, getPrevCmp:null, getNextCmp:null, calculateConstrainRegion:function() {
   var me = this, splitter = me.splitter, collapseTarget = splitter.collapseTarget, defaultSplitMin = splitter.defaultSplitMin, sizePropCap = splitter.vertical ? 'Width' : 'Height', minSizeProp = 'min' + sizePropCap, maxSizeProp = 'max' + sizePropCap, getSizeMethod = 'get' + sizePropCap, neighbors = splitter.neighbors, length = neighbors.length, box = collapseTarget.el.getBox(), left = box.x, top = box.y, right = box.right, bottom = box.bottom, size = splitter.vertical ? right - left : bottom - top, 
   i, neighbor, neighborMaxSize, minRange, maxRange, maxGrowth, maxShrink, targetSize;
@@ -102508,14 +102529,17 @@ Ext.define('Admin.model.finance.RoomOrderModel', {extend:Admin.model.Base, idPro
 Ext.define('Admin.model.finance.SalaryOrderModel', {extend:Admin.model.Base, idProperty:'salaryOrderId', fields:[{type:'int', name:'salaryOrderId'}, {type:'string', name:'deptId'}, {type:'string', name:'userId'}, {type:'string', name:'userName'}, {type:'float', name:'basicwage'}, {type:'float', name:'overtimefee'}, {type:'float', name:'allowance'}, {type:'float', name:'bonus'}, {type:'float', name:'reducemoney'}, {type:'float', name:'realwage'}, {type:'int', name:'month'}], proxy:{type:'rest', url:'/salaryOrder'}});
 Ext.define('Admin.model.finance.financeReportDaily.FinanceReportDailyModel', {extend:Admin.model.Base, idProperty:'financeReportDailyId', fields:[{type:'int', name:'financeReportDailyId'}, {type:'date', name:'date'}, {type:'int', name:'roomIncome'}, {type:'int', name:'logisticstCost'}, {type:'int', name:'salaryCost'}, {type:'int', name:'totalIncome'}, {type:'int', name:'totalCost'}, {type:'int', name:'profit'}]});
 Ext.define('Admin.model.finance.financeReport.FinanceReportModel', {extend:Admin.model.Base, idProperty:'month', fields:[{type:'int', name:'month'}, {type:'int', name:'roomIncome'}, {type:'int', name:'logisticstCost'}, {type:'int', name:'salaryCost'}, {type:'int', name:'profit'}]});
+Ext.define('Admin.model.logistics.roomClean.RoomCleanModel', {extend:Admin.model.Base, fields:[{type:'int', name:'id'}, {type:'string', name:'floor'}, {type:'int', name:'roomNumber'}, {type:'string', name:'roomState'}, {type:'string', name:'roomType'}, {type:'string', name:'roomOther'}, {type:'date', name:'roomDate', dateFormat:'Y/m/d H:i:s'}, {type:'string', name:'roomWorker'}], proxy:{type:'rest', url:'/roomClean'}});
 Ext.define('Admin.store.NavigationTree', {extend:Ext.data.TreeStore, storeId:'NavigationTree', fields:[{name:'text'}], root:{expanded:true, children:[{text:'Dashboard', iconCls:'x-fa fa-desktop', rowCls:'nav-tree-badge nav-tree-badge-new', viewType:'admindashboard', routeId:'dashboard', leaf:true}, {text:'财务管理', iconCls:'x-fa fa-leanpub', expanded:false, selectable:false, children:[{text:'财务收入管理', iconCls:'x-fa fa-file-o', viewType:'income', leaf:true}, {text:'财务支出管理', iconCls:'x-fa fa-exclamation-triangle', 
-viewType:'cost', leaf:true}]}, {text:'酒店报表', iconCls:'x-fa fa-times-circle', expanded:false, selectable:false, children:[{text:'财务报表', iconCls:'x-fa fa-file-o', viewType:'financeReport', leaf:true}, {text:'财务详细', iconCls:'x-fa fa-exclamation-triangle', viewType:'financeReportDaily', leaf:true}]}]}});
+viewType:'cost', leaf:true}]}, {text:'酒店报表', iconCls:'x-fa fa-times-circle', expanded:false, selectable:false, children:[{text:'财务报表', iconCls:'x-fa fa-file-o', viewType:'financeReport', leaf:true}, {text:'财务详细', iconCls:'x-fa fa-exclamation-triangle', viewType:'financeReportDaily', leaf:true}]}, {text:'酒店后勤', iconCls:'x-fa fa-building', rowCls:'nav-tree-badge nav-tree-badge-hot', leaf:false, children:[{text:'客房内务', iconCls:'x-fa fa-university', viewType:'roomClean', leaf:true}, {text:'房卡管理', iconCls:'x-fa fa-credit-card', 
+viewType:'roomCard', leaf:true}, {text:'库存管理', iconCls:'x-fa fa-truck', viewType:'inventory', leaf:true}]}]}});
 Ext.define('Admin.store.finance.financeReport.FinanceReportDailyStore', {extend:Ext.data.Store, alias:'store.financeReportDailyStore', storeId:'financeReportDailyStore', model:'Admin.model.finance.financeReportDaily.FinanceReportDailyModel', proxy:{type:'rest', url:'/financeReportDaily', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:15, sorters:{direction:'DESC', property:'financeReportDailyId'}});
 Ext.define('Admin.store.finance.InStorageApplyStore', {extend:Ext.data.Store, storeId:'inStorageApplyStore', alias:'store.inStorageApplyStore', model:'Admin.model.finance.InStorageApplyModel', proxy:{type:'ajax', url:'/inStorage/tasks', reader:new Ext.data.JsonReader({type:'json', rootProperty:'content', totalProperty:'totalElements'}), simpleSortMode:true}, autoLoad:'true', remoteSort:true, sorters:{direction:'DESC', property:'inStorageApplyId'}});
 Ext.define('Admin.store.finance.RoomOrderGridStroe', {extend:Ext.data.Store, alias:'store.roomOrderGridStroe', storeId:'roomOrderGridStroe', model:'Admin.model.finance.RoomOrderModel', proxy:{type:'rest', url:'/roomOrder', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:25, sorters:{direction:'DESC', property:'orderId'}});
 Ext.define('Admin.store.finance.SalaryOrderGridStroe', {extend:Ext.data.Store, alias:'store.salaryOrderGridStroe', storeId:'salaryOrderGridStroe', model:'Admin.model.finance.SalaryOrderModel', proxy:{type:'rest', url:'/salaryOrder', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:25, sorters:{direction:'DESC', property:'salaryOrderId'}});
 Ext.define('Admin.store.finance.financeReport.FinanceReportStore', {extend:Ext.data.Store, alias:'store.financeReportStore', storeId:'financeReportStore', model:'Admin.model.finance.financeReport.FinanceReportModel', proxy:{type:'rest', url:'/financeReport/2', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:'true', autoSync:true, remoteSort:true, pageSize:15, sorters:{direction:'DESC', property:'financeReportDailyId'}});
 Ext.define('Admin.store.finance.financeReport.FinanceReportStore2', {extend:Ext.data.Store, alias:'store.financeReportStore2', fields:['type', 'data'], data:[{type:'客房收入', data:33.33}, {type:'后勤支出', data:33.33}, {type:'工资支出', data:33.33}]});
+Ext.define('Admin.store.logistics.roomClean.RoomCleanGridStroe', {extend:Ext.data.Store, alias:'store.roomCleanGridStroe', model:'Admin.model.logistics.roomClean.RoomCleanModel', storeId:'roomCleanGridStroe', proxy:{type:'rest', url:'/roomClean', reader:{type:'json', rootProperty:'content', totalProperty:'totalElements'}, writer:{type:'json'}, simpleSortMode:true}, autoLoad:true, autoSync:true, remoteSort:true, pageSize:20, sorters:{direction:'ASC', property:'id'}});
 Ext.define('Admin.view.dashboard.DashboardController', {extend:Ext.app.ViewController, alias:'controller.dashboard', onRefreshToggle:function(tool, e, owner) {
   var store, runner;
   if (tool.toggleValue) {
@@ -102762,11 +102786,9 @@ Ext.define('Admin.view.finance.financeReportDaily.FinanceReportDailyViewControll
 }});
 Ext.define('Admin.view.finance.financeReport.FinanceReport', {extend:Ext.panel.Panel, xtype:'financeReport', layout:'border', height:800, defaults:{collapsible:false}, items:[{region:'north', height:50, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', flex:2, height:100}, {region:'center', flex:1, height:100}]}, {region:'center', height:550, html:'\x3cp\x3eFooter content\x3c/p\x3e', layout:'border', defaults:{collapsible:false}, items:[{region:'west', 
 flex:3, xtype:'lineCharts'}, {region:'center', flex:2, xtype:'pieCharts'}]}]});
-Ext.define('Admin.view.finance.financeReport.LineCharts', {extend:Ext.panel.Panel, xtype:'lineCharts', controller:'lineChartsViewController', items:[{xtype:'cartesian', reference:'chart', width:'100%', height:500, captions: {
-            title: '2018年收支情况',
-        },legend:{type:'sprite', docked:'top'}, store:{type:'financeReportStore'}, axes:[{type:'numeric', fields:['roomIncome', 'logisticstCost', 'salaryCost', 'profit'], position:'left', minimum:0, renderer:'onAxisLabelRender'}, {type:'category', fields:'month', position:'bottom', grid:true, label:{rotate:{degrees:-45}}}], 
-series:[{type:'line', title:'客房收入', xField:'month', yField:'roomIncome', marker:{type:'square', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'后勤支出', xField:'month', yField:'logisticstCost', marker:{type:'triangle', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'工资支出', xField:'month', yField:'salaryCost', 
-marker:{type:'arrow', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'总利润', xField:'month', yField:'profit', marker:{type:'cross', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}]}]});
+Ext.define('Admin.view.finance.financeReport.LineCharts', {extend:Ext.panel.Panel, xtype:'lineCharts', controller:'lineChartsViewController', items:[{xtype:'cartesian', reference:'chart', width:'100%', height:500, captions:{title:'2018年收支情况'}, legend:{type:'sprite', docked:'top'}, store:{type:'financeReportStore'}, axes:[{type:'numeric', fields:['roomIncome', 'logisticstCost', 'salaryCost', 'profit'], position:'left', minimum:0, renderer:'onAxisLabelRender'}, {type:'category', fields:'month', position:'bottom', 
+grid:true, label:{rotate:{degrees:-45}}}], series:[{type:'line', title:'客房收入', xField:'month', yField:'roomIncome', marker:{type:'square', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'后勤支出', xField:'month', yField:'logisticstCost', marker:{type:'triangle', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', 
+title:'工资支出', xField:'month', yField:'salaryCost', marker:{type:'arrow', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}, {type:'line', title:'总利润', xField:'month', yField:'profit', marker:{type:'cross', animation:{duration:200, easing:'backOut'}}, highlightCfg:{scaling:2}, tooltip:{trackMouse:true, renderer:'onSeriesTooltipRender'}}]}]});
 Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {extend:Ext.app.ViewController, alias:'controller.lineChartsViewController', onAxisLabelRender:function(axis, label, layoutContext) {
   return label / 10000 + '万';
 }, onSeriesTooltipRender:function(tooltip, record, item) {
@@ -102775,8 +102797,8 @@ Ext.define('Admin.view.finance.financeReport.LineChartsViewController', {extend:
   var chart = Ext.getCmp('FinanceRateChart'), store = chart.getStore();
   var total = record.get('roomIncome') + record.get('logisticstCost') + record.get('salaryCost');
   var roomIncomePercent = (record.get('roomIncome') / total * 100).toFixed(2);
-  var logisticstCostPercent = (record.get('logisticstCost') / total *100).toFixed(2);
-  var salaryCostPercent = (record.get('salaryCost') / total*100).toFixed(2) ;
+  var logisticstCostPercent = (record.get('logisticstCost') / total * 100).toFixed(2);
+  var salaryCostPercent = (record.get('salaryCost') / total * 100).toFixed(2);
   store.setData([{type:'客房收入', data:roomIncomePercent}, {type:'后勤支出', data:logisticstCostPercent}, {type:'工资支出', data:salaryCostPercent}]);
 }});
 Ext.define('Admin.view.finance.financeReport.PieCharts', {extend:Ext.panel.Panel, xtype:'pieCharts', controller:'pieChartsViewController', items:[{xtype:'polar', reference:'chart', id:'FinanceRateChart', captions:{title:'2018年收支情况'}, width:'100%', height:550, insetPadding:{top:-40, right:-20}, innerPadding:30, store:{type:'financeReportStore2'}, legend:{docked:'top'}, interactions:['rotate'], series:[{type:'pie', angleField:'data', label:{field:'type', calloutLine:{length:60, width:3}}, highlight:true, 
@@ -102793,6 +102815,173 @@ Ext.define('Admin.view.finance.financeReport.PieChartsViewController', {extend:E
 }, onSeriesTooltipRender:function(tooltip, record, item) {
   tooltip.setHtml(record.get('type') + ': ' + record.get('data') + '%');
 }});
+Ext.define('Admin.view.logistics.inventory.Inventory', {extend:Ext.container.Container, xtype:'inventory', layout:'fit', html:'库存管理模块'});
+Ext.define('Admin.view.logistics.roomCard.RoomCard', {extend:Ext.container.Container, xtype:'roomCard', layout:'fit', html:'房卡管理模块'});
+Ext.define('Admin.view.logistics.roomClean.AddOtherWindow', {extend:Ext.window.Window, alias:'widget.addOtherWindow', height:220, minHeight:100, minWidth:300, width:500, scrollable:true, title:'添加标配外物品', closable:true, constrain:true, defaultFocus:'textfield', modal:true, layout:'anchor', items:[{xtype:'form', layout:'form', padding:'10px', ariaLabel:'Enter your name', items:[{xtype:'textfield', fieldLabel:'添加原因', name:'addReason'}, {xtype:'tagfield', fieldLabel:'选择标配外物品', store:Ext.create('Ext.data.Store', 
+{fields:['id', 'name', 'value'], data:[{id:0, name:'热水壶', value:'kettle'}, {id:1, name:'柜子', value:'sark'}, {id:2, name:'电灯泡', value:'bulb'}, {id:3, name:'床', value:'bed'}]}), name:'tagfield', reference:'names', displayField:'name', valueField:'name', filterPickList:true, queryMode:'local', publishes:'value'}]}], buttons:['-\x3e', {xtype:'button', text:'Submit', handler:function(btn) {
+  var win = btn.up('window');
+  var form = win.down('form');
+  var values = form.getValues();
+  var tagfields = values.tagfield;
+  var addReason = values.addReason;
+  Ext.Msg.alert(addReason, tagfields);
+}}, {xtype:'button', text:'Close', handler:function(btn) {
+  btn.up('window').close();
+}}, '-\x3e']});
+Ext.define('Admin.view.logistics.roomClean.RoomClean', {extend:Ext.container.Container, xtype:'roomClean', controller:'roomCleanViewController', viewModel:{type:'roomCleanViewModel'}, layout:'fit', items:[{xtype:'roomCleanPanel'}]});
+Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {extend:Ext.tab.Panel, xtype:'roomCleanPanel', cls:'shadow', activeTab:0, items:[{xtype:'gridpanel', cls:'user-grid', title:'客房内务', bind:'{roomCleanContent}', scrollable:false, columns:[{xtype:'gridcolumn', width:60, dataIndex:'id', text:'编号', align:'center', hidden:true}, {xtype:'gridcolumn', cls:'content-column', dataIndex:'floor', text:'楼层', align:'center', flex:1}, {xtype:'gridcolumn', cls:'content-column', dataIndex:'roomNumber', text:'房间号码', 
+align:'center', flex:1}, {xtype:'gridcolumn', cls:'content-column', dataIndex:'roomState', text:'房间状态', align:'center', flex:1}, {xtype:'gridcolumn', cls:'content-column', dataIndex:'roomType', text:'房间类型', align:'center', flex:1}, {xtype:'gridcolumn', cls:'content-column', dataIndex:'roomOther', text:'备注', align:'center', flex:1}, {xtype:'actioncolumn', cls:'content-column', width:150, dataIndex:'bool', text:'房间操作', align:'center', items:[{xtype:'button', handler:'onFinishButton', tooltip:'完成', 
+getClass:function(v, metadata, r, rowIndex, colIndex, store) {
+  var roomState = r.data.roomState;
+  var roomWorker = r.data.roomWorker;
+  if (roomState == '清洁中' || roomState == '房间服务') {
+    return 'x-fa fa-check';
+  } else {
+    return 'x-hidden';
+  }
+}}, {xtype:'button', handler:'onCleanButton', tooltip:'清洁', getClass:function(v, metadata, r, rowIndex, colIndex, store) {
+  var roomState = r.data.roomState;
+  var roomWorker = r.data.roomWorker;
+  if (roomState == '退房清洁') {
+    return 'x-fa fa-refresh';
+  } else {
+    return 'x-hidden';
+  }
+}}, {xtype:'button', handler:'onAddOtherButton', tooltip:'添加标配外物品', getClass:function(v, metadata, r, rowIndex, colIndex, store) {
+  var roomState = r.data.roomState;
+  var roomWorker = r.data.roomWorker;
+  if (roomState == '清洁中') {
+    return 'x-fa fa-plus';
+  } else {
+    return 'x-hidden';
+  }
+}}, {xtype:'button', handler:'onSendButton', tooltip:'送客人需要物品', getClass:function(v, metadata, r, rowIndex, colIndex, store) {
+  var roomState = r.data.roomState;
+  var roomWorker = r.data.roomWorker;
+  if (roomState == '房间服务') {
+    return 'x-fa fa-paper-plane-o';
+  } else {
+    return 'x-hidden';
+  }
+}}]}], tbar:['-\x3e', {xtype:'splitbutton', text:'一楼', tooltip:'一楼全部房间状态', iconCls:'fa fa-university', value:'一楼', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'一楼', roomState:''});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}, menu:[{text:'退房清洁', value:'退房清洁', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'一楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}, {text:'房间服务', value:'房间服务', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'一楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}]}, '-\x3e', {xtype:'splitbutton', text:'二楼', tooltip:'二楼全部房间状态', iconCls:'fa fa-university', value:'二楼', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:btn.value, roomState:''});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}, menu:[{text:'退房清洁', value:'退房清洁', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'二楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}, {text:'房间服务', value:'房间服务', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'二楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}]}, '-\x3e', {xtype:'splitbutton', text:'三楼', tooltip:'三楼全部房间状态', iconCls:'fa fa-university', value:'三楼', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:btn.value, roomState:''});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}, menu:[{text:'退房清洁', value:'退房清洁', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'三楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}, {text:'房间服务', value:'房间服务', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'三楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}]}, '-\x3e', {xtype:'splitbutton', text:'四楼', tooltip:'四楼全部房间状态', iconCls:'fa fa-university', value:'四楼', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:btn.value, roomState:''});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}, menu:[{text:'退房清洁', value:'退房清洁', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'四楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}, {text:'房间服务', value:'房间服务', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'四楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}]}, '-\x3e', {xtype:'splitbutton', text:'五楼', tooltip:'五楼全部房间状态', iconCls:'fa fa-university', value:'五楼', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:btn.value, roomState:''});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}, menu:[{text:'退房清洁', value:'退房清洁', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'五楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}, {text:'房间服务', value:'房间服务', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'五楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}]}, '-\x3e', {xtype:'splitbutton', text:'六楼', tooltip:'六楼全部房间状态', iconCls:'fa fa-university', value:'六楼', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:btn.value, roomState:''});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}, menu:[{text:'退房清洁', value:'退房清洁', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'六楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}, {text:'房间服务', value:'房间服务', listeners:{click:{fn:function(btn) {
+  var store = btn.up('gridpanel').getStore();
+  Ext.apply(store.proxy.extraParams, {floor:'', roomState:''});
+  Ext.apply(store.proxy.extraParams, {floor:'六楼', roomState:btn.value});
+  store.load({params:{start:0, limit:20, page:1}});
+}}}}]}, '-\x3e'], dockedItems:[{xtype:'pagingtoolbar', dock:'bottom', itemId:'userPaginationToolbar', displayInfo:true, bind:'{roomCleanContent}'}]}]});
+Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {extend:Ext.app.ViewController, alias:'controller.roomCleanViewController', onFinishButton:function(toolbar, rowIndex, colIndex) {
+  Ext.MessageBox.confirm('完成', '你确定完成清洁?', function(btn) {
+    if (btn == 'yes') {
+      Ext.Msg.alert('Title', 'yes');
+    }
+  });
+}, onCleanButton:function(grid, rowIndex, colIndex) {
+  Ext.MessageBox.confirm('清洁', '你确定开始清洁?', function(btn) {
+    if (btn == 'yes') {
+      Ext.Msg.alert('Title', 'yes');
+    }
+  });
+}, onAddOtherButton:function(toolbar, rowIndex, colIndex) {
+  toolbar.up('panel').up('container').add(Ext.widget('addOtherWindow')).show();
+}, onSendButton:function(toolbar, rowIndex, colIndex) {
+  toolbar.up('panel').up('container').add(Ext.widget('sendWindow')).show();
+}});
+Ext.define('Admin.view.logistics.roomClean.RoomCleanViewModel', {extend:Ext.app.ViewModel, alias:'viewmodel.roomCleanViewModel', stores:{roomCleanContent:{type:'roomCleanGridStroe'}}});
+Ext.define('Admin.view.logistics.roomClean.SendWindow', {extend:Ext.window.Window, alias:'widget.sendWindow', height:180, minHeight:100, minWidth:300, width:500, scrollable:true, title:'送客人需要物品', closable:true, constrain:true, defaultFocus:'textfield', modal:true, layout:'anchor', items:[{xtype:'form', layout:'form', padding:'10px', ariaLabel:'Enter your name', items:[{xtype:'tagfield', fieldLabel:'选择客人需要的物品', store:Ext.create('Ext.data.Store', {fields:['id', 'name', 'value'], data:[{id:0, name:'热水壶', 
+value:'kettle'}, {id:1, name:'柜子', value:'sark'}, {id:2, name:'电灯泡', value:'bulb'}, {id:3, name:'床', value:'bed'}]}), name:'tagfield', reference:'names', displayField:'name', valueField:'name', filterPickList:true, queryMode:'local', publishes:'value'}]}], buttons:['-\x3e', {xtype:'button', text:'Submit', handler:function(btn) {
+  var win = btn.up('window');
+  var form = win.down('form');
+  var values = form.getValues();
+  var tagfields = values.tagfield;
+  Ext.Msg.alert('选择客人需要的物品', tagfields);
+}}, {xtype:'button', text:'Close', handler:function(btn) {
+  btn.up('window').close();
+}}, '-\x3e']});
 Ext.define('Admin.view.main.MainContainerWrap', {extend:Ext.container.Container, xtype:'maincontainerwrap', scrollable:'y', layout:{type:'hbox', align:'stretchmax', animate:true, animatePolicy:{x:true, width:true}}, beforeLayout:function() {
   var me = this, height = Ext.Element.getViewportHeight() - 64, navTree = me.getComponent('navigationTreeList');
   me.minHeight = height;
