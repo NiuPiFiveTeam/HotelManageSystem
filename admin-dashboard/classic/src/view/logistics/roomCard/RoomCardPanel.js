@@ -1,6 +1,6 @@
-Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
+Ext.define('Admin.view.logistics.roomClean.RoomCardPanel', {
     extend: 'Ext.tab.Panel',
-    xtype: 'roomCleanPanel',
+    xtype: 'roomCardPanel',
 
     requires: [
         'Ext.grid.Panel',
@@ -19,7 +19,6 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
             title: '客房内务',
             bind: '{roomCleanContent}',
             scrollable: false,
-            height:525,
             columns: [
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center', hidden :true,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'floor',  text: '楼层', align:'center',flex: 1, hidden :true,},

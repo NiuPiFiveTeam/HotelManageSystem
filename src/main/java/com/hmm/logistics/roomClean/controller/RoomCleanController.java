@@ -76,38 +76,36 @@ public class RoomCleanController {
 				else {
 				roomClean.setRoomType("单人房");	
 				}
-				roomClean.setRoomDate(new Date());
 				if(i==0) {
 					roomClean.setRoomState("退房清洁");
-					roomClean.setRoomWorker("阿强");
 					roomClean.setRoomOther("无");
 				}
 				else if(i==1) {
 					roomClean.setRoomState("房间服务");
-					roomClean.setRoomWorker("阿强");
 					roomClean.setRoomOther("清洁房间、送牙刷");
 				}
 				else if(i==2) {
 					roomClean.setRoomState("等待入住");
-					roomClean.setRoomWorker("阿强");
 					roomClean.setRoomOther("无");
 				}
 				else if(i==3) {
 					roomClean.setRoomState("清洁中");
-					roomClean.setRoomWorker("阿强");
 					roomClean.setRoomOther("无");
 				}
 				roomCleanService.save(roomClean);
 			}
+			
+			
 			RoomClean roomClean = new RoomClean();
 			roomClean.setRoomNumber("101");
 			roomClean.setFloor("一楼");
 			roomClean.setRoomType("单人房");
-			roomClean.setRoomDate(new Date());
 			roomClean.setRoomState("退房清洁");
-			roomClean.setRoomWorker("阿强");
 			roomClean.setRoomOther("无");
 			roomCleanService.save(roomClean);
+			
+			
+			
 			return "success:true";
 		} catch (Exception e) {
 			return "success:false";
