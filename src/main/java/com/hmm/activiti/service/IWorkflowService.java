@@ -26,4 +26,15 @@ public interface IWorkflowService
 	//public Page<T> findFinishedProcessInstaces(Page<Leave> page, int[] pageParams);
 	//8.查询流程定义对象
 	//protected ProcessDefinition getProcessDefinition(String processDefinitionId);
+	
+	public void addGroup(String id,String name ,String type);
+	public void deleteGroup(String id);
+	
+	public void addUser(String name , String  password , String groupName);
+	
+	public void deleteUser(String name ,  String groupName);
+	
+	public void editGUserMembership(String name , String  password ,  String groupName);
+	
+	public void findGUser(String name ,  String groupName);
 }

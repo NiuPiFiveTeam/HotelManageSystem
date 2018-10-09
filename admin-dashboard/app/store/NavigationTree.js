@@ -137,6 +137,70 @@
                         leaf: true
                     },
                 ]  
+            },{
+                text: 'Login',
+                iconCls: 'x-fa fa-check',
+                viewType: 'login',
+                leaf: true
+           },
+           {
+                text: '员工自助管理',
+                iconCls: 'x-fa fa-address-card',
+                children: [
+        
+                    {
+                        text: '账户管理',
+                        iconCls: 'x-fa fa-user-circle',
+                        viewType: 'editPassword',
+                        leaf: true
+                    }
+                ]
+                
+            },
+            
+            {
+                text: '员工管理',
+                iconCls: 'x-fa fa-address-card',
+                children: [
+        
+                    {
+                        text: '人员信息管理',
+                        iconCls: 'x-fa fa-user-circle',
+                        viewType: 'empManager',
+                        leaf: true
+                    },
+                    {
+                        text: '排班管理',
+                        iconCls: 'x-fa fa-lock',
+                        viewType: 'paiBanTab',
+                        leaf: true
+                    },
+
+                    {
+                        text: '考勤统计',
+                        iconCls: 'x-fa fa-check',
+                        //viewType: 'login',
+                        
+                        leaf: true
+                    },
+                    
+                    {
+                        text: '部门管理',
+                        iconCls: 'x-fa fa-lightbulb-o',
+                        viewType: 'deptTab',
+                        leaf: true
+                    },
+                    {
+                        text: '员工意见',
+                        iconCls: 'fa fa-envelope-open-o',
+                       // viewType: 'passwordreset',
+                        
+                        leaf: true
+                    }
+                    
+
+                ]
+                
             }
         ]
     }

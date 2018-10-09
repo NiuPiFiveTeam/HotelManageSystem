@@ -16,7 +16,8 @@
        "requires": [
         "charts",
         "font-awesome",
-        "ux"
+        "ux",
+        "calendar"
     ],
 
     /**

@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.activiti.domain.ProcessStatus;
-import com.hmm.employee.domain.Employee;
+import com.hmm.employee.entity.Employee;
 
 
 public class InStorageDTO {

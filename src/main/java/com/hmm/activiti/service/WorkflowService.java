@@ -8,6 +8,8 @@ import org.activiti.engine.IdentityService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.identity.Group;
+import org.activiti.engine.identity.User;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -131,5 +133,49 @@ public class WorkflowService implements IWorkflowService {
 	public Map getTaskVariables(String taskId) {
 		Map<String, Object> variables = taskService.getVariables(taskId);
 		return variables;
+	}
+	
+	@Override
+	public void addGroup(String id, String name,String type) {
+		// TODO Auto-generated method stub
+		Group group = identityService.newGroup(id);
+		group.setName(name);
+		group.setType(type);
+		identityService.saveGroup(group);	
+	}
+
+	@Override
+	public void addUser(String userId, String password , String groupId) {
+		// TODO Auto-generated method stub
+		User user = identityService.newUser(userId);
+		user.setPassword(password);
+		identityService.saveUser(user);
+		identityService.createMembership(userId, groupId);
+	}
+
+	@Override
+	public void deleteUser(String name, String groupName) {
+		// TODO Auto-generated method stub
+		identityService.deleteUser(name);
+		identityService.deleteMembership(name, groupName);	
+	}
+
+	@Override
+	public void editGUserMembership(String name, String password, String groupName) {
+		// TODO Auto-generated method stub	
+		
+	}
+
+	@Override
+	public void findGUser(String name, String groupName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deleteGroup(String id) {
+		// TODO Auto-generated method stub
+		identityService.deleteGroup(id);
+		
 	}
 }

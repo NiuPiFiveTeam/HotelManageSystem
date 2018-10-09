@@ -1,0 +1,73 @@
+package com.hmm.userRole.entity;
+
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import com.hmm.department.entity.Department;
+import com.hmm.employee.entity.Employee;
+
+
+
+@Entity
+@Table(name="t_groupRole")
+public class GroupRole {
+	private Integer groupTable_id;
+	private String groupName;
+	private String groupId;
+	private Department department;
+	private List<Employee> employs;
+	
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	public Integer getGroupTable_id() {
+		return groupTable_id;
+	}
+	
+	public String getGroupName() {
+		return groupName;
+	}
+	
+	public String getGroupId() {
+		return groupId;
+	}
+	
+	@ManyToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
+	public List<Employee> getEmploys() {
+		return employs;
+	}
+	
+	
+	@ManyToOne(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
+	@JoinColumn(name="dept_id")
+	public Department getDepartment() {
+		return department;
+	}
+
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
+	}
+	public void setDepartment(Department department) {
+		this.department = department;
+	}
+	public void setEmploys(List<Employee> employs) {
+		this.employs = employs;
+	}
+
+	public void setGroupTable_id(Integer groupTable_id) {
+		this.groupTable_id = groupTable_id;
+	}
+	
+}

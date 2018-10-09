@@ -72,7 +72,7 @@ public class InStorageService implements IInStorageService {
 				if(inStorage!=null) {
 					InStorageDTO inStorageDTO = new InStorageDTO();
 					BeanUtils.copyProperties(inStorage, inStorageDTO);
-					inStorageDTO.setEmployeeId(inStorage.getEmployee().getID_());
+					inStorageDTO.setEmployeeId(inStorage.getEmployee().getUserName());
 					BeanUtils.copyProperties(workflow, inStorageDTO);
 					results.add(inStorageDTO);
 				}
