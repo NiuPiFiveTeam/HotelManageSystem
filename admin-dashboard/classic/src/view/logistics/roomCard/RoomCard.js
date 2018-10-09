@@ -9,6 +9,6 @@
     // viewModel: {type: 'roomCardViewModel'},
     	
     layout: 'fit',
-    //items: [{xtype:'roomCardPanel'}]
-    html:'房卡管理模块'
+    items: [{xtype:'roomCardPanel'}]
+    //html:'房卡管理模块'
 });

@@ -9,9 +9,7 @@ Ext.define('Admin.model.logistics.roomClean.RoomCleanModel', {
 	    {type: 'int',name: 'roomNumber'},
 	    {type: 'string',name: 'roomState'},
 		{type: 'string',name: 'roomType' },
-		{type: 'string',name: 'roomOther'},
-		{type: 'date', name: 'roomDate', dateFormat:'Y/m/d H:i:s'},
-		{type: 'string',name: 'roomWorker'},
+		{type: 'string',name: 'roomOther'}
 	],
 	proxy: {
 		type: 'rest',

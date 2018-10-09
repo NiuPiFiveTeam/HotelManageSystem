@@ -29,9 +29,6 @@ public class RoomCleanQueryDTO {
 	private String roomState;//房间状态
 	private String roomType;//房间类型
 	private String roomOther;//备注
-	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")  
-	private Date roomDate;//清洁日期
-	private String roomWorker;//清洁人员
 	
 	public String getFloor() {
 		return floor;
@@ -46,12 +43,6 @@ public class RoomCleanQueryDTO {
 		return roomType;
 	}
 	
-	public Date getRoomDate() {
-		return roomDate;
-	}
-	public String getRoomWorker() {
-		return roomWorker;
-	}
 	public String getRoomOther() {
 		return roomOther;
 	}
@@ -69,12 +60,6 @@ public class RoomCleanQueryDTO {
 	}
 	public void setRoomType(String roomType) {
 		this.roomType = roomType;
-	}
-	public void setRoomDate(Date roomDate) {
-		this.roomDate = roomDate;
-	}
-	public void setRoomWorker(String roomWorker) {
-		this.roomWorker = roomWorker;
 	}
 	public void setRoomOther(String roomOther) {
 		this.roomOther = roomOther;
@@ -115,18 +100,6 @@ public class RoomCleanQueryDTO {
 				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomOther())) {
 					predicate.add(criteriaBuilder.like(root.get("roomOther").as(String.class),
 							"%" + roomCleanQueryDTO.getRoomOther() + "%"));
-				}
-	
-				//清洁日期
-				if (null!=roomCleanQueryDTO.getRoomDate()) {
-					predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("roomDate").as(Date.class),
-							roomCleanQueryDTO.getRoomDate()));
-				}
-				
-				//清洁人员
-				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomWorker())) {
-					predicate.add(criteriaBuilder.like(root.get("roomWorker").as(String.class),
-							"%" + roomCleanQueryDTO.getRoomWorker() + "%"));
 				}
 							
 				Predicate[] pre = new Predicate[predicate.size()];

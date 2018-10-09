@@ -9,6 +9,6 @@
     // viewModel: {type: 'inventoryViewModel'},
     	
     layout: 'fit',
-    //items: [{xtype:'inventoryPanel'}]
-    html:'库存管理模块'
+    items: [{xtype:'inventoryPanel'}]
+    //html:'库存管理模块'
 });
