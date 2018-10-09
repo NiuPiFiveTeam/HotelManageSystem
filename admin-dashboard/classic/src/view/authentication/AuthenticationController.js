@@ -20,7 +20,7 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
             success: function(response, options) {
                 var json = Ext.util.JSON.decode(response.responseText);
                 if(json.success){
-                    me.redirectTo('empManager', true);
+                    me.redirectTo('dashboard', true);
                     Ext.getCmp('loginUserName').setText(json.map.userName);
                 }else{
                     Ext.Msg.alert('登录失败', json.msg);
