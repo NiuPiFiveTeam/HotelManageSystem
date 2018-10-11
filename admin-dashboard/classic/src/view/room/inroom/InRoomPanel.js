@@ -30,8 +30,8 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
             region: 'west',
             title:'<b>楼层</b>',
            
-            // bind:'{floodList}',//viewModel
-            store:store,
+            bind:'{floodList}',//viewModel
+            // store:store,
             animate:true,
             animateShadow:true,
             animCollapse:true,
@@ -81,7 +81,6 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
                     '</tpl>'
                 ],
                 listeners:{'itemclick':function(node,event){
-                    console.log(event.data);
                     var win = Ext.create('Admin.view.room.inroom.InRoomEditWindow');
                     //var win = this.up('container').add(Ext.widget('fullRoomEditWindow')).show();
                     var form = win.down('form').getForm();

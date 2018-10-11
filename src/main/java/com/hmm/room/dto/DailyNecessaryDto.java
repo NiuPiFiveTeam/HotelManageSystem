@@ -10,7 +10,8 @@ public class DailyNecessaryDto {
 	private String id; //Daily_  拼接 name
 	private String show; //展示的名称
 	private String name; //用来生成 组件的名称
-	private String number;  //某个日用品的数量
+	private int number;  //某个日用品的数量
+	
 	public String getId() {
 		return id;
 	}
@@ -20,7 +21,7 @@ public class DailyNecessaryDto {
 	public String getName() {
 		return name;
 	}
-	public String getNumber() {
+	public int getNumber() {
 		return number;
 	}
 	public void setId(String id) {
@@ -32,7 +33,7 @@ public class DailyNecessaryDto {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public void setNumber(String number) {
+	public void setNumber(int number) {
 		this.number = number;
 	}
 	

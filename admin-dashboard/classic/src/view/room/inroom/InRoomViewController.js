@@ -5,7 +5,6 @@ Ext.define('Admin.view.room.inroom.InRoomViewController', {
     loadHomeItem:function(node,event){
             var id = event.data.id; //节点
             console.log(event.data);
-            alert(id);
             if(id>1000000){//说明是楼层Id，进行加载客房的操作
                 loadAllRoom(id);
             }else{  //说明是客房Id，需要进行客房相关操作

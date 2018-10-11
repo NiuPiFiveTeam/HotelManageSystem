@@ -61,7 +61,6 @@ Ext.define('Admin.view.room.inroom.InRoomEditWindow', {
                     listeners :{
                       
                         select:function(combo, record, eOpts){
-                      
                             var selectValue = record.get('name');
                             if(selectValue == "日用品"){
                                 var form = Ext.getCmp('roomStateChange');
@@ -71,32 +70,35 @@ Ext.define('Admin.view.room.inroom.InRoomEditWindow', {
                                 if(win == null){
 
                                     win = Ext.create('Admin.view.room.inroom.InRoomDailyWindow');
-
                                     var form = createForm(); //创建表单
-                               
-                                    var store = Ext.create('Admin.store.room.DailyStore');
-                                    store.load();
-                                    var size = store.getCount();
-                                    for (var index = 0; index < size; index++) {
-                                        var dailyShow = store.getAt(index).data.show; //日用品展示的名称
-                                        var dailyName = store.getAt(index).data.name; //日用品的真实名称
-                                        var dailyNumber = 0; //日用品的数量，初始化为0
-                                        var dailyId = store.getAt(index).data.id; //日用品的Id
-                                        var dailyfield = {   //日用品文本域
-                                                xtype: 'numberfield',
-                                                name: dailyName,
-                                                id:dailyId,
-                                                fieldLabel: dailyShow,
-                                                value: dailyNumber,
-                                                maxValue: 99,
-                                                minValue: 0,
-                                                labelWidth: 45,
-                                                width: 130,
-                                                colmunWidth:0.5,
-                                                margin:'0 8 5 0',
-                                            };
-                                        form.add(dailyfield);
-                                    }
+                                    Ext.Ajax.request({			
+                                        url : 'room/getDaily',
+                                        //从数据库中请求数据，动态获取items中的数据			
+                                        method : 'Get',			
+                                        success : function(result) {
+                                            var resultArray = Ext.decode(result.responseText); //得到我们需要的数组
+                                            //给form表单添加组件
+                                            for (var index = 0; index < resultArray.length; index++) {
+                                                var dailyShow = resultArray[index].show; //日用品展示的名称
+                                                var dailyName = resultArray[index].name; //日用品的真实名称
+                                                var dailyNumber = 0; //日用品的数量，初始化为0
+                                                var dailyId = resultArray[index].id; //日用品的Id
+                                                var dailyfield = {   //日用品文本域
+                                                        xtype: 'numberfield',
+                                                        name: dailyName,
+                                                        id:dailyId,
+                                                        fieldLabel: dailyShow,
+                                                        value: dailyNumber,
+                                                        maxValue: 99,
+                                                        minValue: 0,
+                                                        labelWidth: 45,
+                                                        width: 130,
+                                                        colmunWidth:0.5,
+                                                        margin:'0 8 5 0',
+                                                    };
+                                                form.add(dailyfield);
+                                        }}
+                                    });
                                     win.add(form);
                                 }
                                 win.x=win1.x+450;
@@ -157,47 +159,54 @@ function createForm(){
         bodyPadding: 10,
         layout:'column',
         buttons: ['->',{
+                        text: '清零',
+                        handler: function() {
+                            var form = this.up('form');
+                            var size = form.items.length;
+                            for (var index = 0; index < size; index++) {
+                                var filedName = form.items.items[index].name;
+                                var filedString = '[name='+filedName+']';
+                                this.up('form').down(filedString).setValue(0);
+                            }
+                        }
+                    },{
                         text: '标配',
                         handler: function() {
-                            this.up('form').down('[name=toothbrush]').spinUp();
-                            this.up('form').down('[name=toothpaste]').spinUp();
-                            this.up('form').down('[name=towel]').spinUp();
-                            this.up('form').down('[name=bathtowel]').spinUp();
-                            this.up('form').down('[name=showergel]').spinUp();
+                            var form = this.up('form');
+                            var size = form.items.length;
+                            for (var index = 0; index < size; index++) {
+                                var filedName = form.items.items[index].name;
+                                var filedString = '[name='+filedName+']';
+                                this.up('form').down(filedString).setValue(1);
+                            }
                         }
                     },{
                         text: '确认',
                         handler: function() {
                             var tag = Ext.getCmp("dailyResult");   //获取父window中的tag组件
                             var store = Ext.create("Admin.store.room.DailyStore");  //给tag组件创建一个 store
-            
-                            var toothbrushNum = this.up('form').down('[name=toothbrush]').value; //牙刷数量
-                            var toothpasteNum = this.up('form').down('[name=toothpaste]').value; //牙膏数量
-                            var towel = this.up('form').down('[name=towel]').value; //毛巾数量
-                            var bathtowel = this.up('form').down('[name=bathtowel]').value; //浴巾数量
-                            var showergel = this.up('form').down('[name=showergel]').value; //沐浴露
-            
-                            var size = store.getCount();
+                            
+
+                            var form = this.up('form');
+                            var size = form.items.length;
+                            var data = new Array();
+                            var tagvalue = new Array();  //用于标签的显示
                             for (var index = 0; index < size; index++) {
-                               var record = store.getAt(index);
-                               var recordName = record.data.show;
-                               if(recordName == "牙膏"){
-            
-                               }else if(recordName == "牙刷"){
-            
-                               }else if(recordName == "浴巾"){
-                                   
-                               }else if(recordName == "毛巾"){
-                                   
-                               }else if(recordName == "沐浴露"){
-                                   
-                               }
+                                var record = form.items.items[index];
+                                var number = record.value;
+                                if(number != 0){
+                                    var name = record.name;
+                                    var id = record.id;
+                                    tagvalue[index] = id;
+                                    var show = record.fieldLabel;
+                                    data[index] = {'id':id,'show':show,'number':number,'name':name};
+                                    store.add(data[index]);  //给store插入数据
+                                }
                             }
-                            store.getAt(1).set("number",66);
-                            store.load();
-                            tag.setStore(store);
-                            var value = [1,2,3,4];
-                            tag.setValue(value);
+                            tag.setStore(store); //给tag添加store
+                            tag.setValue(tagvalue);  //给tag设置标签显示
+                            var win = Ext.getCmp("inRoomDailyWindow");
+                                win.hide();
                         }
                     },'->']
     });

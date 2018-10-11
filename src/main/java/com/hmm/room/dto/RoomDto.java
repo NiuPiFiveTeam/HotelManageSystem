@@ -9,7 +9,7 @@ public class RoomDto {
  	private String roomNo;		//房间号码
 	
 	private RoomType type; //房间类型， 单人房 双人房 三人房 钟点房
-	private RoomState state; //房间状态， 空闲、入住、需要清洁、需要补充日用品
+	private int state; //房间状态， 空闲、入住、需要清洁、需要补充日用品
 	private String roomPass;  //房卡密码，跟房卡进行绑定
 	private Long floorId;
 	public Long getRoomId() {
@@ -30,10 +30,10 @@ public class RoomDto {
 	public void setType(RoomType type) {
 		this.type = type;
 	}
-	public RoomState getState() {
+	public int getState() {
 		return state;
 	}
-	public void setState(RoomState state) {
+	public void setState(int state) {
 		this.state = state;
 	}
 	public String getRoomPass() {

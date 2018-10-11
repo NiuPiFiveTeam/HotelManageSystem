@@ -15,11 +15,10 @@ Ext.define('Admin.view.room.inroom.InRoomViewModel', {
     stores: {
 
         roomLists: {type: 'roomStore'},
-        // floodList: {
-        //     type: 'inroomTreeStore',//Store reference ==Store的属性 alias: 'store.orderStore',	
-        //     autoLoad: true
-        // }
-        // dailyLists: {type: 'dailyStore'}
+        floodList: {
+            type: 'inroomTreeStore',//Store reference ==Store的属性 alias: 'store.orderStore',	
+            autoLoad: true
+        }
         
     }
 });
