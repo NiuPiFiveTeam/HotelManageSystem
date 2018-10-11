@@ -22,18 +22,17 @@ import com.hmm.employee.entity.Employee;
 @Entity
 @Table(name="t_travel")
 public class Travel {
-	private Integer travelid;
-	private String travelNo;
+	private Long travelId;//
 	private Date traStartTime;
 	private Date traEndTime;
-	private String process;
-	private Float allowance;
+	private String process;//出差内容
+	private Float allowance;//出差补发工资
 	private Employee employ;
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	public Integer getTravelid() {
-		return travelid;
+	public Long getTravelId() {
+		return travelId;
 	}
 	
 	@ManyToOne(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
@@ -41,19 +40,16 @@ public class Travel {
 	public Employee getEmploy() {
 		return employ;
 	}
-	@Column(unique=true)
-	public String getTravelNo() {
-		return travelNo;
-	}
+
 	
-	@JsonFormat(pattern="HH:mm:ss" , timezone = "GMT+8")
-	@DateTimeFormat(pattern="HH:mm:ss")
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
+	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
 	public Date getTraStartTime() {
 		return traStartTime;
 	}
 	
-	@JsonFormat(pattern="HH:mm:ss" , timezone = "GMT+8")
-	@DateTimeFormat(pattern="HH:mm:ss")
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
+	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
 	public Date getTraEndTime() {
 		return traEndTime;
 	}
@@ -64,9 +60,6 @@ public class Travel {
 		return allowance;
 	}
 
-	public void setTravelNo(String travelNo) {
-		this.travelNo = travelNo;
-	}
 	public void setTraStartTime(Date traStartTime) {
 		this.traStartTime = traStartTime;
 	}
@@ -84,8 +77,8 @@ public class Travel {
 		this.employ = employ;
 	}
 
-	public void setTravelid(Integer travelid) {
-		this.travelid = travelid;
+	public void setTravelid(Long travelid) {
+		this.travelId = travelid;
 	}
 	
 }
