@@ -6,6 +6,7 @@ import com.hmm.room.entity.Room;
 
 public interface IRoomService {
 
-	List<Room> loadTreeMenu();
+
+	List<Room> findRoomByFloorId(Long floorId);  //根据楼层Id加载对应的房间List
 
 }

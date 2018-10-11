@@ -1,4 +1,8 @@
 package com.hmm.room.util;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 参考：
  * 		http://blog.csdn.net/cl05300629/article/details/20466111
@@ -13,8 +17,8 @@ public class TreeNode
 	private boolean expanded = false;//节点是否展开
 	private boolean leaf = false;	//是否为子节点，根据当前节点是否有子节点判断
 	
-	//private List<TreeNode> children = ArrayList<TreeNode>();	//子节点集合
-    //private String iconCls;	//节点图标样式
+	private List<TreeNode> children = new ArrayList<TreeNode>();	//子节点集合
+    private String iconCls;	//节点图标样式
 	
 	public Long getId() {
 		return id;
@@ -28,6 +32,14 @@ public class TreeNode
 	public boolean isLeaf() {
 		return leaf;
 	}
+	public List<TreeNode> getChildren() {
+		return children;
+	}
+	public String getIconCls() {
+		return iconCls;
+	}
+	
+	
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -40,9 +52,18 @@ public class TreeNode
 	public void setLeaf(boolean leaf) {
 		this.leaf = leaf;
 	}
+	public void setChildren(List<TreeNode> children) {
+		this.children = children;
+	}
+	public void setIconCls(String iconCls) {
+		this.iconCls = iconCls;
+	}
 	@Override
 	public String toString() {
-		return "TreeNode [id=" + id + ", text=" + text + ", expanded=" + expanded + ", leaf=" + leaf + "]";
+		return "TreeNode [id=" + id + ", text=" + text + ", expanded=" + expanded + ", leaf=" + leaf + ", children="
+				+ children + ", iconCls=" + iconCls + "]";
 	}
 
+	
+	
 }

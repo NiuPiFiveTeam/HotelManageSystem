@@ -1,18 +1,18 @@
-Ext.define('Admin.view.logistics.roomClean.AddOtherWindow', {
-    extend: 'Ext.window.Window',
-    alias: 'widget.addOtherWindow',
-    height: 220,
-    minHeight: 100,
-    minWidth: 300,
-    width: 500,
-    scrollable: true,
-    title: '添加标配外物品',
-    closable: true,
-    constrain: true,
+// Ext.define('Admin.view.logistics.roomClean.AddOtherWindow', {
+//     extend: 'Ext.window.Window',
+//     alias: 'widget.addOtherWindow',
+//     height: 220,
+//     minHeight: 100,
+//     minWidth: 300,
+//     width: 500,
+//     scrollable: true,
+//     title: '添加标配外物品',
+//     closable: true,
+//     constrain: true,
 
-    defaultFocus: 'textfield',
-    modal:true,
-    layout:'anchor',
+//     defaultFocus: 'textfield',
+//     modal:true,
+//     layout:'anchor',
     items: [{
         xtype: 'form',
         layout: 'form',
@@ -44,6 +44,42 @@ Ext.define('Admin.view.logistics.roomClean.AddOtherWindow', {
             publishes: 'value'
         }]
     }],
+// 	buttons: ['->',{
+//         xtype: 'button',
+//         text: 'Submit',
+//         handler: function(btn) {  
+//             var win    = btn.up('window');
+//             var form = win.down('form');
+//             var values  =form.getValues();//获取form数据
+//             var tagfields = values.tagfield;
+//             var addReason=values.addReason;
+//             Ext.Msg.alert(addReason,tagfields);
+// 		}
+//     },{
+//         xtype: 'button',
+//         text: 'Close',
+//         handler: function(btn) {
+//             btn.up('window').close();
+//         }
+//     },'->']
+// });
+
+
+Ext.define('Admin.view.logistics.roomClean.AddOtherWindow', {
+    extend: 'Ext.window.Window',
+    alias: 'widget.addOtherWindow',
+    height: 220,
+    minHeight: 100,
+    minWidth: 300,
+    width: 500,
+    scrollable: true,
+    title: '添加标配外物品',
+    closable: true,
+    constrain: true,
+
+    defaultFocus: 'textfield',
+    modal:true,
+    layout:'anchor',
 	buttons: ['->',{
         xtype: 'button',
         text: 'Submit',

@@ -65,6 +65,7 @@ public class RoomCleanQueryDTO {
 		this.roomOther = roomOther;
 	}
 	
+	
 	@SuppressWarnings({ "serial"})
 	public static Specification<RoomClean> getWhereClause(final RoomCleanQueryDTO roomCleanQueryDTO) {
 		return new Specification<RoomClean>() {
@@ -109,3 +110,24 @@ public class RoomCleanQueryDTO {
 	}
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
