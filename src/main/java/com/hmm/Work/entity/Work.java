@@ -23,7 +23,7 @@ import com.hmm.employee.entity.Employee;
 public class Work {
 	private Long workid;
 	//private String workNo;
-	//private Date worktime;
+	private Integer worktime;
 	private Date ontudytime;//上班打卡时间
 	private Date offdutytime;//下班打卡时间
 	private String flag;//打卡状态
@@ -80,6 +80,14 @@ public class Work {
 	
 	public void setEmploy(Employee employ) {
 		this.employ = employ;
+	}
+
+	public Integer getWorktime() {
+		return worktime;
+	}
+
+	public void setWorktime(Integer worktime) {
+		this.worktime = worktime;
 	}
 	
 
