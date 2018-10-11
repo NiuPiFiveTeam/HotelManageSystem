@@ -32,6 +32,7 @@ public class Leave {
     private Date applyTime;
     private String leaveType;//请假类型
     private String reason;//请假理由
+    
     private int realityTotalTime;//实际请假基本工作总时长
     private ProcessStatus processStatus;//流程状态
     private Employee employ;
