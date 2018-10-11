@@ -10,13 +10,17 @@ import com.hmm.room.entity.Floor;
 
 @Repository
 public interface FloorRepository extends PagingAndSortingRepository<Floor, String>{
-	/**
-	 * 查询根节点
-	 * 		parentNode.id = null时 默认返回根节点
-	 * @return 节点集合 List<Company>
-	 */
-	@Query("from Floor f where f.floorId = 999")
-	public List<Floor> findParentNodes();
+	
+//	/**
+//	 * 查询根节点
+//	 * 		parentNode.id = null时 默认返回根节点
+//	 * @return 节点集合 List<Company>
+//	 */
+//	@Query("from Floor f where f.floorId = 999")
+//	public List<Floor> findParentNodes();
+	
+	@Query("from Floor f order by f.floorId")
+	public List<Floor> findFloorNodes();
 	
 	/**
 	 * 根据父节点ID查询出子节点

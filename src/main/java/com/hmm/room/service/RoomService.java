@@ -15,20 +15,14 @@ public class RoomService implements IRoomService {
 	@Autowired
 	private RoomRepository roomRepository;
 
-	/**
-	  * 加载树形菜单，返回json
-	 */
+
 	@Override
-	public List<Room> loadTreeMenu() {
+	public List<Room> findRoomByFloorId(Long floorId) {
+
+		List<Room> roomList = null;
 		
-		Iterable<Room> roomIterable = roomRepository.findAll();
-		List<Room> roomlist = new ArrayList<>();
+		roomList = roomRepository.findFloorNodes(floorId);
 		
-		for (Room room : roomIterable) {
-			roomlist.add(room);
-			
-		}
-		System.out.println(roomlist);
-		return roomlist;
+		return roomList.size() <= 0 ? null : roomList;
 	}
 }
