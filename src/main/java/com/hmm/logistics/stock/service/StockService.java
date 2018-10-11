@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.repository.StockRepository;
@@ -20,6 +22,8 @@ import com.hmm.logistics.stock.repository.StockRepository;
 * @date 2018年10月9日
 * @version V1.0
  */
+@Service
+@Transactional
 public class StockService implements IStockService {
 	@Autowired
 	private StockRepository stockRepository;

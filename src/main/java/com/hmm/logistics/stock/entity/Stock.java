@@ -5,6 +5,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import com.hmm.logistics.stock.util.StockType;
 /**
  * 
 * @Title: Stock.java
@@ -21,7 +23,7 @@ public class Stock {
 	private String goodsName;//商品名，例：牙刷
 	private String unit;//单位，例：只
 	private float amount;//数量，例:100只
-	
+	private  StockType stockType;//商品类型
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -37,6 +39,9 @@ public class Stock {
 	public float getAmount() {
 		return amount;
 	}
+	public StockType getStockType() {
+		return stockType;
+	}
 	
 	
 	public void setId(Long id) {
@@ -51,5 +56,7 @@ public class Stock {
 	public void setAmount(float amount) {
 		this.amount = amount;
 	}
-
+	public void setStockType(StockType stockType) {
+		this.stockType = stockType;
+	}
 }
