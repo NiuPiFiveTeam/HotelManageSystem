@@ -27,4 +27,5 @@ public interface EmployeeService {
 	public Employee findByEmpNameAndEmpNo(String empName , String empNo);
 	public Employee findByEmpName(String empName);
 	public void updatePassword(String password , String userName );
+	public Employee findByUserName(String userName);
 }

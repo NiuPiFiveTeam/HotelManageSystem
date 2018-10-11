@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.hmm.calendars.dao.SchedulEventDao;
 import com.hmm.calendars.entity.Calendar;
+import com.hmm.calendars.entity.EventCalendarDTO;
 import com.hmm.calendars.entity.ExtResultJson;
 import com.hmm.calendars.entity.SchedulEvent;
 import com.hmm.calendars.entity.SchedulEventDto;
@@ -129,5 +130,15 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 		
 		return json;
 	}
+
+	@Override
+	public List<SchedulEvent> findStartDate(Date date, String userName) {
+		// TODO Auto-generated method stub
+		return schedulEventdao.findStartDate(date, userName);
+	}
+
+
+
+	
 
 }

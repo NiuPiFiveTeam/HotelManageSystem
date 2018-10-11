@@ -170,4 +170,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 
+	@Override
+	public Employee findByUserName(String userName) {
+		// TODO Auto-generated method stub
+		return employdao.findByUserName(userName);
+	}
+
+
 }

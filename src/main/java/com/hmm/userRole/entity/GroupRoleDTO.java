@@ -8,6 +8,7 @@ public class GroupRoleDTO {
 	private String groupName;
 	private String groupId;
 	private String deptName;
+	private Float money;
 
 
 	//后到前：1.针对“前端”设计的数据封装对象(查询)
@@ -45,6 +46,12 @@ public class GroupRoleDTO {
 	}
 	public void setDeptName(String deptName) {
 		this.deptName = deptName;
+	}
+	public Float getMoney() {
+		return money;
+	}
+	public void setMoney(Float money) {
+		this.money = money;
 	}
 	
 }

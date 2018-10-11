@@ -20,6 +20,8 @@ public interface EmployeeDao extends JpaSpecificationExecutor<Employee> , Paging
 	
 	public Employee findByEmpName(String empName);
 	
+	public Employee findByUserName(String userName);
+	
 	@Modifying
 	@Query("update Employee e set e.password = ?1 where e.userName = ?2")
 	public void updatePassword(String password , String userName );

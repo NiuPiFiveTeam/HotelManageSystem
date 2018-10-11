@@ -25,6 +25,7 @@ public class GroupRole {
 	private String groupName;
 	private String groupId;
 	private Department department;
+	private Float money;
 	private List<Employee> employs;
 	
 	@Id
@@ -68,6 +69,14 @@ public class GroupRole {
 
 	public void setGroupTable_id(Integer groupTable_id) {
 		this.groupTable_id = groupTable_id;
+	}
+
+	public Float getMoney() {
+		return money;
+	}
+
+	public void setMoney(Float money) {
+		this.money = money;
 	}
 	
 }
