@@ -58,6 +58,12 @@ public class RoomCleanController {
 			return new ExtAjaxResponse(true,"更新失败！");
 		}
 	}
+	@PutMapping("/changeRoomState")
+	public ExtAjaxResponse changeRoomState() {
+		return null;
+	
+	}
+	
 	
 
 	/**
