@@ -77,7 +77,7 @@ public class Travel {
 		this.employ = employ;
 	}
 
-	public void setTravelid(Long travelid) {
+	public void setTravelId(Long travelid) {
 		this.travelId = travelid;
 	}
 	
