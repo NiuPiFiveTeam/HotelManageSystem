@@ -75,5 +75,17 @@ public class RoomCleanController {
 		return RoomState.NEEDCLEAN.toString();
 	
 	}
+	/**
+	 * 
+	 * @param roomNo  房间号
+	 * @param dailyTagData  请求的日用品
+	 * @return  返回房间状态
+	 */
+	@RequestMapping("/dailyNecessarySupplement")
+	public @ResponseBody String dailyNecessarySupplement(@RequestParam("roomNo") String roomNo,@RequestParam("dailyTagData") String dailyTagData) {
+		System.out.println(roomNo+" "+dailyTagData);
+		return RoomState.NEEDCLEAN.toString();
+	
+	}
 	
 }
