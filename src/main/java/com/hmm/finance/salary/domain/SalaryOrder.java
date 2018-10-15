@@ -3,6 +3,7 @@ package com.hmm.finance.salary.domain;
 import java.util.Date;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -48,7 +49,7 @@ public class SalaryOrder {
 	public Date getDate() {
 		return date;
 	}
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="employeeId")
 	public Employee getEmployee() {
 		return employee;
