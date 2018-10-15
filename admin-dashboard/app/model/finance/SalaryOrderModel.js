@@ -1,29 +1,23 @@
 Ext.define('Admin.model.finance.SalaryOrderModel', {
     extend: 'Admin.model.Base',
     idProperty:'salaryOrderId',
-    requires: [
-        'Ext.data.proxy.Rest'   //数据层 代理 Rest模式的工具类
-    ],
 
     fields: [
+    
         {type: 'int',name: 'salaryOrderId'},
-        {type: 'string',name: 'deptId'},
-        {type: 'string',name: 'userId'},
-        {type: 'string',name: 'userName'}, 
+        {type: 'string',name: 'empNo'},//员工编号
+        {type: 'string',name: 'empName'}, //员工姓名
+		{type: 'string',name: 'deptName'},//员工部门
 
-        {type: 'float',name: 'basicwage'},
-        {type: 'float',name: 'overtimefee'},
-        {type: 'float',name: 'allowance'},
-        {type: 'float',name: 'bonus'},
+        {type: 'float',name: 'basicwage'},//基本工资
+        {type: 'float',name: 'overtimefee'},//加班工资
+        {type: 'float',name: 'allowance'},//出差工资
 
-        {type: 'float',name: 'reducemoney'},
-        {type: 'float',name: 'realwage'},
-        
-        {type: 'int',name: 'month'},
-    ],
+        {type: 'float',name: 'reducemoney'},//请假所扣工资
+        {type: 'float',name: 'realwage'},//实发工资
 
-    proxy: {        //不加这个用不了Rest写法
-        type: 'rest',
-        url: '/salaryOrder',
-    }
+        {type: 'date',name: 'date'},//工资发放日期
+
+
+    ]
 });

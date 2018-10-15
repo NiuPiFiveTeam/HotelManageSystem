@@ -1,5 +1,5 @@
 Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyGrid', {
-    extend: 'Ext.panel.Panel',
+    extend: 'Ext.tab.Panel',
     xtype: 'inStorageApplyGrid',
 
     requires: [
@@ -16,6 +16,7 @@ Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyGrid', {
     items: [{
             xtype: 'gridpanel',
             selType: 'checkboxmodel',   //复选框
+            title: '入库审批',
             scrollable: true,  //可滚动的
             headerBorders: true, //边框
             bind: '{inStorageApplyStore}',
@@ -75,7 +76,7 @@ Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyGrid', {
         			return val;
             	}
             },{
-            	header:'员工id',
+            	header:'入库员工',
             	dataIndex:'employeeId',
             	sortable: true
             },{

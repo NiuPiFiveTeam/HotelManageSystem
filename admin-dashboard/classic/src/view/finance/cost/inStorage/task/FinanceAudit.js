@@ -24,17 +24,17 @@ Ext.define('Admin.view.finance.cost.inStorage.task.FinanceAudit',{
         readOnly:true
     },{
         xtype:'radiogroup',
-        fieldLabel:'财务主管审批',
+        fieldLabel:'财务审批',
         defaults:{
             flex:1
         },
         items:[{
-            name:'financePass',
+            name:'financeClerkPass',
             inputValue:true,
             boxLabel:'财务同意',
             checked:true
-        },{
-            name:'financePass',
+        },{       
+            name:'financeClerkPass',
             inputValue:false,
             boxLabel:'财务不同意',
         }]

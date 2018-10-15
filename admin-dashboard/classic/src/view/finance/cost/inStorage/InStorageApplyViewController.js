@@ -26,11 +26,27 @@ Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyViewController',{
 			//后勤主管审批
 			var win = this.setCurrentView(view,taskDefinitionKey,'后勤主管审批');
 			win.down('form').getForm().loadRecord(record);
-		}else if(taskDefinitionKey == 'financeAudit'){
-			//财务主管审批
-			var win = this.setCurrentView(view,taskDefinitionKey,'财务主管审批');
-			win.down('form').getForm().loadRecord(record);
-		}else{
+		}else if(taskDefinitionKey == 'contactSupplier'){
+            //联系供货方
+            var win = this.setCurrentView(view,taskDefinitionKey,'联系供货方');
+            win.down('form').getForm().loadRecord(record);
+        }else if(taskDefinitionKey == 'financeAudit'){
+            //财务审批
+            var win = this.setCurrentView(view,taskDefinitionKey,'财务审批');
+            win.down('form').getForm().loadRecord(record);
+        }else if(taskDefinitionKey == 'pay'){
+            //出纳付款
+            var win = this.setCurrentView(view,taskDefinitionKey,'财务审批');
+            win.down('form').getForm().loadRecord(record);
+        }else if(taskDefinitionKey == 'confirmReceipt'){
+            //出纳付款
+            var win = this.setCurrentView(view,taskDefinitionKey,'收货确认');
+            win.down('form').getForm().loadRecord(record);
+        }else if(taskDefinitionKey == 'financeManagerAudit'){
+            //出纳付款
+            var win = this.setCurrentView(view,taskDefinitionKey,'财务经理审批(金额过大)');
+            win.down('form').getForm().loadRecord(record);
+        }else{
 			Ext.Msg.alert('无人审批','无人审批 无人审批');
 		}
 	},
@@ -52,8 +68,8 @@ Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyViewController',{
     	var values = form.getValues();
     	var url = 'inStorage/complete/'+values.taskId;
     	var variables=[{
-    		key:'logisticstPass',
-    		value:values.logisticstPass,
+    		key:'logisticstManagerPass',
+    		value:values.logisticstManagerPass,
     		type:'B'
     	},{
     		key:'logisticstBackReason',
@@ -62,23 +78,67 @@ Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyViewController',{
     	}];
     	this.complete(url,variables,form);
     },
-    //4.财务主管审批
-    FinanceFormSubmitButton:function(btn){
-    	var form = btn.up('form');
-    	var values = form.getValues();
-    	var url = 'inStorage/complete/'+values.taskId;
-    	var variables=[{
-    		key:'financePass',
-    		value:values.financePass,
-    		type:'B'
-    	},{
-    		key:'financeBackReason',
-    		value:values.financeBackReason,
-    		type:'S'
-    	}];
-    	this.complete(url,variables,form);
+    //4.联系供货方
+    contactSupplierSubmitButton:function(btn){
+        var form = btn.up('form');
+        var values = form.getValues();
+        var url = 'inStorage/complete/'+values.taskId;
+        var variables=[{
+            key:'amountMoney',
+            value:values.amountMoney, 
+            type:'N'
+        }];
+        this.complete(url,variables,form);
     },
-    //4.封装审批表单数据,并以Ajax提交到后台完成任务的流程变量封装对象中。
+    //5.财务部门审批
+    FinanceFormSubmitButton:function(btn){
+        var form = btn.up('form');
+        var values = form.getValues();
+        var url = 'inStorage/complete/'+values.taskId;
+        var variables=[{
+            key:'financeClerkPass',
+            value:values.financeClerkPass, 
+            type:'B'
+        },{
+            key:'financeBackReason',
+            value:values.financeBackReason,
+            type:'S'
+        }];
+        this.complete(url,variables,form);
+    },
+    //6.出纳付款
+    paySubmitButton:function(btn){
+        var form = btn.up('form');
+        var values = form.getValues();
+        var url = 'inStorage/complete/'+values.taskId;
+        var variables=[];
+        this.complete(url,variables,form);
+    },
+    //7.收货确认
+    ConfirmReceiptSubmitButton:function(btn){
+        var form = btn.up('form');
+        var values = form.getValues();
+        var url = 'inStorage/complete/'+values.taskId;
+        var variables=[];
+        this.complete(url,variables,form);
+    },
+    //7.财务经理审批
+    FinanceManagerFormSubmitButton:function(btn){
+        var form = btn.up('form');
+        var values = form.getValues();
+        var url = 'inStorage/complete/'+values.taskId;
+        var variables=[{
+            key:'financeManagerPass',
+            value:values.financeManagerPass, 
+            type:'B'
+        },{
+            key:'financeBackReason',
+            value:values.financeBackReason,
+            type:'S'
+        }];
+        this.complete(url,variables,form);
+    },
+    //封装审批表单数据,并以Ajax提交到后台完成任务的流程变量封装对象中。
     complete:function(url,variables,form){
     	//转换JSON为字符串
     	var keys="", values="", types="";

@@ -29,12 +29,12 @@ Ext.define('Admin.view.finance.cost.inStorage.task.LogisticstAudit',{
     		flex:1
     	},
     	items:[{
-    		name:'logisticstPass',
+    		name:'logisticstManagerPass',
     		inputValue:true,
     		boxLabel:'后勤同意',
     		checked:true
     	},{
-    		name:'logisticstPass',
+    		name:'logisticstManagerPass',
     		inputValue:false,
     		boxLabel:'后勤不同意',
     	}]

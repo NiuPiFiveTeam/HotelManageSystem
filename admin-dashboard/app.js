@@ -12,6 +12,7 @@ Ext.application({
         // so that application classes do not need to require each other.
         'Admin.*',
         'Ext.chart.*'
+        
     ],
 
     // The name of the initial view to create.

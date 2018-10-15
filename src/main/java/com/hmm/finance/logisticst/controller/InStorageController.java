@@ -22,9 +22,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.activiti.util.WorkflowVariable;
+import com.hmm.common.SessionUtil;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.employee.entity.Employee;
+import com.hmm.employee.service.EmployeeService;
 import com.hmm.finance.logisticst.domain.InStorage;
 import com.hmm.finance.logisticst.domain.InStorageDTO;
 import com.hmm.finance.logisticst.service.IInStorageService;
@@ -35,13 +39,20 @@ public class InStorageController {
 	@Autowired
 	private IInStorageService inStorageService;
 	
+	@Autowired
+	private EmployeeService employServiceImpl;
+	
 	private TaskService taskService;  
 	@PostMapping
-    public ExtAjaxResponse save() {
+    public ExtAjaxResponse save(HttpSession session,@RequestBody InStorage inStorage) {
     	try {
-    		InStorage inStorage = new InStorage();
-    		inStorage.setInStorageId("a1"); 
-    		inStorageService.save(inStorage);
+    		String userId = SessionUtil.getUserName(session);
+    		if(userId != null) {
+    			Employee employee = employServiceImpl.findByEmpName(userId);
+    			inStorage.setEmployee(employee);
+    			inStorage.setProcessStatus(ProcessStatus.NEW);
+    			inStorageService.save(inStorage);
+    		}
     		return new ExtAjaxResponse(true,"保存成功!");
 	    } catch (Exception e) {
 	    	e.printStackTrace();
@@ -51,20 +62,13 @@ public class InStorageController {
 	
 /*-------------------------------------流程引擎web层------------------------------------------*/
 	
-	/**
-	 * 启动流程
-	 * @param leaveId	请假信息Id
-	 * @param session	通过会话获取登录用户(请假人)
-	 * @return
-	 */
 	@RequestMapping(value = "/start")
     public ExtAjaxResponse start() {
     	try {
-    		String employeeId = "admin";
+    		String employeeId = "user3";
     		Map<String, Object> variables = new HashMap<String, Object>();
-    		variables.put("deptLeader", "financeManager");
-    		variables.put("applyEmployeeId", employeeId);
-    		inStorageService.startWorkflow(employeeId,"a1", variables);
+    		variables.put("applyUserId", employeeId);
+    		inStorageService.startWorkflow(employeeId,"1", variables);
     		return new ExtAjaxResponse(true,"操作成功!");
 	    } catch (Exception e) {
 	    	e.printStackTrace();
@@ -73,10 +77,12 @@ public class InStorageController {
     }
 	
 	@RequestMapping(value = "/tasks")
-	public Page<InStorageDTO> findTodoTasks(ExtjsPageRequest pageable){
+	public Page<InStorageDTO> findTodoTasks(HttpSession session,ExtjsPageRequest pageable){
 		Page<InStorageDTO> page = new PageImpl<InStorageDTO>(new ArrayList<InStorageDTO>(),pageable.getPageable(),0);
 		try {
-			page = inStorageService.findTodoTasks("user4", pageable.getPageable());
+			String employeeName = SessionUtil.getUserName(session);
+			Employee employee = employServiceImpl.findByEmpName(employeeName);	
+			page = inStorageService.findTodoTasks(employee.getEmpName(), pageable.getPageable());
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -87,9 +93,13 @@ public class InStorageController {
      * 签收任务
      */
     @RequestMapping(value = "claim/{id}")
-    public ExtAjaxResponse claim(@PathVariable("id") String taskId) {
+    public ExtAjaxResponse claim(@PathVariable("id") String taskId, HttpSession session) {
     	try{
-    		inStorageService.claim(taskId, "user4");
+    		String userId = SessionUtil.getUserName(session);
+    		if(userId != null) {
+    			Employee employee = employServiceImpl.findByEmpName(userId);
+    			inStorageService.claim(taskId, employee.getEmpName());
+    		}	
 	    	return new ExtAjaxResponse(true,"任务签收成功!");
 	    } catch (Exception e) {
 	    	e.printStackTrace();
@@ -104,8 +114,7 @@ public class InStorageController {
      */
     @RequestMapping(value = "complete/{id}")
     public @ResponseBody ExtAjaxResponse complete(@PathVariable("id") String taskId, WorkflowVariable var) {
-    	try{
-    		
+    	try{		
     		Map<String, Object> variables = var.getVariableMap();
     		System.out.println(variables);
     		inStorageService.complete(taskId, variables);

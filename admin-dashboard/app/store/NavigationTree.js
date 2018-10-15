@@ -63,7 +63,7 @@
                     {
                         text: 'VIP客户信息',
                         iconCls: 'x-fa fa-handshake-o',
-                        viewType: 'fullRoom',
+                        // viewType: 'fullRoom',
                         leaf: true
                     },
                     {
@@ -83,13 +83,19 @@
                     {
                         text: '财务收入管理',
                         iconCls: 'x-fa fa-file-o',
-                        viewType: 'income',
+                        // viewType: 'income',
                         leaf: true
                     },
                     {
                         text: '财务支出管理',
                         iconCls: 'x-fa fa-exclamation-triangle',
                         viewType: 'cost',
+                        leaf: true
+                    },     
+                    {               
+                        text: '后勤入库审批',
+                        iconCls: 'x-fa fa-exclamation-triangle',
+                        viewType: 'inStorageApplyCenterPanel',
                         leaf: true
                     }
                 ]
