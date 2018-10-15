@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.hmm.room.entity.Room;
 
 @Repository
-public interface RoomRepository extends PagingAndSortingRepository<Room, String>{
+public interface RoomRepository extends PagingAndSortingRepository<Room, Long>{
 
 	
 	@Query("from Room r where r.floorNode.floorId = ?1 order by r.roomNo")
