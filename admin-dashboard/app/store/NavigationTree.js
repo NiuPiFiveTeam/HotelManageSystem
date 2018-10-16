@@ -148,7 +148,12 @@
                 iconCls: 'x-fa fa-check',
                 viewType: 'login',
                 leaf: true
-           },
+           },{
+                text: '流程定义模块',
+                iconCls: 'x-fa fa-address-card',
+                viewType: 'processDefinitionCenterPanel',
+                leaf: true
+            },
            {
                 text: '员工自助管理',
                 iconCls: 'x-fa fa-address-card',
@@ -158,6 +163,33 @@
                         text: '账户管理',
                         iconCls: 'x-fa fa-user-circle',
                         viewType: 'editPassword',
+                        leaf: true
+                    },{
+                        text: '考勤打卡',
+                        iconCls: 'x-fa fa-check',
+                        viewType: 'attenceCenterPanel',
+                        leaf: true
+                   },{
+                        text: '请假管理模块',
+                        iconCls: 'x-fa fa-address-card',
+                        viewType: 'leaveCenterPanel',
+                        leaf: true
+                        
+                    },{
+                        text: '请假审批',
+                        iconCls: 'x-fa fa-address-card',
+                        viewType: 'leaveApproveCenterPanel',
+                        leaf: true
+                    },{
+                        text: '出差管理模块',
+                        iconCls: 'x-fa fa-address-card',
+                        viewType: 'travelCenterPanel',
+                        leaf: true
+                        
+                    },{
+                        text: '出差审批',
+                        iconCls: 'x-fa fa-address-card',
+                        viewType: 'travelApproveCenterPanel',
                         leaf: true
                     }
                 ]
