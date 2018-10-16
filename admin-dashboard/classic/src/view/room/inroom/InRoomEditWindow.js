@@ -1,10 +1,11 @@
 
 // The data store containing the list of states
-var states = Ext.create('Ext.data.Store', {
+var serviceType = Ext.create('Ext.data.Store', {
     fields: ['abbr', 'name'],
     data : [
-        {"abbr":"clean", "name":"清洁"},
-        {"abbr":"commodity", "name":"日用品"},
+        {"abbr":"cleanService", "name":"清洁服务"},
+        {"abbr":"dailyNecessaryService", "name":"日用品补充"},
+        {"abbr":"roomcardService", "name":"房卡服务"},
         // {"abbr":"AZ", "name":"Arizona"}
     ]
 });
@@ -53,8 +54,8 @@ Ext.define('Admin.view.room.inroom.InRoomEditWindow', {
                 },{
                     xtype:'combobox',
                     fieldLabel: '服务类型', 
-                    store: states,
-                    displayField: 'name', //states中要显示的字段
+                    store: serviceType,
+                    displayField: 'name', //serviceType中要显示的字段
                     valueField: 'abbr', //后台读取到的字段
                     editable:false, //是否可编辑
                     emptyText : '请选择服务类型',
@@ -62,55 +63,13 @@ Ext.define('Admin.view.room.inroom.InRoomEditWindow', {
                       
                         select:function(combo, record, eOpts){
                             var selectValue = record.get('name');
-                            if(selectValue == "日用品"){
-                                var form = Ext.getCmp('roomStateChange');
-                                form.items.get(2).setHidden(false); //
-                                var win1 = Ext.getCmp("inRoomEditWindow");
-                                var win = Ext.getCmp("inRoomDailyWindow");
-                                if(win == null){
-
-                                    win = Ext.create('Admin.view.room.inroom.InRoomDailyWindow');
-                                    var form = createForm(); //创建表单
-                                    Ext.Ajax.request({			
-                                        url : 'room/getDaily',
-                                        //从数据库中请求数据，动态获取items中的数据			
-                                        method : 'Get',			
-                                        success : function(result) {
-                                            var resultArray = Ext.decode(result.responseText); //得到我们需要的数组
-                                            //给form表单添加组件
-                                            for (var index = 0; index < resultArray.length; index++) {
-                                                var dailyShow = resultArray[index].show; //日用品展示的名称
-                                                var dailyName = resultArray[index].name; //日用品的真实名称
-                                                var dailyNumber = 0; //日用品的数量，初始化为0
-                                                var dailyId = resultArray[index].id; //日用品的Id
-                                                var dailyfield = {   //日用品文本域
-                                                        xtype: 'numberfield',
-                                                        name: dailyName,
-                                                        id:dailyId,
-                                                        fieldLabel: dailyShow,
-                                                        value: dailyNumber,
-                                                        maxValue: 99,
-                                                        minValue: 0,
-                                                        labelWidth: 45,
-                                                        width: 130,
-                                                        colmunWidth:0.5,
-                                                        margin:'0 8 5 0',
-                                                    };
-                                                form.add(dailyfield);
-                                        }}
-                                    });
-                                    win.add(form);
-                                }
-                                win.x=win1.x+450;
-                                win.y=win1.y;
-                                win.show();
-                               
-                            }else if(selectValue == "清洁"){
-                                var form = Ext.getCmp('roomStateChange');
-                                form.items.get(2).setHidden(true); //
-                                var win = Ext.getCmp("inRoomDailyWindow");
-                                win.hide();
-                            }
+                            var functionName = record.get('abbr');
+                            // if(selectValue == "日用品补充"){
+                            //     dailyNecessaryService();
+                            // }else if(selectValue == "清洁服务"){
+                            //     cleanService();
+                            // }else if(selectValue == "房卡服务"){}
+                            eval(functionName+"()");  //替换繁琐的 if else 语句，通过命名的规范来提高程序的低耦合性
                         }
                     }
                 },{
@@ -131,13 +90,78 @@ Ext.define('Admin.view.room.inroom.InRoomEditWindow', {
                             '<span>{number}</span>',
                         '</tpl>'
                     ]
+                },{
+                        xtype      : 'radiogroup',
+                        fieldLabel : '清洁类型',
+                        width:300,
+                        hidden:true,
+                        defaults: {
+                            flex: 1, //flex只在当layOut为vbox,hbox中起作用。grid的默认layOut应该为vbox
+                            //在这里 flex表示 每一列占用1/3的宽度
+                            listeners :{
+                                change:function(radio, newValue,oldValue){ //当选中的时候就执行这个函数
+                                 
+                                    // console.log(radio);
+                                    // console.log(newValue);  //新的值
+                                    // console.log(oldValue);  //原来的值
+                                    // console.log(radio.inputValue);
+                                    if(newValue==true && radio.id == "checkoutClean"){
+                                        var win = radio.up("window");
+                                        var form = win.down('form');
+                                        form.items.get(4).setHidden(false); //
+                                        console.log(form);
+                                        win.setHeight(350);
+                                    }else if(newValue==true && radio.id == "roomserviceClean"){
+                                        var win = radio.up("window");
+                                        var form = win.down('form');
+                                        form.items.get(4).setHidden(true); //
+                                        console.log(form);
+                                        win.setHeight(300);
+                                    }
+                                }
+                            }
+                        },
+                        layout: 'hbox',
+                        items: [
+                            {
+                                boxLabel  : '退房清洁',
+                                name      : 'cleanType',
+                                inputValue: 'checkoutClean',
+                                id        : 'checkoutClean',
+                               
+                            },{
+                                boxLabel  : '客房清洁',
+                                name      : 'cleanType',
+                                inputValue: 'roomserviceClean',
+                                id        : 'roomserviceClean'
+                            }
+                        ],
+                       
+                },{
+                    xtype     : 'textareafield',
+                    grow      : true,
+                    name      : 'remark',
+                    fieldLabel: '备　注',
+                    anchor    : '100%',
+                    hidden:true
                 }]
             },
-            {
-
-            }
-          
     ],
+    buttons: ['->',{
+        text: '提交服务请求',
+        handler: function() {
+            var form = Ext.getCmp('roomStateChange');
+            roomNo = form.items.get(0).value; //  获取房间号码
+            var selectValue = form.items.get(1).value; //选择的服务类型
+            if(selectValue == null){
+                alert("请选择一项服务后再提交");
+            }else {
+                var submitfunctionName = selectValue+"Submit";
+                eval(submitfunctionName+"(roomNo)");
+            }
+           
+        }
+    }],
     listeners:{
         close:function(){
             var win1 = Ext.getCmp("inRoomDailyWindow");
@@ -151,6 +175,9 @@ Ext.define('Admin.view.room.inroom.InRoomEditWindow', {
 
 
 
+/**
+ * 生成 日用品表单
+ */
 function createForm(){
     var form = Ext.create({
         xtype:'form',
@@ -185,16 +212,14 @@ function createForm(){
                         handler: function() {
                             var tag = Ext.getCmp("dailyResult");   //获取父window中的tag组件
                             var store = Ext.create("Admin.store.room.DailyStore");  //给tag组件创建一个 store
-                            
-
                             var form = this.up('form');
                             var size = form.items.length;
                             var data = new Array();
                             var tagvalue = new Array();  //用于标签的显示
                             for (var index = 0; index < size; index++) {
                                 var record = form.items.items[index];
-                                var number = record.value;
-                                if(number != 0){
+                                var number = record.value; //得到日用品的数量
+                                if(number != 0){  //如果日用品数量不为0，才生成标签
                                     var name = record.name;
                                     var id = record.id;
                                     tagvalue[index] = id;
@@ -211,4 +236,181 @@ function createForm(){
                     },'->']
     });
     return form;
+}
+
+/**
+ *  日用品补充选择函数
+ */
+function dailyNecessaryService(){
+    var form = Ext.getCmp('roomStateChange');
+    form.items.get(3).setHidden(true); //
+    form.items.get(2).setHidden(false); //
+    form.items.get(4).setHidden(true);
+    var win1 = Ext.getCmp("inRoomEditWindow");
+    win1.setHeight(300);
+    var win = Ext.getCmp("inRoomDailyWindow");
+    if(win == null){
+
+        win = Ext.create('Admin.view.room.inroom.InRoomDailyWindow');
+        var form = createForm(); //创建表单
+        Ext.Ajax.request({			
+            url : 'room/getDaily',
+            //从数据库中请求数据，动态获取items中的数据			
+            method : 'Get',			
+            success : function(result) {
+                var resultArray = Ext.decode(result.responseText); //得到我们需要的数组
+                //给form表单添加组件
+                for (var index = 0; index < resultArray.length; index++) {
+                    var dailyShow = resultArray[index].show; //日用品展示的名称
+                    var dailyName = resultArray[index].name; //日用品的真实名称
+                    var dailyNumber = 0; //日用品的数量，初始化为0
+                    var dailyId = resultArray[index].id; //日用品的Id
+                    var dailyfield = {   //日用品文本域
+                            xtype: 'numberfield',
+                            name: dailyName,
+                            id:dailyId,
+                            fieldLabel: dailyShow,
+                            value: dailyNumber,
+                            maxValue: 99,
+                            minValue: 0,
+                            labelWidth: 45,
+                            width: 130,
+                            colmunWidth:0.5,
+                            margin:'0 8 5 0',
+                        };
+                    form.add(dailyfield);
+            }}
+        });
+        win.add(form);
+    }
+    win.x=win1.x+450;
+    win.y=win1.y;
+    win.show();
+}
+
+
+
+/**
+ *  客房清洁服务选择函数
+ */
+function cleanService(){
+    var form = Ext.getCmp('roomStateChange');
+    form.items.get(2).setHidden(true); //
+    form.items.get(3).setHidden(false); //
+    var win = Ext.getCmp("inRoomDailyWindow");
+    if(win!=null){
+        win.hide();
+    }
+}
+
+/**
+ *  房卡服务选择函数
+ */
+function roomcardService(){
+    alert("房卡服务");
+}
+
+
+/**
+ * 日用品补充请求提交函数
+ */
+function dailyNecessaryServiceSubmit(roomNo){
+    
+    var form = Ext.getCmp('roomStateChange');
+    var dailyResult = form.items.get(2); //取到日用品的那个表单域
+    var dailyStore = dailyResult.getStore(); //取到表单域的store
+    var length = dailyStore.data.items.length;  //取到表单域的store的条目数量
+    var dailyTagData = new Array(); //封装好的数据
+    for(var i = 0; i < length ; i++){
+      var data = dailyStore.data.items[i].data;
+      dailyTagData[i] = data;
+    }
+    console.log(dailyTagData);
+    /**
+     *  封装好数据后，开始转发到后台
+     */
+    Ext.Ajax.request({			
+        url : 'roomClean/dailyNecessarySupplement',
+        //从数据库中请求数据，动态获取items中的数据	
+        params : {
+            'dailyTagData':dailyTagData,
+            'roomNo':roomNo
+        },                //如果未配置任何方法，则在未发送参数时为“GET”，如果正在发送参数，则为“POST”。
+        method : 'POST', //方法名称区分大小写，应该全部大写。			
+        success : function(result) {  //这里取回来房间最新的状态值
+
+            var state = result.responseText;
+            var roomdataview = Ext.getCmp('roomdataview');
+            var roomstore = roomdataview.getStore();
+            var record = roomstore.findRecord('roomNo',roomNo);  //findRecord ，返回值是一个 model
+
+            if(state=="NEED_DAILY_NECESSITIES"){ //说明后台返回的是房间需要日用品的状态
+                record.set('state',2);
+            }
+  
+            roomstore.load();
+            alert("请求已提交");
+            var fatherwin = form.up('window');
+            fatherwin.close();
+        }
+    });
+    
+
+}
+
+
+/**
+ * 清洁服务请求提交函数
+ */
+function cleanServiceSubmit(roomNo){
+   var radio1 = Ext.getCmp("checkoutClean");  //获取哪个radio被选中
+   var radio2 = Ext.getCmp("roomserviceClean");
+
+   var selectValue = null;
+   var remark = null;
+   if(radio1.getValue()){
+       selectValue = radio1.inputValue;  //说明需要退房
+       var form = Ext.getCmp("roomStateChange");
+       remark = form.items.get(4).value;   //得到输入的备注
+   }else if(radio2.getValue()){
+       selectValue = radio2.inputValue;  //说明需要清洁
+   }
+
+   if(selectValue != null){
+        Ext.Ajax.request({			
+            url : 'roomClean/changeRoomState',
+            //从数据库中请求数据，动态获取items中的数据	
+            params : {
+                'roomNo':roomNo,
+                'selectValue':selectValue,
+                'remark':remark,
+            },                //如果未配置任何方法，则在未发送参数时为“GET”，如果正在发送参数，则为“POST”。
+            method : 'Get', //方法名称区分大小写，应该全部大写。			
+            success : function(result) {  //这里取回来房间最新的状态值
+
+                var state = result.responseText;
+                var roomdataview = Ext.getCmp('roomdataview');
+                var roomstore = roomdataview.getStore();
+                var record = roomstore.findRecord('roomNo',roomNo);  //findRecord ，返回值是一个 model
+
+                if(state=="NEEDCLEAN"){ //说明后台返回的是房间需要清洁的状态
+                    record.set('state',3);
+                }
+                roomstore.load();
+                alert("请求已提交");
+                var fatherwin = form.up('window');
+                fatherwin.close();
+            }
+        });
+   }else{
+        alert("请选择一项清洁服务！");
+   }
+}
+
+
+/**
+ * 房卡服务请求提交函数
+ */
+function roomcardServiceSubmit(){
+    alert("房卡服务提交");
 }

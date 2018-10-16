@@ -41,7 +41,7 @@ public class RoomController {
 	 * @return
 	 */
 	@RequestMapping("/findRoom")
-	public @ResponseBody List<RoomDto> findRoomByFloorId(@RequestParam("floorId") String floorId) {
+	public @ResponseBody List<RoomDto> findRoomByFloorId(@RequestParam("floorId") String floorId,@RequestParam("type") String type) {
 //		logger.info("nihao");
 		
 		Long floorIdL = Long.parseLong(floorId);
@@ -52,13 +52,27 @@ public class RoomController {
 			for (Room room : roomList) {
 				RoomDto roomDto  = new RoomDto();
 				BeanUtils.copyProperties(room, roomDto);
-				if(room.getState() == RoomState.CHECKIN) {
-					roomDto.setState(1);  //表示正常入住状态
-				}else if(room.getState() == RoomState.NEEDCLEAN){
-					roomDto.setState(2);  //表示需要清洁状态
-				}else if(room.getState() == RoomState.NEED_DAILY_NECESSITIES){
-					roomDto.setState(3);  //表示需要日用品状态
+				if (type.equals("empty")) {
+					if (room.getState() == RoomState.EMPTY) {
+						roomDto.setState(0);  //表示空闲状态
+					}else {
+						continue;
+					}
+				}else if (type.equals("checkIn")) {
+					if (room.getState() != RoomState.EMPTY) {
+						if(room.getState() == RoomState.CHECKIN) {
+							roomDto.setState(1);  //表示正常入住状态
+						}else if(room.getState() == RoomState.NEEDCLEAN){
+							roomDto.setState(2);  //表示需要清洁状态
+						}else if(room.getState() == RoomState.NEED_DAILY_NECESSITIES){
+							roomDto.setState(3);  //表示需要日用品状态
+						}
+					}else {
+						continue;
+					}
+					
 				}
+				
 				roomDto.setFloorId(room.getFloorNode().getFloorId());
 				roomDtos.add(roomDto);
 			}

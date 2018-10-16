@@ -57,19 +57,19 @@
                     {
                         text: '客人信息登记',
                         iconCls: 'x-fa fa-user-plus',
-                        viewType: 'emptyRoom',
+                        viewType: 'addGuest',
                         leaf: true
                     },
                     {
                         text: 'VIP客户信息',
                         iconCls: 'x-fa fa-handshake-o',
-                        // viewType: 'fullRoom',
+                        viewType: 'vipGuest',
                         leaf: true
                     },
                     {
                         text: '查看入住客户',
                         iconCls: 'x-fa fa-group',
-                        viewType: 'allRoom',
+                        viewType: 'lookCheckInGuest',
                         leaf: true
                     }
                 ]

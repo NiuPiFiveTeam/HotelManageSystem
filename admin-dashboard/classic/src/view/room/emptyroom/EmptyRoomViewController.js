@@ -1,16 +1,16 @@
-Ext.define('Admin.view.room.inroom.InRoomViewController', {
+Ext.define('Admin.view.room.emptyroom.EmptyRoomViewController', {
     extend: 'Ext.app.ViewController',
-    alias: 'controller.inroomViewController',
+    alias: 'controller.emptyRoomViewController',
 	
-    loadHomeItem:function(node,event){
+    loadEmptyHomeItem:function(node,event){
             var id = event.data.id; //节点
             console.log(event.data);
             if(id>1000000){//说明是楼层Id，进行加载客房的操作
-                loadAllRoom(id);
+                loadAllEmptyRoom(id);
             }else{  //说明是客房Id，需要进行客房相关操作
                 // loadAllRoom(event.data.parentId);
-                removeBorder();
-                addBorder(id);
+                removeEmptyBorder();
+                addEmptyBorder(id);
             }   
     },
 
@@ -24,7 +24,7 @@ Ext.define('Admin.view.room.inroom.InRoomViewController', {
 
 
 /** 给Room添加边框，显示选中状态 */
-function addBorder(roomId){
+function addEmptyBorder(roomId){
     var div = document.getElementById(roomId); //得到room的DIV
     div.setAttribute('style','cursor:pointer;width:50px;height:70px;margin-left:15px;margin-top:5px;float:left;border:1px dashed #35baf6;');
     //style="cursor:pointer;width:50px;height:70px;margin-left:15px;margin-top:10px;float:left;border:1px dashed white;"
@@ -32,7 +32,7 @@ function addBorder(roomId){
 }
 
 /** 给Room移除边框，显示未选中状态 */
-function removeBorder(){
+function removeEmptyBorder(){
     var div = document.getElementsByClassName("dataview-multisort-item"); //得到room的DIV
     for (let index = 0; index < div.length; index++) {
         div[index].setAttribute('style','cursor:pointer;width:50px;height:70px;margin-left:15px;margin-top:5px;float:left;border:1px dashed white;');
@@ -40,19 +40,19 @@ function removeBorder(){
 }
 
 /** 加载出全部客房 */
-function loadAllRoom(id){
+function loadAllEmptyRoom(id){
     var proxy = {
         type: 'ajax',
-        url: 'room/findRoom?floorId='+id+"&type=checkIn",	//后台Controller中的接口url地址
+        url: 'room/findRoom?floorId='+id+"&type=empty",	//后台Controller中的接口url地址
         reader: {
             type:'json'
         }
     };
-    var store = Ext.create('Admin.store.room.RoomStore');
+    var store = Ext.create('Admin.store.room.EmptyRoomStore');
     store.setProxy(proxy);
     store.load();
 
-    var room = Ext.getCmp('roomdataview');
+    var room = Ext.getCmp('emptyRoomdataview');
     console.log(room);
     room.setStore(store);
     room.store.load();

@@ -26,12 +26,12 @@ public class FloorController {
 	 * @return
 	 */
 	@RequestMapping("/findNodes")
-	public @ResponseBody List<TreeNode> findNodesByParentId(@RequestParam("node") String node)
+	public @ResponseBody List<TreeNode> findNodesByParentId(@RequestParam("node") String node,@RequestParam("type") String type)
 	{
 		if(node.equals("root")) {
-			return floorService.findNodes(null);
+			return floorService.findNodes(null,type);
 		}else {
-			return floorService.findNodes(Long.parseLong(node));
+			return floorService.findNodes(Long.parseLong(node),type);
 		}
 	}
 }

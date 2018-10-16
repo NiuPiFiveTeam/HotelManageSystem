@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.hmm.room.entity.Floor;
 import com.hmm.room.entity.Room;
 import com.hmm.room.repository.FloorRepository;
+import com.hmm.room.util.RoomState;
 import com.hmm.room.util.TreeNode;
 
 
@@ -20,7 +21,7 @@ public class FloorService implements IFloorService {
 	private FloorRepository floorRepository;
 	
 	@Override
-	public List<TreeNode> findNodes(Long parentId) 
+	public List<TreeNode> findNodes(Long parentId,String type) 
 	{
 		List<TreeNode> nodeList = new ArrayList<TreeNode>(); //节点list
 		List<Floor> lists;
@@ -46,10 +47,26 @@ public class FloorService implements IFloorService {
 					List<TreeNode> roomlist = new ArrayList<TreeNode>(); //节点roomlist
 					for (Room room : f.getChildNodes()){
 						TreeNode roomnode  = new TreeNode();
-						roomnode.setText(room.getRoomNo());
-						roomnode.setId(room.getRoomId());
-						roomnode.setLeaf(true);
-						roomnode.setIconCls("fa-bed");
+						if (type.equals("empty")) {
+							if (room.getState() == RoomState.EMPTY) {
+								roomnode.setText(room.getRoomNo());
+								roomnode.setId(room.getRoomId());
+								roomnode.setLeaf(true);
+								roomnode.setIconCls("fa-bed");
+							}else {
+								continue;
+							}
+						}else if (type.equals("checkIn")) {
+							if (room.getState() != RoomState.EMPTY) {
+								roomnode.setText(room.getRoomNo());
+								roomnode.setId(room.getRoomId());
+								roomnode.setLeaf(true);
+								roomnode.setIconCls("fa-bed");
+							}else {
+								continue;
+							}
+						}
+						
 						roomlist.add(roomnode);
 					}
 					node.setChildren(roomlist); //设置好二级节点

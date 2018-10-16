@@ -2,12 +2,12 @@ package com.hmm.room.entity;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hmm.room.util.RoomState;
 import com.hmm.room.util.RoomType;
 
@@ -28,6 +28,7 @@ public class Room {
 	private String roomPass;  //房卡密码，跟房卡进行绑定
 	
 	//其他属性
+	@JsonIgnore
 	private Floor floorNode;//多个子节点  对  一个父节点,多个房间对应一个楼层
 
 	@Id
@@ -51,7 +52,8 @@ public class Room {
 		return roomPass;
 	}
 
-	@ManyToOne(cascade=CascadeType.ALL)
+	
+	@ManyToOne(cascade=CascadeType.ALL,fetch=FetchType.LAZY)
 	public Floor getFloorNode() {
 		return floorNode;
 	}
@@ -75,7 +77,7 @@ public class Room {
 	public void setRoomPass(String roomPass) {
 		this.roomPass = roomPass;
 	}
-
+	
 	public void setFloorNode(Floor floorNode) {
 		this.floorNode = floorNode;
 	}

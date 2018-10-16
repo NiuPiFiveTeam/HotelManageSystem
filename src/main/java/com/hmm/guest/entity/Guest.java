@@ -63,7 +63,7 @@ public class Guest {
 		return registerTime;
 	}
 	
-	@ManyToOne(cascade=CascadeType.ALL)
+	@ManyToOne(cascade=CascadeType.ALL,fetch = FetchType.LAZY)
 	public Room getRoom() {
 		return room;
 	}
@@ -95,6 +95,12 @@ public class Guest {
 	}
 	public void setRoom(Room room) {
 		this.room = room;
+	}
+	@Override
+	public String toString() {
+		return "Guest [guestId=" + guestId + ", realName=" + realName + ", phone=" + phone + ", gender=" + gender
+				+ ", idCard=" + idCard + ", address=" + address + ", state=" + state + ", registerTime=" + registerTime
+				+ "]";
 	} 
 	
 	

@@ -1,12 +1,10 @@
-Ext.define('Admin.store.room.InRoomTreeStore', {
+Ext.define('Admin.store.room.EmptyRoomTreeStore', {
     extend: 'Ext.data.TreeStore',
-    alias: 'store.inroomTreeStore',
-    // model:'',
-    // storeId: 'inroomTree',
+    alias: 'store.emptyRoomTreeStore',
     
     proxy: {
 		type: 'ajax',
-		url: 'floor/findNodes?type=checkIn',	//后台Controller中的接口url地址
+		url: 'floor/findNodes?type=empty',	//后台Controller中的接口url地址,这里我们只查询空房间
 		reader: {
 			type:'json'
 		}
@@ -16,8 +14,8 @@ Ext.define('Admin.store.room.InRoomTreeStore', {
 		text : '楼层',
         iconCls:'fa-university',
         expanded : true	 //发送node=root，这个设置true就是默认打开，打开就会访问ajax
+      
 	}
-
 
 	// root: {
     //     text:'楼层',
@@ -38,4 +36,5 @@ Ext.define('Admin.store.room.InRoomTreeStore', {
     //         ] }
     //     ]
 	// }
+
 });

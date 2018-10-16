@@ -45,7 +45,7 @@ public class Floor {
 		return floorType;
 	}
 
-	@OneToMany(mappedBy="floorNode" ,cascade=CascadeType.ALL,fetch = FetchType.EAGER)
+	@OneToMany(mappedBy="floorNode" ,cascade=CascadeType.ALL,fetch = FetchType.LAZY)
 	public List<Room> getChildNodes() {
 		return childNodes;
 	}

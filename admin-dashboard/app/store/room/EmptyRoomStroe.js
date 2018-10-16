@@ -1,7 +1,7 @@
-Ext.define('Admin.store.room.RoomStore', {
+Ext.define('Admin.store.room.EmptyRoomStore', {
     extend:'Ext.data.Store',
-	alias: 'store.roomStore',
-	storeId:'roomStore',
+	alias: 'store.emptyRoomStore',
+	storeId:'emptyRoomStore',
     model: 'Admin.model.room.RoomModel',
 
     // data: {
@@ -43,7 +43,7 @@ Ext.define('Admin.store.room.RoomStore', {
 	// },
 	 proxy: {
 		type: 'ajax',
-		url: 'room/findRoom?floorId=1000001&type=checkIn',	//后台Controller中的接口url地址
+		url: 'room/findRoom?floorId=1000001&type=empty',	//后台Controller中的接口url地址
 		reader: {
 			type:'json'
 			// rootProperty:'roomList'

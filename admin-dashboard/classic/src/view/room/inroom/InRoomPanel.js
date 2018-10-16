@@ -1,5 +1,5 @@
 
-var store = Ext.create('Admin.store.room.InRoomTreeStore');
+// var store = Ext.create('Admin.store.room.InRoomTreeStore');
 
 Ext.define('Admin.view.room.inroom.InRoomPanel', {
     extend: 'Ext.panel.Panel',
@@ -61,8 +61,8 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
                 tpl: [
                     '<div style="width:300px;height:30px;float:right">',
                         '<img style="width:20px;height:20px;margin-right:5px; margin-top:5px;" src="classic/resources/images/room/1.png" /><strong style="position:relative; bottom:4px;font-size:15px;margin-right:10px;">已入住</strong>',
-                        '<img style="width:20px;height:20px;margin-right:5px; margin-top:5px;" src="classic/resources/images/room/3.png" /><strong style="position:relative; bottom:4px;font-size:15px;margin-right:10px;">需要日用品</strong>',
-                        '<img style="width:20px;height:20px;margin-right:5px; margin-top:5px;" src="classic/resources/images/room/2.png" /><strong style="position:relative; bottom:4px;font-size:15px;">需要清洁</strong>',
+                        '<img style="width:20px;height:20px;margin-right:5px; margin-top:5px;" src="classic/resources/images/room/2.png" /><strong style="position:relative; bottom:4px;font-size:15px;margin-right:10px;">需要日用品</strong>',
+                        '<img style="width:20px;height:20px;margin-right:5px; margin-top:5px;" src="classic/resources/images/room/3.png" /><strong style="position:relative; bottom:4px;font-size:15px;">需要清洁</strong>',
                     '</div>',
                     '<div style="clear:both;"></div>',
                     '<tpl for=".">',
@@ -70,10 +70,10 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
                         '<tpl if="state == 1 ">', //表示正常入住状态
                             '<img style="width:50px;height:50px;margin-bottom=0px;" src="classic/resources/images/room/1.png" />',
                         '</tpl>',  
-                        '<tpl if="state == 2 ">', //表示需要清洁状态
+                        '<tpl if="state == 2 ">', //表示需要日用品状态
                             '<img style="width:50px;height:50px;margin-bottom=0px;" src="classic/resources/images/room/2.png" />',
                         '</tpl>',    
-                        '<tpl if="state == 3 ">', //表示需要日用品状态
+                        '<tpl if="state == 3 ">', //表示需要清洁状态
                             '<img style="width:50px;height:50px;margin-bottom=0px;" src="classic/resources/images/room/3.png" />',
                         '</tpl>',  
                             '<h3 style="margin-top:0px;margin-left:11px;margin-bottom:0px;">{roomNo}</h3>',
@@ -85,7 +85,7 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
                     //var win = this.up('container').add(Ext.widget('fullRoomEditWindow')).show();
                     var form = win.down('form').getForm();
                     // Ext.getCmp('roomNo').setValue(event.data.roomNo);
-                    form.findField('roomNo').setValue(event.data.roomNo);
+                    form.findField('roomNo').setValue(event.data.roomNo); //设置表单中的房间号的value
                     win.show();
                    
                 }},
