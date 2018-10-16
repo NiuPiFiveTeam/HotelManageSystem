@@ -1,4 +1,4 @@
-﻿Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyViewModel', {
+﻿Ext.define('Admin.view.finance.inStorage.InStorageApplyViewModel', {
     extend: 'Ext.app.ViewModel',
     alias: 'viewmodel.inStorageApplyViewModel',
     requires: [

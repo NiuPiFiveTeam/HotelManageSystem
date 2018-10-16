@@ -1,6 +1,25 @@
-Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyViewController',{
+Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
 	extend:Ext.app.ViewController,
 	alias:'controller.inStorageApplyViewController',
+
+
+    //添加入库申请
+    openAddInStoreOrderWindow:function(toolbar, rowIndex, colIndex){
+        toolbar.up('panel').up('container').add(Ext.widget('addInStoreOrderWindow')).show();
+    },
+
+// openAddWindow:function(){
+//         var win = this.lookupReference('AddEmpWindow');
+//         if (!win) {
+//             win = new Admin.view.employ.addEmp.AddEmpWindow();
+//             this.getView().add(win);
+//         }
+//         win.show();
+//     },
+
+
+
+
 	//1.签收任务
 	InStorageClaimButton:function(view,recIndex,cellIndex,item,e,record){
 		Ext.Ajax.request({

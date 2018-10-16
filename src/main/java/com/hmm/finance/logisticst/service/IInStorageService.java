@@ -1,5 +1,6 @@
 package com.hmm.finance.logisticst.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -19,7 +20,7 @@ public interface IInStorageService {
 	//1.启动流程
 	public void startWorkflow(String employeeId,String inStorageId, Map<String, Object> variables);
 //	//2.查询流程任务
-	public Page<InStorageDTO> findTodoTasks(String employeeId, Pageable pageable);
+	public List<InStorageDTO> findTodoTasks(String employeeId, Pageable pageable);
 //	//3.签收流程任务
 	public void claim(String taskId,String employeeId);
 //	//4.完成流程任务

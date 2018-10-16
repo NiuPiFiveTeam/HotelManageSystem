@@ -1,6 +1,6 @@
-Ext.define('Admin.view.finance.cost.inStorage.task.Pay',{
+Ext.define('Admin.view.finance.inStorage.task.ConfirmReceipt',{
 	extend:'Ext.form.Panel',
-	alias:'widget.pay',
+	alias:'widget.confirmReceipt',
 	requires:[
 		'Ext.button.Button',
         'Ext.form.RadioGroup',
@@ -22,13 +22,26 @@ Ext.define('Admin.view.finance.cost.inStorage.task.Pay',{
     	fieldLabel:'任务id',
     	hidden:true,
     	readOnly:true
+    },{
+    	xtype:'radiogroup',
+    	fieldLabel:'收货确认',
+    	defaults:{
+    		flex:1
+    	},
+    	items:[]
+    },{
+    	xtype:'textareafield',
+    	grow:true,
+    	name:'logisticstBackReason',
+    	fieldLabel:'驳回理由',
+    	anchor:'100%'
     }],
 
     bbar:[{
     	xtype:'button',
     	ui:'soft-green',
     	text:'提交',
-    	handler:'paySubmitButton'
+    	handler:'ConfirmReceiptSubmitButton'
     },{
     	xtype:'button',
     	ui:'gray',

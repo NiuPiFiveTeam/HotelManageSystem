@@ -1,4 +1,4 @@
-Ext.define('Admin.view.finance.cost.inStorage.task.LogisticstAudit',{
+Ext.define('Admin.view.finance.inStorage.task.LogisticstAudit',{
 	extend:'Ext.form.Panel',
 	alias:'widget.logisticstAudit',
 	requires:[

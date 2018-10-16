@@ -1,6 +1,6 @@
-Ext.define('Admin.view.finance.cost.inStorage.task.FinanceManagerAudit',{
+Ext.define('Admin.view.finance.inStorage.task.FinanceAudit',{
     extend:'Ext.form.Panel',
-    alias:'widget.financeManagerAudit',
+    alias:'widget.financeAudit',
     requires:[
         'Ext.button.Button',
         'Ext.form.RadioGroup',
@@ -24,17 +24,17 @@ Ext.define('Admin.view.finance.cost.inStorage.task.FinanceManagerAudit',{
         readOnly:true
     },{
         xtype:'radiogroup',
-        fieldLabel:'财务jingli审批',
+        fieldLabel:'财务审批',
         defaults:{
             flex:1
         },
         items:[{
-            name:'financeManagerPass',
+            name:'financeClerkPass',
             inputValue:true,
             boxLabel:'财务同意',
             checked:true
         },{       
-            name:'financeManagerPass',
+            name:'financeClerkPass',
             inputValue:false,
             boxLabel:'财务不同意',
         }]
@@ -50,7 +50,7 @@ Ext.define('Admin.view.finance.cost.inStorage.task.FinanceManagerAudit',{
         xtype:'button',
         ui:'soft-green',
         text:'提交',
-        handler:'FinanceManagerFormSubmitButton'
+        handler:'FinanceFormSubmitButton'
     },{
         xtype:'button',
         ui:'gray',

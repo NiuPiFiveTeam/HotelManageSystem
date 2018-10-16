@@ -1,6 +1,6 @@
-Ext.define('Admin.view.finance.cost.inStorage.task.ConfirmReceipt',{
+Ext.define('Admin.view.finance.inStorage.task.ContactSupplier',{
 	extend:'Ext.form.Panel',
-	alias:'widget.confirmReceipt',
+	alias:'widget.contactSupplier',
 	requires:[
 		'Ext.button.Button',
         'Ext.form.RadioGroup',
@@ -23,8 +23,15 @@ Ext.define('Admin.view.finance.cost.inStorage.task.ConfirmReceipt',{
     	hidden:true,
     	readOnly:true
     },{
+        xtype:'textfield',
+        name:'amountMoney',
+        fieldLabel:'总金额',
+        value:9999,
+        hidden:true,
+        readOnly:true
+    },{
     	xtype:'radiogroup',
-    	fieldLabel:'收货确认',
+    	fieldLabel:'联系供货方',
     	defaults:{
     		flex:1
     	},
@@ -41,7 +48,7 @@ Ext.define('Admin.view.finance.cost.inStorage.task.ConfirmReceipt',{
     	xtype:'button',
     	ui:'soft-green',
     	text:'提交',
-    	handler:'ConfirmReceiptSubmitButton'
+    	handler:'contactSupplierSubmitButton'
     },{
     	xtype:'button',
     	ui:'gray',

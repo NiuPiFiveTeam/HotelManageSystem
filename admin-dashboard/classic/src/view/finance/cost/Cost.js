@@ -11,5 +11,4 @@
             xtype:'salaryCostCenterPanel',
             title:'工资支出'
 	}]
-
 });

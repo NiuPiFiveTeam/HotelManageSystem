@@ -58,11 +58,11 @@ public class InStorageService implements IInStorageService {
 	}
 	
 	@Override
-	public Page<InStorageDTO> findTodoTasks(String employeeId,Pageable pageable){
-		List<InStorageDTO> results = null;
+	public List<InStorageDTO> findTodoTasks(String employeeId,Pageable pageable){
+		List<InStorageDTO> inStorageDTOs = null;
 		List<WorkflowDTO> workflowLists = workflowService.findTodoTasks(employeeId);
 		if(workflowLists!=null) {
-			results = new ArrayList<InStorageDTO>();
+			inStorageDTOs = new ArrayList<InStorageDTO>();
 			for(WorkflowDTO workflow : workflowLists) {
 				String businessKey = workflow.getBusinessKey();
 				if(businessKey == null) {
@@ -74,11 +74,11 @@ public class InStorageService implements IInStorageService {
 					BeanUtils.copyProperties(inStorage, inStorageDTO);
 					inStorageDTO.setEmployeeId(inStorage.getEmployee().getUserName());
 					BeanUtils.copyProperties(workflow, inStorageDTO);
-					results.add(inStorageDTO);
+					inStorageDTOs.add(inStorageDTO);
 				}
 			}
 		}
-		return new PageImpl<InStorageDTO> (results,pageable,results!=null?results.size():0);
+		return inStorageDTOs;
 	}
 	
 	 /**

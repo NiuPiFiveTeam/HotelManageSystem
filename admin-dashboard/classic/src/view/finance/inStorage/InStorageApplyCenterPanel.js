@@ -1,4 +1,4 @@
-Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyCenterPanel', {
+Ext.define('Admin.view.finance.inStorage.InStorageApplyCenterPanel', {
     extend: 'Ext.panel.Panel',
     xtype: 'inStorageApplyCenterPanel',
 	layout:'fit',

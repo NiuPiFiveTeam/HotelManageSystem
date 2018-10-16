@@ -39,7 +39,6 @@ public class FinanceReportDailyService implements IFinanceReportDailyService {
 		String dateString = formatter.format(date);
 
 		System.out.println(salaryOrderRepository.findSalaryByDay(dateString));
-	
 	}
 	
 	//查询所有记录

@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -21,16 +22,6 @@ import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.entity.Employee;
 import com.hmm.logistics.stock.entity.InDetailed;
 
-
-/**
- * 
-* @Title: InAll.java
-* @Package com.hmm.stock.entity
-* @Description: 入库总表实体类
-* @author DJDU
-* @date 2018年9月21日
-* @version V1.5
- */
 
 @Entity
 @Table(name="t_inStorage")
@@ -58,6 +49,7 @@ public class InStorage {
 	public String getVender() {
 		return vender;
 	}
+	@Column(nullable=true) 
 	public float getAmount() {
 		return amount;
 	}

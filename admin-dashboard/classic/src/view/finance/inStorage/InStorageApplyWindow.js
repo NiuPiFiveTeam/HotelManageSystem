@@ -1,4 +1,4 @@
-Ext.define('Admin.view.finance.cost.inStorage.InStorageApplyWindow',{
+Ext.define('Admin.view.finance.inStorage.InStorageApplyWindow',{
 	extend:'Ext.window.Window',
 	alias:'widget.inStorageApplyWindow',
     autoShow: true,

@@ -3,7 +3,7 @@
   <process id="CreateDailyReport" name="CreateDailyReport" isExecutable="true">
     <startEvent id="timerstartevent1" name="Timer start">
       <timerEventDefinition>
-        <timeCycle>R/PT5S</timeCycle>
+        <timeCycle>R/P1MT5S</timeCycle>
       </timerEventDefinition>
     </startEvent>
     <serviceTask id="servicetask1" name="酒店日报表生成" activiti:delegateExpression="${createDailyReport}"></serviceTask>
