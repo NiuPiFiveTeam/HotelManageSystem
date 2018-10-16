@@ -6,7 +6,6 @@ Ext.define('Admin.store.finance.SalaryOrderGridStroe', {
 	model:'Admin.model.finance.SalaryOrderModel',
 
     proxy: {
-        // type: 'memory', 	//内存代理
         type: 'rest',
         url: '/salaryOrder',	//mvc url  xxx.json
 	    reader:{

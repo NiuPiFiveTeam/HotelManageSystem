@@ -68,7 +68,6 @@ public class InitUsersAndGroupsDB {
         		identityService.createMembership("user6", "marketingClerk");
         		identityService.createMembership("user7", "financeManager");
         		identityService.createMembership("user8", "financeClerk");
-
             }
         };
     }

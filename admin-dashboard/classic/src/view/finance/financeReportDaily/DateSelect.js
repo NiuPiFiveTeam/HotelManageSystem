@@ -120,5 +120,4 @@ Ext.define('Ext.ux.form.MonthField', {
         this.picker.hide();
         //this.blur();
     }
-
 });

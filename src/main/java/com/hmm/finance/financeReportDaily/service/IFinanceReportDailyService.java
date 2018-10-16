@@ -17,6 +17,7 @@ public interface IFinanceReportDailyService{
 	public List<FinanceReportDaily> exportExcelByAll();
 	public void save(FinanceReportDaily financeReportDaily);
 	public Page<FinanceReportDaily> findAll(Specification<FinanceReportDaily> spec, Pageable pageable);
+	public void createDailyReport(Date date);
 }
 	
 	

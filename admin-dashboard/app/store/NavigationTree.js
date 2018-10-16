@@ -63,7 +63,7 @@
                     {
                         text: 'VIP客户信息',
                         iconCls: 'x-fa fa-handshake-o',
-                        viewType: 'fullRoom',
+                        // viewType: 'fullRoom',
                         leaf: true
                     },
                     {
@@ -76,38 +76,44 @@
                 
             },{
                 text: '财务管理',
-                iconCls: 'x-fa fa-leanpub',
+                iconCls: 'x-fa fa-money',
                 expanded: false,
                 selectable: false,
                 children: [
                     {
                         text: '财务收入管理',
-                        iconCls: 'x-fa fa-file-o',
-                        viewType: 'income',
+                        iconCls: 'x-fa fa-usd',
+                        // viewType: 'income',
                         leaf: true
                     },
                     {
                         text: '财务支出管理',
-                        iconCls: 'x-fa fa-exclamation-triangle',
+                        iconCls: 'x-fa fa-calendar-minus-o',
                         viewType: 'cost',
+                        leaf: true
+                    },     
+                    {               
+                        text: '后勤入库申请/审批',
+                        iconCls: 'x-fa fa-drivers-license-o',
+                        viewType: 'inStorageApplyCenterPanel',
                         leaf: true
                     }
                 ]
             },{
                 text: '酒店报表',
-                iconCls: 'x-fa fa-times-circle',
+                iconCls: 'x-fa fa-area-chart',
                 expanded: false,
                 selectable: false,
                 children: [
                     {
                         text: '财务报表',
-                        iconCls: 'x-fa fa-file-o',
+                        iconCls: 'x-fa fa-bar-chart-o',
                         viewType: 'financeReport',
                         leaf: true
                     },
                     {
                         text: '财务详细',
-                        iconCls: 'x-fa fa-exclamation-triangle',
+                        iconCls: 'x-fa fa-file-text-o',
                         viewType: 'financeReportDaily',
                         leaf: true
                     }
