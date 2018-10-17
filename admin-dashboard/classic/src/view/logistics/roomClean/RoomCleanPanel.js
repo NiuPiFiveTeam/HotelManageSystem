@@ -21,7 +21,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
             scrollable: false,
             height:525,
             columns: [
-                {xtype: 'gridcolumn',width: 60,dataIndex: 'roomId',text: '编号',align:'center', hidden :true,},
+                {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center', hidden :true,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'floorName',  text: '楼层', align:'center',flex: 1, hidden :true,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomNo',text: '房间号码', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomCleanState', text: '房间状态', align:'center',flex: 1,

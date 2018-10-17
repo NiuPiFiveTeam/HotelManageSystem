@@ -14,12 +14,12 @@
 		writer: {
 			type: 'json'
 		},
-		simpleSortMode: true	//简单排序模式
+		simpleSortMode: true,	//简单排序模式
 	},
 	autoLoad: true,//自动请求
 	autoSync: true,//自动同步
 	remoteSort: true,//全局（远程排序）排序，等于重新加载了数据
-	pageSize: 20,
+	pageSize: 10,
 
 	sorters: [{
 		direction: 'ASC',
