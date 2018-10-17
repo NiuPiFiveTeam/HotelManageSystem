@@ -4,11 +4,11 @@ Ext.define('Admin.model.logistics.roomClean.RoomCleanModel', {
 		'Ext.data.proxy.Rest'
 	],
 	fields: [
-		{type: 'int',name: 'id'},
-		{type: 'string',name: 'floor'},
-	    {type: 'int',name: 'roomNumber'},
-	    {type: 'string',name: 'roomState'},
-		{type: 'string',name: 'roomType' },
+		{type: 'int',name: 'roomId'},
+		{type: 'string',name: 'floorName'},
+	    {type: 'int',name: 'roomNo'},
+	    {type: 'string',name: 'roomCleanState'},
+		{type: 'string',name: 'type' },
 		{type: 'string',name: 'roomOther'}
 	],
 	proxy: {
