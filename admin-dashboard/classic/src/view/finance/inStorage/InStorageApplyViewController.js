@@ -3,9 +3,22 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
 	alias:'controller.inStorageApplyViewController',
 
 
-    //添加入库申请
-    openAddInStoreOrderWindow:function(toolbar, rowIndex, colIndex){
-        toolbar.up('panel').up('container').add(Ext.widget('addInStoreOrderWindow')).show();
+    //入库申请
+    InStorageApplyButton:function(view,recIndex,cellIndex,item,e,record){
+        Ext.Ajax.request({
+            url:'inStorage/start/'+record.get('inStorageId'),
+            method:'post',
+            success:function(response,options){
+                var json = Ext.util.JSON.decode(response.responseText);
+                if(json.success){
+                    Ext.Msg.alert(json.msg,'入库单号:'+record.get('inStorageId')+' 已申请!',function(){
+                        view.getStore().reload();
+                    });
+                }else{
+                    Ext.Msg.alert(json.msg,'入库单号:'+record.get('inStorageId')+' 申请失败!');
+                }
+            }
+        });
     },
 
 // openAddWindow:function(){
@@ -193,5 +206,23 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
     			}
     		}
     	});
+    },
+
+    //流程跟踪
+    onClickGraphTraceButton:function(view,recIndex,cellIndex,item,e,record){
+        var processInstanceId = record.get('processInstanceId').replace('inStorageApply:2:','');
+        var diagramResourceUrl = 'process-trace?processInstanceId=' + processInstanceId;
+        var win = new Ext.window.Window({
+            title:'入库申请流程',
+            width:860,
+            height:500,
+            layout:'fit',
+            items:[new Ext.Panel({
+                resizeTabs:true,
+                autoScroll:true,
+                html:'<iframe scrolling="auto" frameborder="0" width="100%" height="100%" src='+diagramResourceUrl+'></iframe>'
+            })]
+        });
+        win.show();
     }
 })

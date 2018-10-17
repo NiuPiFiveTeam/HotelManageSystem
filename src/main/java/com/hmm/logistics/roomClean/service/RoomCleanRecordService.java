@@ -1,5 +1,7 @@
 package com.hmm.logistics.roomClean.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hmm.logistics.roomClean.dto.FloorVoRoomVoRoomCleanDTO;
 import com.hmm.logistics.roomClean.entity.RoomCleanRecord;
 import com.hmm.logistics.roomClean.repository.RoomCleanRecordRepository;
 /**
@@ -56,5 +59,6 @@ public class RoomCleanRecordService implements IRoomCleanRecordService{
 		// TODO Auto-generated method stub
 		return roomCleanRecordRepository.findById(id).get();
 	}
+
 
 }

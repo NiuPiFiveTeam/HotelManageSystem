@@ -13,7 +13,7 @@ public class InStorageDTO {
 	private String inStorageId;
 	private Date inStorageDate;
 	private String vender;//采购商家
-	private float amount;
+	private Float amount;
 	private Date applyTime;
 	private String employeeId;
 	
@@ -43,7 +43,7 @@ public class InStorageDTO {
 	public String getVender() {
 		return vender;
 	}
-	public float getAmount() {
+	public Float getAmount() {
 		return amount;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
@@ -93,7 +93,7 @@ public class InStorageDTO {
 	public void setVender(String vender) {
 		this.vender = vender;
 	}
-	public void setAmount(float amount) {
+	public void setAmount(Float amount) {
 		this.amount = amount;
 	}
 	public void setApplyTime(Date applyTime) {

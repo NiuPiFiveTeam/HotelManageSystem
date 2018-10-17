@@ -9,6 +9,7 @@ import javax.servlet.http.HttpSession;
 import org.activiti.engine.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +27,7 @@ import com.hmm.employee.service.EmployeeService;
 import com.hmm.finance.logisticst.domain.InStorage;
 import com.hmm.finance.logisticst.domain.InStorageDTO;
 import com.hmm.finance.logisticst.service.IInStorageService;
+import com.hmm.finance.salary.domain.SalaryOrderDTO;
 
 @RestController
 @RequestMapping(value="/inStorage")
@@ -55,14 +57,10 @@ public class InStorageController {
     }
 	
 /*-------------------------------------流程引擎web层------------------------------------------*/
-	
-	@RequestMapping(value = "/start")
-    public ExtAjaxResponse start() {
+	@RequestMapping(value = "/start/{inStorageId}")
+    public ExtAjaxResponse start(@PathVariable String inStorageId) {
     	try {
-    		String employeeId = "user3";
-    		Map<String, Object> variables = new HashMap<String, Object>();
-    		variables.put("applyUserId", employeeId);
-    		inStorageService.startWorkflow(employeeId,"1", variables);
+    		inStorageService.startWorkflow(inStorageId);
     		return new ExtAjaxResponse(true,"操作成功!");
 	    } catch (Exception e) {
 	    	e.printStackTrace();
@@ -79,19 +77,18 @@ public class InStorageController {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-		return null;
+		return new PageImpl<InStorageDTO>(list,pageable.getPageable(),list!=null?list.size():0);
 	}
 	
 	/**
-     * 签收任务
+     	* 签收任务
      */
     @RequestMapping(value = "claim/{id}")
     public ExtAjaxResponse claim(@PathVariable("id") String taskId, HttpSession session) {
     	try{
-    		String userId = SessionUtil.getUserName(session);
-    		if(userId != null) {
-    			Employee employee = employServiceImpl.findByEmpName(userId);
-    			inStorageService.claim(taskId, employee.getEmpName());
+    		String userName = SessionUtil.getUserName(session);
+    		if(userName != null) {
+    			inStorageService.claim(taskId, userName);
     		}	
 	    	return new ExtAjaxResponse(true,"任务签收成功!");
 	    } catch (Exception e) {

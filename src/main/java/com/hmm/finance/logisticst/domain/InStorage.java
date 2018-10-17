@@ -29,8 +29,8 @@ public class InStorage {
 	private String inStorageId;
 	private Date inStorageDate;//入库日期
 	private String vender;//采购商家
-	private float amount;
-	private Date applyTime;
+	private Float amount;
+	private Date applyTime;//申请时间
 	
 	private List<InDetailed> inDetaileds = new ArrayList<InDetailed>();
 	private Employee employee;
@@ -50,7 +50,7 @@ public class InStorage {
 		return vender;
 	}
 	@Column(nullable=true) 
-	public float getAmount() {
+	public Float getAmount() {
 		return amount;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
@@ -78,7 +78,7 @@ public class InStorage {
 	public void setVender(String vender) {
 		this.vender = vender;
 	}
-	public void setAmount(float amount) {
+	public void setAmount(Float amount) {
 		this.amount = amount;
 	}
 	public void setApplyTime(Date applyTime) {

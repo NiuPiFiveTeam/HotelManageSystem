@@ -1,72 +1,48 @@
-package com.hmm.logistics.roomClean.entity;
+package com.hmm.logistics.roomClean.dto;
+import com.hmm.logistics.roomClean.util.RoomCleanState;
+import com.hmm.room.util.RoomType;
 
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.format.annotation.DateTimeFormat;
-
-/**
- * 
-* @Title: RoomCleanQueryDTO.java
-* @Package com.hmm.logistics.roomClean.entity
-* @Description: TODO(客房内务DTO，用于与前端数据交互)
-* @author DJDU
-* @date 2018年10月8日
-* @version V1.0
- */
-public class RoomCleanQueryDTO {
-	private String roomNumber;//房间编号
-	private String floor;//楼层
-	private String roomState;//房间状态
-	private String roomType;//房间类型
-	private String roomOther;//备注
+public class FloorVoRoomVoRoomCleanDTO {
+	private String floorName; //楼层
+	private String roomNo;	  //房间号码
+	private RoomType type;	  //房间类型
+	private String roomCleanState;//房间服务状态
+	private String roomOther; //房间备注
 	
-	public String getFloor() {
-		return floor;
+	public String getFloorName() {
+		return floorName;
 	}
-	public String getRoomNumber() {
-		return roomNumber;
+	public void setFloorName(String floorName) {
+		this.floorName = floorName;
 	}
-	public String getRoomState() {
-		return roomState;
+	public String getRoomNo() {
+		return roomNo;
 	}
-	public String getRoomType() {
-		return roomType;
+	public void setRoomNo(String roomNo) {
+		this.roomNo = roomNo;
 	}
-	
+	public RoomType getType() {
+		return type;
+	}
+	public void setType(RoomType type) {
+		this.type = type;
+	}
+	public String getRoomCleanState() {
+		return roomCleanState;
+	}
+	public void setRoomCleanState(String roomCleanState) {
+		this.roomCleanState = roomCleanState;
+	}
 	public String getRoomOther() {
 		return roomOther;
-	}
-	
-	
-	
-	public void setFloor(String floor) {
-		this.floor = floor;
-	}
-	public void setRoomNumber(String roomNumber) {
-		this.roomNumber = roomNumber;
-	}
-	public void setRoomState(String roomState) {
-		this.roomState = roomState;
-	}
-	public void setRoomType(String roomType) {
-		this.roomType = roomType;
 	}
 	public void setRoomOther(String roomOther) {
 		this.roomOther = roomOther;
 	}
-	
-	
-	@SuppressWarnings({ "serial"})
+}
+
+/**
+ * @SuppressWarnings({ "serial"})
 	public static Specification<RoomClean> getWhereClause(final RoomCleanQueryDTO roomCleanQueryDTO) {
 		return new Specification<RoomClean>() {
 			@Override
@@ -108,26 +84,4 @@ public class RoomCleanQueryDTO {
 			}
 		};
 	}
-	
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ * */

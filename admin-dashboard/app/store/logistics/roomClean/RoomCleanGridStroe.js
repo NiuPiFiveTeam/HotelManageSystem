@@ -23,7 +23,7 @@
 
 	sorters: [{
 		direction: 'ASC',
-		property: 'floor'
+		property: 'floorName'
 	}]
 	
 });

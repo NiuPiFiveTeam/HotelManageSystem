@@ -75,22 +75,22 @@ public class Employee {
 	public String getEmpNo() {
 		return empNo;
 	}
-	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ")
+	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public Set<Work> getWorks() {
 		return works;
 	}
 	
-	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ")
+	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public Set<Leave> getLeaves() {
 		return leaves;
 	}
 	
-	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ")
+	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public Set<Overtime> getOvertimes() {
 		return overtimes;
 	}
 	
-	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ")
+	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public Set<Travel> getTravels() {
 		return travels;
 	}
@@ -104,7 +104,7 @@ public class Employee {
 	public List<GroupRole> getGroupRoles() {
 		return groupRoles;
 	}
-	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ")
+	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public List<SchedulEvent> getSchedulEventlist() {
 		return SchedulEventlist;
 	}

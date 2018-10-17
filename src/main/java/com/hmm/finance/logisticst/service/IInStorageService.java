@@ -18,7 +18,7 @@ public interface IInStorageService {
 		
 	//流程业务
 	//1.启动流程
-	public void startWorkflow(String employeeId,String inStorageId, Map<String, Object> variables);
+	public void startWorkflow(String inStorageId);
 //	//2.查询流程任务
 	public List<InStorageDTO> findTodoTasks(String employeeId, Pageable pageable);
 //	//3.签收流程任务

@@ -1,7 +1,8 @@
 package com.hmm.logistics.roomClean.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hmm.common.beans.BeanUtils;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.logistics.roomClean.dto.FloorVoRoomVoRoomCleanDTO;
 import com.hmm.logistics.roomClean.entity.RoomClean;
-import com.hmm.logistics.roomClean.entity.RoomCleanQueryDTO;
 import com.hmm.logistics.roomClean.service.IRoomCleanService;
 import com.hmm.room.util.RoomState;
 
@@ -36,13 +37,18 @@ public class RoomCleanController {
 	@Autowired
 	private IRoomCleanService roomCleanService;
 	
+
 	@GetMapping
-	public Page<RoomClean> getPage(RoomCleanQueryDTO roomCleanQueryDTO , ExtjsPageRequest pageRequest) 
-	{
-		System.out.println(RoomCleanQueryDTO.getWhereClause(roomCleanQueryDTO));
-		return roomCleanService.findAll(RoomCleanQueryDTO.getWhereClause(roomCleanQueryDTO), pageRequest.getPageable());
+	public List<FloorVoRoomVoRoomCleanDTO> getPage(ExtjsPageRequest pageRequest){
+		
+		return roomCleanService.findAllFloorVoRoomVoRoomCleanDTO();
+		
 	}
 	
+//	@RequestMapping("/data")
+//	public void set() {
+//		roomCleanService.set();
+//	}
 	
 	@PutMapping(value="{id}",consumes=MediaType.APPLICATION_JSON_VALUE)
 	public ExtAjaxResponse update(@PathVariable("id") Long myId,@RequestBody RoomClean dto) {

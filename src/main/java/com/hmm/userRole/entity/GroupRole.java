@@ -42,7 +42,7 @@ public class GroupRole {
 		return groupId;
 	}
 	
-	@ManyToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
+	@ManyToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY,mappedBy="groupRoles")
 	public List<Employee> getEmploys() {
 		return employs;
 	}
