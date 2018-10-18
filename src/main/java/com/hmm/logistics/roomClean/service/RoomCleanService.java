@@ -2,7 +2,6 @@ package com.hmm.logistics.roomClean.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,15 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hmm.common.web.ExtjsPageRequest;
-import com.hmm.logistics.roomClean.dto.FloorVoRoomVoRoomCleanDTO;
+import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
 import com.hmm.logistics.roomClean.entity.RoomClean;
+import com.hmm.logistics.roomClean.repository.FloorVoRoomVoRoomCleanRepository;
 import com.hmm.logistics.roomClean.repository.RoomCleanRepository;
 import com.hmm.logistics.roomClean.util.RoomCleanState;
 import com.hmm.room.entity.Floor;
 import com.hmm.room.entity.Room;
-import com.hmm.room.repository.FloorRepository;
 import com.hmm.room.repository.RoomRepository;
-import com.hmm.room.util.RoomState;
+import com.hmm.room.util.RoomType;
 
 /**
  * 
@@ -41,6 +40,8 @@ public class RoomCleanService implements IRoomCleanService{
 	private RoomCleanRepository roomCleanRepository;
 	@Autowired
 	private RoomRepository roomRepository;
+	@Autowired
+	private FloorVoRoomVoRoomCleanRepository floorVoRoomVoRoomCleanDTORepository;
 	
 	@Override
 	public RoomClean save(RoomClean entity) {
@@ -75,15 +76,15 @@ public class RoomCleanService implements IRoomCleanService{
 		return roomCleanRepository.findById(id).get();
 	}
 
-	@SuppressWarnings("null")
+	//设置FloorVoRoomVoRoomClean表
 	@Override
-	public List<FloorVoRoomVoRoomCleanDTO> findAllFloorVoRoomVoRoomCleanDTO() {
-		// TODO Auto-generated method stub
-		ExtjsPageRequest page=new ExtjsPageRequest();
-		List<FloorVoRoomVoRoomCleanDTO> floorVoRoomVoRoomCleanDTO = new ArrayList<FloorVoRoomVoRoomCleanDTO>();;
-		List<Room> rooms = (List<Room>) roomRepository.findAll();//获取全部房间的列表集合
+	public void saveAllFloorVoRoomVoRoomCleanDTO() {
+		// 先存数据后查询
+		List<FloorVoRoomVoRoomClean> floorVoRoomVoRoomCleanDTO = new ArrayList<FloorVoRoomVoRoomClean>();
+		List<Room> rooms = (List<Room>)roomRepository.findAll();
 		for(Room room:rooms) {
-			FloorVoRoomVoRoomCleanDTO floorVoRoomVoRoomClean=new FloorVoRoomVoRoomCleanDTO();
+			//System.out.println(room.getFloorNode().getFloorName());
+			FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=new FloorVoRoomVoRoomClean();
 
 			Floor floor=room.getFloorNode();//获取楼层记录
 			RoomClean roomClean=roomCleanRepository.findByRoomId(room.getRoomId());//获取房间清洁服务记录
@@ -91,7 +92,20 @@ public class RoomCleanService implements IRoomCleanService{
 			floorVoRoomVoRoomClean.setFloorName(floor.getFloorName());
 			floorVoRoomVoRoomClean.setRoomNo(room.getRoomNo());
 			floorVoRoomVoRoomClean.setRoomOther(roomClean.getRoomOther());
-			floorVoRoomVoRoomClean.setType(room.getType());
+			
+			if(room.getType()==RoomType.DOUBLEROOM) {
+				floorVoRoomVoRoomClean.setType("双人房");
+			}
+			else if(room.getType()==RoomType.HOURROOM) {
+				floorVoRoomVoRoomClean.setType("钟点房");
+			}
+			else if(room.getType()==RoomType.SINGLEROOM) {
+				floorVoRoomVoRoomClean.setType("单人房");
+			}
+			else if(room.getType()==RoomType.TRIPLEROOM) {
+				floorVoRoomVoRoomClean.setType("三人房");
+			}
+			
 			if(roomClean.getRoomCleanState()==RoomCleanState.CLEAN) {
 				floorVoRoomVoRoomClean.setRoomCleanState("退房清洁");
 			}
@@ -105,14 +119,14 @@ public class RoomCleanService implements IRoomCleanService{
 				floorVoRoomVoRoomClean.setRoomCleanState("服务中");
 			}
 			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING) {
-				continue;
+				floorVoRoomVoRoomClean.setRoomCleanState("等待中");
+				//continue;
 			}
-			
-			
 			floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 		}
-		
-		return floorVoRoomVoRoomCleanDTO;
+		for(FloorVoRoomVoRoomClean floorVoRoomVoRoomClean:floorVoRoomVoRoomCleanDTO) {
+			floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
+		}
 	}
 
 	
@@ -123,6 +137,7 @@ public class RoomCleanService implements IRoomCleanService{
 		return roomCleanRepository.findByRoomId(roomId);
 	}
 	
+	//设置RoomClean表
 	@Override
 	public void set() {
 		List<Room> rooms = (List<Room>) roomRepository.findAll();
@@ -134,6 +149,11 @@ public class RoomCleanService implements IRoomCleanService{
 			save(rc);
 		}
 	}
-	
-	
+
+	@Override
+	public Page<FloorVoRoomVoRoomClean> findAllFloorVoRoomVoRoomCleanDTO(Specification<FloorVoRoomVoRoomClean> spec,
+			ExtjsPageRequest pageRequest) {
+		// TODO Auto-generated method stub
+		return floorVoRoomVoRoomCleanDTORepository.findAll(spec, pageRequest.getPageable());
+	}
 }

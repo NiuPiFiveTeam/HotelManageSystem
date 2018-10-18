@@ -1,11 +1,21 @@
 package com.hmm.logistics.roomClean.dto;
-import com.hmm.logistics.roomClean.util.RoomCleanState;
-import com.hmm.room.util.RoomType;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.jpa.domain.Specification;
+
+import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
 
 public class FloorVoRoomVoRoomCleanDTO {
 	private String floorName; //楼层
 	private String roomNo;	  //房间号码
-	private RoomType type;	  //房间类型
+	private String type;	  //房间类型
 	private String roomCleanState;//房间服务状态
 	private String roomOther; //房间备注
 	
@@ -21,10 +31,10 @@ public class FloorVoRoomVoRoomCleanDTO {
 	public void setRoomNo(String roomNo) {
 		this.roomNo = roomNo;
 	}
-	public RoomType getType() {
+	public String getType() {
 		return type;
 	}
-	public void setType(RoomType type) {
+	public void setType(String type) {
 		this.type = type;
 	}
 	public String getRoomCleanState() {
@@ -39,49 +49,31 @@ public class FloorVoRoomVoRoomCleanDTO {
 	public void setRoomOther(String roomOther) {
 		this.roomOther = roomOther;
 	}
-}
-
-/**
- * @SuppressWarnings({ "serial"})
-	public static Specification<RoomClean> getWhereClause(final RoomCleanQueryDTO roomCleanQueryDTO) {
-		return new Specification<RoomClean>() {
+	@SuppressWarnings({ "serial"})
+	public static Specification<FloorVoRoomVoRoomClean> getWhereClause(final FloorVoRoomVoRoomCleanDTO floorVoRoomVoRoomCleanDTO) {
+		return new Specification<FloorVoRoomVoRoomClean>() {
 			@Override
-			public Predicate toPredicate(Root<RoomClean> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+			public Predicate toPredicate(Root<FloorVoRoomVoRoomClean> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 			
 				List<Predicate> predicate = new ArrayList<>();
-	
-				//房间编号
-				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomNumber())) {
-					predicate.add(criteriaBuilder.like(root.get("roomNumber").as(String.class),
-							"%" +roomCleanQueryDTO.getRoomNumber() + "%"));
-				}
-	   			
-	   			//楼层
-				if (StringUtils.isNotBlank(roomCleanQueryDTO.getFloor())) {
-					predicate.add(criteriaBuilder.like(root.get("floor").as(String.class),
-							"%" +roomCleanQueryDTO.getFloor() + "%"));
-				}
-	   			
-	   			//房间状态
-				//StringUtils.isNotBlank(）等价于 str != null && str.length > 0 && str.trim().length > 0
-				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomState())) {
-					predicate.add(criteriaBuilder.like(root.get("roomState").as(String.class),
-							"%" + roomCleanQueryDTO.getRoomState() + "%"));
-				}
-				//房间类型
-				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomType())) {
-					predicate.add(criteriaBuilder.like(root.get("roomType").as(String.class),
-							"%" + roomCleanQueryDTO.getRoomType() + "%"));
-				}
-				//备注
-				if (StringUtils.isNotBlank(roomCleanQueryDTO.getRoomOther())) {
-					predicate.add(criteriaBuilder.like(root.get("roomOther").as(String.class),
-							"%" + roomCleanQueryDTO.getRoomOther() + "%"));
-				}
-							
+				
+				if (StringUtils.isNotBlank(floorVoRoomVoRoomCleanDTO.getRoomCleanState())) {
+					predicate.add(criteriaBuilder.like(root.get("roomCleanState").as(String.class),
+							"%" + floorVoRoomVoRoomCleanDTO.getRoomCleanState() + "%"));}
+				if (StringUtils.isNotBlank(floorVoRoomVoRoomCleanDTO.getRoomNo())) {
+					predicate.add(criteriaBuilder.like(root.get("roomNo").as(String.class),
+							"%" + floorVoRoomVoRoomCleanDTO.getRoomNo() + "%"));}
+				if (StringUtils.isNotBlank(floorVoRoomVoRoomCleanDTO.getType())) {
+					predicate.add(criteriaBuilder.like(root.get("type").as(String.class),
+							"%" + floorVoRoomVoRoomCleanDTO.getType() + "%"));}
+						
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();
 			}
 		};
 	}
+}
+
+/**
+ * 
  * */

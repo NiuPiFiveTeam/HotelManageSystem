@@ -1,8 +1,7 @@
 package com.hmm.logistics.roomClean.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +16,7 @@ import com.hmm.common.beans.BeanUtils;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
 import com.hmm.logistics.roomClean.dto.FloorVoRoomVoRoomCleanDTO;
+import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
 import com.hmm.logistics.roomClean.entity.RoomClean;
 import com.hmm.logistics.roomClean.service.IRoomCleanService;
 import com.hmm.room.util.RoomState;
@@ -37,13 +37,14 @@ public class RoomCleanController {
 	@Autowired
 	private IRoomCleanService roomCleanService;
 	
-
 	@GetMapping
-	public List<FloorVoRoomVoRoomCleanDTO> getPage(ExtjsPageRequest pageRequest){
-		
-		return roomCleanService.findAllFloorVoRoomVoRoomCleanDTO();
-		
-	}
+		public Page<FloorVoRoomVoRoomClean> getPages(FloorVoRoomVoRoomCleanDTO floorVoRoomVoRoomCleanDTO,ExtjsPageRequest pageRequest){
+			return roomCleanService.findAllFloorVoRoomVoRoomCleanDTO(FloorVoRoomVoRoomCleanDTO.getWhereClause(floorVoRoomVoRoomCleanDTO), pageRequest);
+		}
+//	@RequestMapping("/data")
+//	public void save() {
+//		roomCleanService.saveAllFloorVoRoomVoRoomCleanDTO();
+//	}
 	
 //	@RequestMapping("/data")
 //	public void set() {
