@@ -98,8 +98,43 @@ addGuestLabel.addListener("click", function () {
                     bar: {
                         cls: 'fa-refresh' ,
                         width:20,
-                        handler: function() {
-                            console.log('foo trigger clicked');
+                        handler: function(idcard) {
+                           
+                            let cardNumber = idcard.value; 
+                            if (cardNumber == '' || cardNumber == null) {
+                                alert('请输入身份证号');
+                                return;
+                            } else {
+                                if (isCardNo(cardNumber) == false) {
+                                    alert('身份证输入不合法');
+                                    return;
+                                }else {
+                                    let thisFieldSet = idcard.up('fieldset');
+                                    let thisFieldSetName = thisFieldSet.name;
+                                    console.log(thisFieldSetName);
+                                    let thisArr = thisFieldSetName.split("_");
+                                    let thisIndex = parseInt(thisArr[1])-1;
+                                    console.log(thisIndex);
+                                    while(thisIndex > 0){  //最多检验到第一个fieldset
+                                        let FrontfieldSet = addGuestFormPanel.items.get(thisIndex-1); //上一个fieldset
+                                        console.log(FrontfieldSet);
+                                        let frontIdCard = FrontfieldSet.items.get(0).value; //取到上一个fieldSet的身份证号，判断是否相同
+                                        thisIndex--;
+                                        if(cardNumber == frontIdCard){
+                                            alert("身份证号重复！请核对后重新输入！");
+                                            return;
+                                        }
+                                    }
+                                    alert(cardNumber);
+                                    Ext.Ajax.request({
+                                        url:'guest/findGuestByIdCard', 
+                                        params:{'cardNumber':cardNumber}, 
+                                        method:'Get', success:function(result) {
+                                            loadGuestInfo(idcard, result);
+                                        }
+                                    });
+                                }
+                            }
                         }
                     }
                 }
@@ -159,6 +194,38 @@ addGuestLabel.addListener("click", function () {
 },null,{ element: 'el' });
 
 
+function loadGuestInfo(idcard,result){
+
+    let fatherFiledSet = idcard.up('fieldset');
+
+    if(result.responseText == null || result.responseText == ""){
+        alert("这是酒店的新用户");
+        fatherFiledSet.items.get(5).setValue("临时客人");
+    }else{
+        let resultArray = Ext.decode(result.responseText); //得到我们需要的数组
+        console.log(resultArray);
+        fatherFiledSet.items.get(1).setValue(resultArray['realName']);
+        fatherFiledSet.items.get(2).setValue(resultArray['address']);
+        fatherFiledSet.items.get(3).setValue(resultArray['phone']);
+        if(resultArray['gender'] == "MALE"){
+            fatherFiledSet.items.get(4).setValue("男性");
+        }else{
+            fatherFiledSet.items.get(4).setValue("女性");
+        }
+        //CASUAL,MEMBER,STARMEMBER,BLACKLIST
+        if(resultArray['guestState'] == "STARMEMBER"){
+            fatherFiledSet.items.get(5).setValue("星标会员");
+        }else if(resultArray['guestState'] == "MEMBER"){
+            fatherFiledSet.items.get(5).setValue("普通会员");
+        }else if(resultArray['guestState'] == "BLACKLIST"){
+            fatherFiledSet.items.get(5).setValue("黑名单");
+        }
+        var registerDate = resultArray['registerTime'].substr(0,10);
+        fatherFiledSet.items.get(6).setValue(registerDate);
+    }
+
+}
+
 
 Ext.define('Admin.view.guest.addguest.AddGuestPanel', {
 extend: 'Ext.form.Panel',
@@ -173,6 +240,7 @@ items:[
         xtype: 'fieldset',
         title: '第一个客人信息',
         name:'guestfieldset_1',
+        // collapsed: true
         collapsible: true,
         colmunWidth:1,
         width:1000, 
@@ -182,9 +250,6 @@ items:[
             layout: 'hbox'
         }, 
         items:[
-            {
-                xtype:addGuestLabel
-            },
             {
                 xtype:'textfield',
                 fieldLabel: '身份证号',
@@ -207,14 +272,14 @@ items:[
                                }else{  //ajax进去后台查询
                                     alert(cardNumber);
                                     Ext.Ajax.request({			
-                                        url : 'guest/findGuestByIdcard',
+                                        url : 'guest/findGuestByIdCard',
                                         //从数据库中请求数据，动态获取items中的数据
                                         params : {
                                             'cardNumber':cardNumber,
                                         },			
                                         method : 'Get',			
                                         success : function(result) {
-                                            
+                                            loadGuestInfo(idcard,result);
                                         }
                                     }); 
                                }
@@ -277,8 +342,45 @@ items:[
           height:30,
           margin:'0 0 0 90',
           listeners:{
-                'click':function(){
-                    alert(123);
+                'click':function(btn){
+                    let guestInfoAddPanel = btn.up('form');
+                    let guestNumber = guestInfoAddPanel.items.length - 3;
+                    var guestList = new Array();
+                    let index = 0;
+                    while(guestNumber > 0){
+                        let guestInfor = guestInfoAddPanel.items.get(guestNumber - 1);
+                        let data = {
+                          'idCard':guestInfor.items.items[0].value,
+                          'realName':guestInfor.items.items[1].value,
+                          'address':guestInfor.items.items[2].value,
+                          'phone':guestInfor.items.items[3].value,
+                          'gender':guestInfor.items.items[4].value,
+                          'state':guestInfor.items.items[5].value,
+                          'registerTime':guestInfor.items.items[6].value
+                        };
+                        guestList[index] = data;
+                        guestNumber--;
+                        index++;
+                    }
+                    for (let i = 0; i < guestList.length; i++) {
+                        for (let j = i+1; j < guestList.length; j++) {
+                            if(guestList[i]['idCard'] == guestList[j]['idCard']){
+                                alert("身份证号码:\""+guestList[j]['idCard']+"\"存在重复,请重新确认是否输入错误!");
+                                return;
+                            }
+                        }
+                    }
+                    Ext.Ajax.request({			
+                        url : 'guest/saveGuest',
+                        //从数据库中请求数据，动态获取items中的数据			
+                        method : 'Get',		
+                        params:{
+                            'guestList':JSON.stringify(guestList)
+                        },
+                        success : function(result) {
+
+                        }
+                    });
                 }
           }
     }

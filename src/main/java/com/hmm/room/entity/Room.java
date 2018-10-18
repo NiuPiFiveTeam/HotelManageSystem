@@ -8,6 +8,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hmm.room.util.RoomState;
 import com.hmm.room.util.RoomType;
 
@@ -18,6 +19,7 @@ import com.hmm.room.util.RoomType;
  */
 @Entity
 @Table(name="t_room")
+//@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 public class Room {
 
 	private Long roomId;  
@@ -28,7 +30,7 @@ public class Room {
 	private String roomPass;  //房卡密码，跟房卡进行绑定
 	
 	//其他属性
-	@JsonIgnore
+//	@JsonIgnore
 	private Floor floorNode;//多个子节点  对  一个父节点,多个房间对应一个楼层
 
 	@Id
