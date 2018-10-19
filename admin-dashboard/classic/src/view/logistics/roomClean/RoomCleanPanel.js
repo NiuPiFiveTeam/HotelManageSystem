@@ -1,3 +1,5 @@
+Ext.util.CSS.createStyleSheet('.ts {display:none}');//单独创建css样式
+
 Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
     extend: 'Ext.tab.Panel',
     xtype: 'roomCleanPanel',
@@ -19,7 +21,17 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
             title: '客房内务',
             bind: '{roomCleanContent}',
             scrollable: false,
-            height:525,
+            viewConfig:{
+                forceFit:false,
+                emptyText:"<div style='text-align:center;padding:8px;font-size:16px;'>查询无数据</div>",
+                deferEmptyText:false,
+                // getRowClass: function (record, rowIndex, rowParams, store) {
+                //     //设置条件，然后返回想展示的样式
+                //         if (record.get('roomCleanState')=='等待中') {
+                //             return 'ts';//样式名字
+                //         } 
+                //     }
+            },
             columns: [
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center', hidden :true,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'floorName',  text: '楼层', align:'center',flex: 1, hidden :true,},
@@ -27,16 +39,16 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomCleanState', text: '房间状态', align:'center',flex: 1,
                 renderer: function(val) {
 		            if (val =='退房清洁') {
-			            return '<span style="color:green;">退房清洁</span>';
+			            return '<span style="color:red;">退房清洁</span>';
 			        } else if (val =='客房服务') {
-			            return '<span style="color:red;">客房服务</span>';
+			            return '<span style="color:blue;">客房服务</span>';
 			        } else if (val =='清洁中') {
-			            return '<span style="color:blue;">清洁中</span>';
+			            return '<span style="color:green;">清洁中</span>';
 			        }else if (val =='服务中') {
-			            return '<span style="color:blue;">服务中</span>';
+			            return '<span style="color:#FA8072;">服务中</span>';
 			        }
 			        return val;
-	            }
+                },
                 },
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'type',  text: '房间类型', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomOther',  text: '备注', align:'center',flex: 1},
@@ -85,10 +97,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                     },
 /*********************************************************客房服务按钮**********************************************************/
              //客房服务按钮
-                        {xtype: 'button',handler: 'onInCleanButton',tooltip : '客房服务', //iconCls: 'x-fa fa-close'	,
+                        {xtype: 'button',handler: 'onInCleanStartButton',tooltip : '客房服务', //iconCls: 'x-fa fa-close'	,
                         getClass : function (v, metadata, r, rowIndex, colIndex, store) {
                             var roomCleanState = r.data.roomCleanState;
-                            var roomWorker = r.data.roomWorker;
                             if(roomCleanState == '客房服务'){
                                 return 'x-fa fa-refresh';
                             }
@@ -138,7 +149,21 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
          },],
                 }
             ],
-            tbar: [
+            tbar: ['->',{
+                text:"全部楼层",
+                tooltip : '一楼全部房间状态',
+                iconCls: 'fa fa-university',
+                listeners: {
+                    click: {
+                        fn: function(btn){
+                            //alert(btn.value);
+                            var store =	btn.up('gridpanel').getStore();
+                            Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                            store.load({params:{start:0, limit:20, page:1}});
+                        }
+                    }
+                }
+            },
             '->',{
                 xtype: 'splitbutton',
                 text: '一楼',
@@ -150,9 +175,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         fn: function(btn){
                             //alert(btn.value);
                             var store =	btn.up('gridpanel').getStore();
-                            Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                            Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
-                            store.load({params:{start:0, limit:20, page:1}});
+                            Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                            Ext.apply(store.proxy.extraParams, {floorName:btn.value,roomCleanState:""});
+                            store.load({params:{start:0, limit:20, page:1,sort:"roomCleanState"}});
                         }
                     }
                 },
@@ -165,23 +190,23 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                                 fn: function(btn){ 
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"一楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"一楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}}); 
                                 }
                             }
                         },
                     },
                     {
-                        text:'房间服务',
-                        value:'房间服务',
+                        text:'客房服务',
+                        value:'客房服务',
                         listeners: {
                             click: {
                                 fn: function(btn){ 
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"一楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"一楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});  
                                 }
                             }
@@ -200,9 +225,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         fn: function(btn){ 
                              //alert(btn.value);
                              var store =	btn.up('gridpanel').getStore();
-                             Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                             Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
-                             store.load({params:{start:0, limit:20, page:1}}); 
+                             Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                             Ext.apply(store.proxy.extraParams, {floorName:btn.value,roomCleanState:""});
+                             store.load({params:{start:0, limit:20, page:1,sort:"roomCleanState"}}); 
                         }
                     }
                 },
@@ -215,23 +240,23 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                                 fn: function(btn){
                                    // alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"二楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"二楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}}); 
                                 }
                             }
                         },
                     },
                     {
-                        text:'房间服务',
-                        value:'房间服务',
+                        text:'客房服务',
+                        value:'客房服务',
                         listeners: {
                             click: {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"二楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"二楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}}); 
                                 }
                             }
@@ -251,9 +276,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         fn: function(btn){ 
                              //alert(btn.value);
                              var store =	btn.up('gridpanel').getStore();
-                             Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                             Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
-                             store.load({params:{start:0, limit:20, page:1}}); 
+                             Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                             Ext.apply(store.proxy.extraParams, {floorName:btn.value,roomCleanState:""});
+                             store.load({params:{start:0, limit:20, page:1,sort:"roomCleanState"}}); 
                         }
                     }
                 },
@@ -266,23 +291,23 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"三楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"三楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
                         },
                     },
                     {
-                        text:'房间服务',
-                        value:'房间服务',
+                        text:'客房服务',
+                        value:'客房服务',
                         listeners: {
                             click: {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"三楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"三楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
@@ -302,9 +327,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         fn: function(btn){ 
                             //alert(btn.value);
                             var store =	btn.up('gridpanel').getStore();
-                            Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                            Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
-                            store.load({params:{start:0, limit:20, page:1}}); 
+                            Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                            Ext.apply(store.proxy.extraParams, {floorName:btn.value,roomCleanState:""});
+                            store.load({params:{start:0, limit:20, page:1,sort:"roomCleanState"}}); 
                         }
                     }
                 },
@@ -317,23 +342,23 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"四楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"四楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
                         },
                     },
                     {
-                        text:'房间服务',
-                        value:'房间服务',
+                        text:'客房服务',
+                        value:'客房服务',
                         listeners: {
                             click: {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"四楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"四楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
@@ -353,9 +378,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         fn: function(btn){ 
                              //alert(btn.value);
                              var store =btn.up('gridpanel').getStore();
-                             Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                             Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
-                             store.load({params:{start:0, limit:20, page:1}}); 
+                             Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                             Ext.apply(store.proxy.extraParams, {floorName:btn.value,roomCleanState:""});
+                             store.load({params:{start:0, limit:20, page:1,sort:"roomCleanState"}}); 
                         }
                     }
                 },
@@ -368,23 +393,23 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"五楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"五楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
                         },
                     },
                     {
-                        text:'房间服务',
-                        value:'房间服务',
+                        text:'客房服务',
+                        value:'客房服务',
                         listeners: {
                             click: {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"五楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"五楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
@@ -404,9 +429,9 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         fn: function(btn){ 
                              //alert(btn.value);
                              var store =	btn.up('gridpanel').getStore();
-                             Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                             Ext.apply(store.proxy.extraParams, {floor:btn.value,roomState:""});
-                             store.load({params:{start:0, limit:20, page:1}}); 
+                             Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                             Ext.apply(store.proxy.extraParams, {floorName:btn.value,roomCleanState:""});
+                             store.load({params:{start:0, limit:20, page:1,sort:"roomCleanState"}}); 
                         }
                     }
                 },
@@ -419,23 +444,23 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"六楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"六楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }
                         },
                     },
                     {
-                        text:'房间服务',
-                        value:'房间服务',
+                        text:'客房服务',
+                        value:'客房服务',
                         listeners: {
                             click: {
                                 fn: function(btn){
                                     //alert(btn.value);
                                     var store =	btn.up('gridpanel').getStore();
-                                    Ext.apply(store.proxy.extraParams, {floor:"",roomState:""});
-                                    Ext.apply(store.proxy.extraParams, {floor:"六楼",roomState:btn.value});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"",roomCleanState:""});
+                                    Ext.apply(store.proxy.extraParams, {floorName:"六楼",roomCleanState:btn.value});
                                     store.load({params:{start:0, limit:20, page:1}});
                                 }
                             }

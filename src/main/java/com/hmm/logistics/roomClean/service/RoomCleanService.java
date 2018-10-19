@@ -76,7 +76,7 @@ public class RoomCleanService implements IRoomCleanService{
 		return roomCleanRepository.findById(id).get();
 	}
 
-	//设置FloorVoRoomVoRoomClean表
+	//设置FloorVoRoomVoRoomClean表或更新其数据
 	@Override
 	public void saveAllFloorVoRoomVoRoomCleanDTO() {
 		// 先存数据后查询
@@ -92,7 +92,9 @@ public class RoomCleanService implements IRoomCleanService{
 			floorVoRoomVoRoomClean.setFloorName(floor.getFloorName());
 			floorVoRoomVoRoomClean.setRoomNo(room.getRoomNo());
 			floorVoRoomVoRoomClean.setRoomOther(roomClean.getRoomOther());
-			
+			//start 更新数据用
+			floorVoRoomVoRoomClean.setId(roomClean.getRoomCleanId());
+			//end
 			if(room.getType()==RoomType.DOUBLEROOM) {
 				floorVoRoomVoRoomClean.setType("双人房");
 			}
@@ -108,21 +110,24 @@ public class RoomCleanService implements IRoomCleanService{
 			
 			if(roomClean.getRoomCleanState()==RoomCleanState.CLEAN) {
 				floorVoRoomVoRoomClean.setRoomCleanState("退房清洁");
+				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
 			else if(roomClean.getRoomCleanState()==RoomCleanState.CLEANING) {
 				floorVoRoomVoRoomClean.setRoomCleanState("清洁中");
+				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
 			else if(roomClean.getRoomCleanState()==RoomCleanState.SERVICE) {
 				floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
+				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
 			else if(roomClean.getRoomCleanState()==RoomCleanState.SERVICING) {
 				floorVoRoomVoRoomClean.setRoomCleanState("服务中");
+				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
 			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING) {
 				floorVoRoomVoRoomClean.setRoomCleanState("等待中");
-				//continue;
+				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
-			floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 		}
 		for(FloorVoRoomVoRoomClean floorVoRoomVoRoomClean:floorVoRoomVoRoomCleanDTO) {
 			floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);

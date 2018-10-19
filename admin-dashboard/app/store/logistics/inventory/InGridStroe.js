@@ -1,11 +1,11 @@
-   Ext.define('Admin.store.logistics.roomClean.RoomCleanGridStroe', {
+   Ext.define('Admin.store.logistics.inventory.InGridStroe', {
     extend: 'Ext.data.Store',
-	alias: 'store.roomCleanGridStroe',
-	model:'Admin.model.logistics.roomClean.RoomCleanModel',
-	storeId:'roomCleanGridStroe',//方便写事件时找到它
+	alias: 'store.inGridStroe',
+	model:'Admin.model.logistics.inventory.InModel',
+	storeId:'inGridStroe',//方便写事件时找到它
 	proxy: {
 		type: 'rest',
-		url: '/roomClean',
+		url: '/inventory/In',
 		reader:{
 			type:'json',
 			rootProperty:'content',//对应后台返回的结果集名称
@@ -24,7 +24,7 @@
 	sorters: [
 		{
 		direction: 'ASC',
-		property: 'roomNo'
+		property: 'applyTime'
 		}
 ]
 	
