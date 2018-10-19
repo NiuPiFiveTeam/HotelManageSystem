@@ -8,6 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.leave.entity.Leave;
 import com.hmm.leave.entity.LeaveDTO;
+import com.hmm.leave.entity.LeaveEmpDTO;
 
 
 
@@ -28,7 +29,8 @@ public interface ILeaveService {
 		public void claim(String taskId,String userId);
 		//4.完成流程任务
 		public void complete(String taskId, Map<String, Object> variables);
+		
 		public void deleteAll(Long[] ids);
-		public Page<Leave> findAll(Specification<Leave> whereClause, Pageable pageable);
+		public Page<LeaveEmpDTO> findAll(Specification<Leave> whereClause, Pageable pageable);
 
 }

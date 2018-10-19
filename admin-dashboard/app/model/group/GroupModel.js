@@ -8,6 +8,7 @@ Ext.define('Admin.model.group.GroupModel', {
 		{type:'int',name:'groupTable_id'}
 		,{type:'string',name:'groupName'}
 		,{type:'string',name:'groupId'}
+		,{type:'float',name:'money'}
 		,{type:'string',name:'deptName'}
 	],
 	proxy: {

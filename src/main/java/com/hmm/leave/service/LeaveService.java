@@ -16,11 +16,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.activiti.domain.WorkflowDTO;
 import com.hmm.activiti.service.IWorkflowService;
+import com.hmm.employee.entity.Employee;
 import com.hmm.leave.dao.LeaveRepository;
 import com.hmm.leave.entity.Leave;
 import com.hmm.leave.entity.LeaveDTO;
+import com.hmm.leave.entity.LeaveEmpDTO;
 
 
 
@@ -79,10 +82,10 @@ public class LeaveService implements ILeaveService {
 		Leave leave = leaveRepository.findById(leaveId).get();
 		if(leave!=null){
 			try {
-				processInstance = workflowService.startWorkflow(userId, "leave", leave.getId().toString(), variables);
+				processInstance = workflowService.startWorkflow(userId, "myProcess", leave.getId().toString(), variables);
 				leave.setProcessInstanceId(processInstance.getId());
 				leave.setApplyTime(new Date());
-				//leaveRepository.save(leave);
+				leaveRepository.save(leave);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -109,11 +112,20 @@ public class LeaveService implements ILeaveService {
 	            if (workflow.getBusinessKey() == null) {
 	                continue;
 	            }
+	            
 	            Leave leave = leaveRepository.findById(businessKey).get();
 	            if(leave!=null){
 	            	LeaveDTO leaveDTO = new LeaveDTO();
 	            	BeanUtils.copyProperties(leave, leaveDTO);
 	            	BeanUtils.copyProperties(workflow, leaveDTO);
+	            	Employee employ = leave.getEmploy();
+	            	if(null != workflow.getAssignee()) {
+	            		leave.setProcessStatus(ProcessStatus.APPROVAL);
+	            		leaveRepository.save(leave);
+	            	}
+	            	leaveDTO.setEmpName(employ.getEmpName());
+	            	leaveDTO.setEmpNo(employ.getEmpNo());
+	            	leaveDTO.setDeptName(employ.getDepartmentes().getDeptName());
 	            	results.add(leaveDTO);
 	            }
 	        }
@@ -130,6 +142,7 @@ public class LeaveService implements ILeaveService {
      */
 	public void claim(String taskId, String userId) {
 		workflowService.claim(taskId, userId);
+		
 	}
 	 /**
      * 完成流程任务
@@ -139,6 +152,7 @@ public class LeaveService implements ILeaveService {
      * @return
      */
 	public void complete(String taskId, Map<String, Object> variables) {
+		
 		workflowService.complete(taskId, variables);
 	}
 
@@ -154,9 +168,24 @@ public class LeaveService implements ILeaveService {
 	}
 
 	@Override
-	public Page<Leave> findAll(Specification<Leave> whereClause, Pageable pageable) {
+	public Page<LeaveEmpDTO> findAll(Specification<Leave> whereClause, Pageable pageable) {
 		// TODO Auto-generated method stub
-		return leaveRepository.findAll(whereClause, pageable);
+		List<Leave> leaves = leaveRepository.findAll(whereClause);
+		List<LeaveEmpDTO> empDTOs = null;
+		if(null != leaves) {
+			empDTOs = new ArrayList<>();
+			for (Leave leave : leaves) {
+				LeaveEmpDTO empDTO = new LeaveEmpDTO();
+				LeaveEmpDTO.entityToDto(leave, empDTO);
+				Employee employ = leave.getEmploy();
+				empDTO.setEmpName(employ.getEmpName());
+				empDTO.setEmpNo(employ.getEmpNo());
+				empDTO.setDeptName(employ.getDepartmentes().getDeptName());
+				empDTOs.add(empDTO);
+			}
+		}
+		
+		return new PageImpl<LeaveEmpDTO>(empDTOs, pageable, null!=leaves?leaves.size():0);
 	}
 
 	

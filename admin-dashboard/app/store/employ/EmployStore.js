@@ -14,7 +14,9 @@ Ext.define('Admin.store.employ.EmployStore', {
         writer:{
             type:'json'
         },
-        simpleSortMode: true
+        simpleSortMode: true,
+        
+
     },
 
     autoLoad: true,

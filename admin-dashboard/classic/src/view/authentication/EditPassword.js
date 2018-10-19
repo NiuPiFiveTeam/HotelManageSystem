@@ -59,13 +59,14 @@ Ext.define('Admin.view.authentication.EditPassword', {
                             name: 'oldpassword',
                             //bind: '{password}',
                             allowBlank : false,
+                            enableKeyEvents:true,
                             triggers: {
                                 glyphed: {
                                     cls: 'trigger-glyph-noop auth-password-trigger'
                                 }
                             },
                             listeners: {
-                                blur: function(){
+                                keyup: function(){
                                     Ext.Ajax.request({
                                     url: 'checkpwd',
                                     method: 'post',
@@ -76,6 +77,8 @@ Ext.define('Admin.view.authentication.EditPassword', {
                                         var json = Ext.util.JSON.decode(response.responseText);
                                         if(!json.success){
                                             Ext.getCmp('oldPWD').update("<span style='font-size:16px;line-height:30px;color:red;'>*输入密码有误</span>");
+                                        }else{
+                                            Ext.getCmp('oldPWD').update("<span style='font-size:16px;line-height:30px;color:red;'>*密码正确</span>");
                                         }
                                     }
                                     });
@@ -114,7 +117,7 @@ Ext.define('Admin.view.authentication.EditPassword', {
                         },
                         {
                             xtype: 'box',
-                            id:'newPWD',
+                            id:'new1PWD',
                             html:'' 
                         }
 
@@ -131,6 +134,7 @@ Ext.define('Admin.view.authentication.EditPassword', {
                             fieldLabel: '请确认密码',
                             id: 'newCheckPWD2',
                             height: 40,
+                            enableKeyEvents:true,
                             //hideLabel: true,
                             emptyText: 'Password',
                             inputType: 'password',
@@ -143,13 +147,16 @@ Ext.define('Admin.view.authentication.EditPassword', {
                                 }
                             },
                             listeners: {
-                                blur: function(){
+                                keyup: function(){
                                     var newPWD = Ext.getCmp('newCheckPWD').getValue();
                                     var newPWD2 = Ext.getCmp('newCheckPWD2').getValue();
                                     if(newPWD != newPWD2){
-                                        Ext.getCmp('newPWD').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码不一致</span>");
+                                        Ext.getCmp('new1PWD').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码不一致</span>");
                                          Ext.getCmp('newPWD2').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码不一致</span>");
                                         //Ext.Msg.alert('','两次输入的密码不一致');
+                                    }else{
+                                        Ext.getCmp('new1PWD').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码一致</span>");
+                                         Ext.getCmp('newPWD2').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码一致</span>");
                                     }
                                 }
                             }

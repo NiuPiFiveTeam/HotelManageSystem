@@ -27,14 +27,16 @@ public class Leave {
     private Long id;
     private Date startTime;//请假开始时间
     private Date endTime;//请假终止时间
-    private Date realityStartTime;
-    private Date realityEndTime;
-    private Date applyTime;
+    private Date realityStartTime;//批准开始时间
+    private Date realityEndTime;//批准结束时间
+    private Date applyTime;//申请时间
     private String leaveType;//请假类型
     private String reason;//请假理由
-    
-    private int realityTotalTime;//实际请假基本工作总时长
     private ProcessStatus processStatus;//流程状态
+    private String approval;
+    private String userId;//启动流程的用户ID
+	//流程实例Id：用于关联流程引擎相关数据没有启动流程之前为""
+	private String processInstanceId;
     private Employee employ;
     
     @ManyToOne(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
@@ -44,9 +46,7 @@ public class Leave {
 	}
     //工作流程数据字段
     //
-	private String userId;//启动流程的用户ID
-	//流程实例Id：用于关联流程引擎相关数据没有启动流程之前为""
-	private String processInstanceId;
+	
 	//Getter & Setter
 	//Date类型get上添加@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 //	public static long getSerialversionuid() {
@@ -132,11 +132,11 @@ public class Leave {
 	public void setEmploy(Employee employ) {
 		this.employ = employ;
 	}
-	public int getRealityTotalTime() {
-		return realityTotalTime;
+	public String getApproval() {
+		return approval;
 	}
-	public void setRealityTotalTime(int realityTotalTime) {
-		this.realityTotalTime = realityTotalTime;
+	public void setApproval(String approval) {
+		this.approval = approval;
 	}
 	
 

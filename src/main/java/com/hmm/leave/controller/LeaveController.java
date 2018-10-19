@@ -2,12 +2,16 @@ package com.hmm.leave.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Id;
 import javax.servlet.http.HttpSession;
 
-
+import org.activiti.engine.IdentityService;
+import org.activiti.engine.identity.Group;
+import org.activiti.engine.task.Task;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -22,17 +26,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.activiti.util.WorkflowVariable;
 import com.hmm.common.SessionUtil;
 import com.hmm.common.beans.BeanUtils;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.employee.entity.Employee;
+import com.hmm.employee.service.EmployeeService;
 import com.hmm.leave.entity.Leave;
 import com.hmm.leave.entity.LeaveDTO;
+import com.hmm.leave.entity.LeaveEmpDTO;
 import com.hmm.leave.entity.LeaveQueryDTO;
 import com.hmm.leave.service.ILeaveService;
+
 
 
 
@@ -44,12 +51,21 @@ public class LeaveController
 	@Autowired
 	private ILeaveService leaveService;
 	
+	@Autowired
+	private EmployeeService employServiceimpl;
+	
+	@Autowired
+    private IdentityService identityService;
 	
 	@PostMapping
-    public @ResponseBody ExtAjaxResponse save(HttpSession session,@RequestBody Leave leave) {
+    public @ResponseBody ExtAjaxResponse save(HttpSession session,@RequestBody LeaveEmpDTO dto) {
     	try {
     		String userId = SessionUtil.getUserName(session);
     		if(userId != null) {
+    			Leave leave = new Leave();
+    			LeaveEmpDTO.dtoToEntity(dto, leave);
+    			Employee employ = employServiceimpl.findByUserName(userId);
+    			leave.setEmploy(employ);
     			leave.setUserId(userId);
     			leave.setProcessStatus(ProcessStatus.NEW);
     			leaveService.save(leave);
@@ -63,11 +79,11 @@ public class LeaveController
     }
 	
 	@PutMapping(value="id")
-    public @ResponseBody ExtAjaxResponse update(@PathVariable("id") Long id ,@RequestBody Leave leave) {
+    public @ResponseBody ExtAjaxResponse update(@PathVariable("id") Long id ,@RequestBody LeaveEmpDTO dto) {
     	try {
     		Leave leave2 = leaveService.findOne(id);
     		if(leave2 != null) {
-    			BeanUtils.copyProperties(leave, leave2);//使用自定义的BeanUtils
+    			BeanUtils.copyProperties(dto, leave2);//使用自定义的BeanUtils
 				leaveService.save(leave2);
     		}
     		
@@ -108,15 +124,15 @@ public class LeaveController
 	}
 	
 	@GetMapping
-    public Page<Leave> findLeaveByUserId(LeaveQueryDTO leaveQueryDTO,HttpSession session,ExtjsPageRequest pageable) 
+    public Page<LeaveEmpDTO> findLeaveByUserId(LeaveQueryDTO leaveQueryDTO,HttpSession session,ExtjsPageRequest pageable) 
 	{
-		Page<Leave> page;
+		Page<LeaveEmpDTO> page;
 		String userId = SessionUtil.getUserName(session);
 		if(userId!=null) {
 			leaveQueryDTO.setUserId(SessionUtil.getUserName(session));
 			page = leaveService.findAll(LeaveQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
 		}else {
-			page = new PageImpl<Leave>(new ArrayList<Leave>(),pageable.getPageable(),0);
+			page = new PageImpl<LeaveEmpDTO>(new ArrayList<LeaveEmpDTO>(),pageable.getPageable(),0);
 		}
 		return page;
     }
@@ -132,16 +148,46 @@ public class LeaveController
     public @ResponseBody ExtAjaxResponse start(@RequestParam(name="id") Long leaveId,HttpSession session) {
     	try {
     		String userId = SessionUtil.getUserName(session);
-    		Map<String, Object> variables = new HashMap<String, Object>();
-    		variables.put("deptLeader", "financeManager");
-    		variables.put("applyUserId", userId);
-    		leaveService.startWorkflow(userId,leaveId, variables);
-    		return new ExtAjaxResponse(true,"操作成功!");
+    		List<Group> groupListuser = identityService.createGroupQuery().groupMember(userId).list();
+    		String[] groupNames = new String[groupListuser.size()];
+    		for (int i = 0; i < groupNames.length; i++) {
+                groupNames[i] = groupListuser.get(i).getId();
+            }
+    		String groupUserList = ArrayUtils.toString(groupNames);
+    		System.out.println(groupUserList);
+    		if(groupUserList.indexOf("Manager") != -1) {
+    			Map<String, Object> variables1 = new HashMap<String, Object>();
+    			variables1.put("deptLeader", "Admin");
+    			variables1.put("applyUserId", userId);
+    			leaveService.startWorkflow(userId,leaveId, variables1);
+    			return new ExtAjaxResponse(true,"操作成功!");
+    		}else {
+    			Employee employ =  employServiceimpl.findByUserName(userId);
+    			String managerNo = employ.getDepartmentes().getManagerNo();
+    			if(null != managerNo) {
+    				String ManagerUserId = employServiceimpl.findByEmpNo(managerNo).getUserName();
+    	    		List<Group> groupList = identityService.createGroupQuery().groupMember(ManagerUserId).list();
+    	    		Map<String, Object> variables = new HashMap<String, Object>();
+    	    		for (Group group : groupList) {
+    	    			String  groupName = group.getId();
+    					if(groupName.indexOf("Manager") != -1) {
+    						variables.put("deptLeader", groupName);
+    						variables.put("applyUserId", userId);
+    						leaveService.startWorkflow(userId,leaveId, variables);
+    					}
+    				}
+    	    		return new ExtAjaxResponse(true,"操作成功!");
+    			}else {
+    				return new ExtAjaxResponse(true,"错误!");
+    			}
+    		}
+    		
 	    } catch (Exception e) {
 	    	e.printStackTrace();
 	        return new ExtAjaxResponse(false,"操作失败!");
 	    }
     }
+	
 	
 	/**
 	 * 查询待处理流程任务

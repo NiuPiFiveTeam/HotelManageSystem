@@ -41,7 +41,7 @@ public class Department {
 			return dept_id;
 		}
 		
-		@OneToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
+		@OneToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY,mappedBy="departmentes")
 		public Set<Employee> getEmployee() {
 			return employ;
 		}

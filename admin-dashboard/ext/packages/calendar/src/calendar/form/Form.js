@@ -47,7 +47,7 @@ Ext.define('Ext.calendar.form.Form', {
                 startDate: startDate,
                 endDate: endDate,
                 empName: event.getEmpName(),
-                deptName: event.getDeptName()
+                empNo: event.getEmpNo()
             }, editable;
 
         if (!ignoreTimes) {

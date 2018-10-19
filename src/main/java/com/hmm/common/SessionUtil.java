@@ -10,6 +10,8 @@ public class SessionUtil
 	public static final String USERNAME 	= "userName";
 	public static final String GROUPS 		= "groups";
 	public static final String GROUPNAMES 	= "groupNames";
+	public static final String DEPTNAME 	= "deptName";
+	public static final String LOGINTYPE 	= "logintype";
     /**
      * 设置用户到session
      */
@@ -25,7 +27,30 @@ public class SessionUtil
         	Object user = session.getAttribute(USER);
         	return user == null ? null : (User) user;
     }
+    
+    public static void setDeptName(HttpSession session, String deptName) {
+        session.setAttribute(DEPTNAME, deptName);		
+    }
 
+    /**
+     * 从Session获取当前用户信息
+     */
+    public static String getDeptName(HttpSession session) {
+        	String deptName = (String) session.getAttribute(DEPTNAME);
+        	return deptName == null ? null : deptName;
+    }
+    public static void setLogintype(HttpSession session, String logintype) {
+        session.setAttribute(LOGINTYPE, logintype);		
+    }
+
+    /**
+     * 从Session获取当前用户信息
+     */
+    public static String getLogintyp(HttpSession session) {
+        	String logintype = (String) session.getAttribute(LOGINTYPE);
+        	return logintype == null ? null : logintype;
+    }
+    
     /**
      * 设置用户到session
      */
@@ -77,6 +102,8 @@ public class SessionUtil
 		session.removeAttribute(USERNAME);
          session.removeAttribute(GROUPS);
          session.removeAttribute(GROUPNAMES);
+         session.removeAttribute(DEPTNAME);
+         session.removeAttribute(LOGINTYPE);
     }
 }
 

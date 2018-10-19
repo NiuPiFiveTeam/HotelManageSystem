@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import com.hmm.leave.entity.Leave;
 
+
+
 @Repository
 public interface LeaveRepository extends JpaSpecificationExecutor<Leave> , PagingAndSortingRepository<Leave, Long>{
 	@Query("from Leave leave where leave.userId = ?1") 

@@ -29,10 +29,11 @@ public interface IWorkflowService
 	
 	public void addGroup(String id,String name ,String type);
 	public void deleteGroup(String id);
-	
+	public void addUser2(String name , String  password);
 	public void addUser(String name , String  password , String groupName);
 	
-	public void deleteUser(String name ,  String groupName);
+	public void deleteUser(String name ,  String groupName);//删除关系
+	public void deleteUser2(String name);//删除用户
 	
 	public void editGUserMembership(String name , String  password ,  String groupName);
 	

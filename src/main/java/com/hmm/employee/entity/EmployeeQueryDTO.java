@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -14,21 +16,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.hmm.department.entity.Department;
+
 public class EmployeeQueryDTO {
-	private String department;
+	private String deptName;
 	private String empName;
+	private String userName;
 	private String idcard;
 	private String empNo;
 	@DateTimeFormat(pattern="yyyy-MM-dd")  
 	private Date createTimeStart;
 	@DateTimeFormat(pattern="yyyy-MM-dd")  
 	private Date createTimeEnd;
-	public String getDepartment() {
-		return department;
-	}
-	public void setDepartment(String department) {
-		this.department = department;
-	}
+
 	public String getEmpName() {
 		return empName;
 	}
@@ -60,15 +60,20 @@ public class EmployeeQueryDTO {
 	public void setEmpNo(String empNo) {
 		this.empNo = empNo;
 	}
+	@SuppressWarnings("serial")
 	public static Specification<Employee> getWhereClause(final EmployeeQueryDTO employQueryDTO) {
 		return new Specification<Employee>() {
 
 			@Override
 			public Predicate toPredicate(Root<Employee> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 				List<Predicate> predicates = new ArrayList<>();
-				if(StringUtils.isNoneBlank(employQueryDTO.getDepartment())) {
-					predicates.add(criteriaBuilder.equal(root.get("department").as(String.class),
-							employQueryDTO.getDepartment()));
+				
+				if(null != employQueryDTO.getDeptName()) {
+					Join<Department, Employee> join = root.join("departmentes",JoinType.LEFT);
+					predicates.add(criteriaBuilder.like(join.get("deptName").as(String.class), 
+							"%" + employQueryDTO.getDeptName() + "%"));
+//					predicates.add(criteriaBuilder.equal(join.get("deptName").as(String.class), "%"+employQueryDTO.getDeptName()+"%"));
+					
 				}
 				
 				if(null != employQueryDTO.getEmpName()) {
@@ -80,6 +85,12 @@ public class EmployeeQueryDTO {
 					predicates.add(criteriaBuilder.like(root.get("empNo").as(String.class), 
 							"%" + employQueryDTO.getEmpNo() + "%"));
 				}
+				
+				if(null != employQueryDTO.getUserName()) {
+					predicates.add(criteriaBuilder.like(root.get("userName").as(String.class), 
+							"%" + employQueryDTO.getUserName() + "%"));
+				}
+				
 				if(null != employQueryDTO.getCreateTimeStart()) {
 					predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("entryDate").as(Date.class), 
 							employQueryDTO.getCreateTimeStart()));
@@ -94,6 +105,18 @@ public class EmployeeQueryDTO {
 			}
 		};
 		
+	}
+	public String getDeptName() {
+		return deptName;
+	}
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 
 	

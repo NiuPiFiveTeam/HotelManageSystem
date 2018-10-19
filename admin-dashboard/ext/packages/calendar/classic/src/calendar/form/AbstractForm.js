@@ -42,10 +42,10 @@ Ext.define('Ext.calendar.form.AbstractForm', {
          * @cfg {Object} titleField
          * The config for the title field.
          */
-         deptNameField: {
+         empNoField: {
             xtype: 'textfield',
-            fieldLabel: '部门',
-            name: 'deptName',
+            fieldLabel: '员工编号',
+            name: 'empNo',
             allowBlank: false
         },
 
@@ -245,7 +245,7 @@ Ext.define('Ext.calendar.form.AbstractForm', {
                 me.getAllDayField(),
                 me.getDescriptionField(),
                 me.getEmpNameField(),
-                me.getDeptNameField()
+                me.getEmpNoField()
             ]
         }];
     },

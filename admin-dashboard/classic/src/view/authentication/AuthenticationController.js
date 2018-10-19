@@ -15,6 +15,7 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
             method: 'post',
             params: {
                 userName: btn.up("form").getForm().findField("userid").getValue(),
+                logintype: btn.up("form").getForm().findField("logintype").getValue(),
                 password: btn.up("form").getForm().findField("password").getValue()
             },
             success: function(response, options) {
@@ -48,11 +49,7 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
     onEditPWDButton: function(btn){
         var newPWD = btn.up("form").getForm().findField("newpassword").getValue();
         var newPWD2 = btn.up("form").getForm().findField("newpassword2").getValue();
-        if(newPWD != newPWD2){
-            Ext.getCmp('newPWD').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码不一致</span>");
-             Ext.getCmp('newPWD2').update("<span style='font-size:16px;line-height:30px;color:red;'>*两次输入的密码不一致</span>");
-            //Ext.Msg.alert('','两次输入的密码不一致');
-        }else{
+        if(newPWD == newPWD2){
             Ext.Ajax.request({
             url: 'editPassword',
             method: 'post',
@@ -70,6 +67,8 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
                 }
             }
             });
+        }else{
+            Ext.Msg.alert('失败', 密码不一致);
         }
     }
 });

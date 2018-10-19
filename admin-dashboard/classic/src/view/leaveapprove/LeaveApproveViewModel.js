@@ -1,7 +1,6 @@
-Ext.define('Admin.view.employ.EmployManegerModel', {
+﻿Ext.define('Admin.view.leaveapprove.LeaveApproveViewModel', {
     extend: 'Ext.app.ViewModel',
-    alias: 'viewmodel.employManegerModel',
-
+    alias: 'viewmodel.leaveApproveViewModel',
     requires: [
         'Ext.data.Store',
         'Ext.data.proxy.Memory',
@@ -11,10 +10,7 @@ Ext.define('Admin.view.employ.EmployManegerModel', {
         'Ext.data.field.Boolean',
         'Ext.data.reader.Json'
     ],
-
     stores: {
-        //empDepLists: {type: 'deptStore'},
-        empLists: {type: 'employStore'}
+    	leaveApproveStore: {type: 'leaveApproveStore'}//调用组件2
     }
-  
 });

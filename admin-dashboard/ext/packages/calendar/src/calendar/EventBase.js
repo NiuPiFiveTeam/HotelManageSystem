@@ -65,7 +65,7 @@ Ext.define('Ext.calendar.EventBase', {
          */
         title: '',
         empName: '',
-        deptName: '',
+        empNo: '',
 
         /**
          * @cfg touchAction
@@ -103,7 +103,7 @@ Ext.define('Ext.calendar.EventBase', {
             me.setEndDate(model.getEndDate());
             me.setTitle(model.getTitle()+'--');
             me.setEmpName(model.getEmpName());
-            me.setDeptName(model.getDeptName()+'--');
+            me.setEmpNo(model.getEmpNo()+'--');
 
             dom = me.element.dom;
             dom.setAttribute('data-eventId', model.id);

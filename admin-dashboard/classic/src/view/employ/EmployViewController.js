@@ -1,44 +1,38 @@
-Ext.define('Admin.view.employ.EmployManagerController', {
+Ext.define('Admin.view.employ.EmployViewController', {
     extend: 'Ext.app.ViewController',
-    alias: 'controller.employManagerController',
+    alias: 'controller.employViewController',
 
     /**员工修改模块**/
 	onEditButton:function(grid, rowIndex, colIndex){
 
-        var win = this.lookupReference('EditEmpPanel');
-
-        if (!win) {
-            win = new Admin.view.employ.addEmp.EditEmpPanel();
-
-            this.getView().add(win);
-        }
-        win.show();
-        var form = this.lookupReference('EditEmpForm').getForm();
-        
-        for(var i=0;i<form.getFields().length;i++){
-
-        var pro = form.getFields().get(i).getName(); //遍历属性名 
-            
+        var win = this.lookupReference('editEmpwindow');
+      if (!win) {
+        win = new Admin.view.employ.addEmp.EditEmpPanel;
+        this.getView().add(win);
+      }
+      win.show();
+      var form = this.lookupReference('editEmpForm').getForm();
+      for (var i = 0; i < form.getFields().length; i++) {
+        var pro = form.getFields().get(i).getName();
         var rec = grid.getStore().getAt(rowIndex);
-            
-        //var proVal = record.get(pro); //拿取当前记录的当前的 属性的值
-        
-        form.findField(pro).setValue(rec.get(pro)); //设置值
+        form.findField(pro).setValue(rec.get(pro));
         var image = rec.get('empImage');
-        var src = "resources/images/user-profile/" + image;
-        Ext.getCmp('imageEditId').setSrc(src);
-            
-        }
+        var src = 'resources/images/employee/' + image;
+        Ext.getCmp('imageEditID').setSrc(src);
+      }
         
-       
-        
-    },     
-    EditEmpFormCancel: function() {
-        this.lookupReference('EditEmpForm').getForm().reset();
-        this.lookupReference('EditEmpwindow').close();
+    }, 
+
+    onOpenPhotoButton:function(btn){
+      btn.up("panel").up("panel").up("container").add(Ext.widget('addPhotoWindow')).show();
     },
+
+    // EditEmpFormCancel: function() {
+    //     this.lookupReference('EditEmpForm').getForm().reset();
+    //     this.lookupReference('EditEmpwindow').close();
+    // },
     EditEmpFormSubmit: function() {
-        var formPanel = this.lookupReference('EditEmpForm');
+        var formPanel = this.lookupReference('editEmpForm');
         var store = Ext.data.StoreManager.lookup('EmployStoreid');
         form = formPanel.getForm();
         if (form.isValid()) {
@@ -47,7 +41,7 @@ Ext.define('Admin.view.employ.EmployManagerController', {
             record.set(values);
             store.load();
             form.reset();
-            this.lookupReference('EditEmpwindow').close();
+            this.lookupReference('editEmpwindow').close();
             Ext.MessageBox.alert(
                 '修改成功'  
             );
@@ -67,7 +61,7 @@ Ext.define('Admin.view.employ.EmployManagerController', {
 
     /****查看员工详细信息****/
 	onDisableButton:function(grid, rowIndex, colIndex){
-		var win = this.lookupReference('lookEmpwindow');
+		var win = this.lookupReference('lookEmpWindow');
 
         if (!win) {
             win = new Admin.view.employ.addEmp.LookEmpWindow();
@@ -86,7 +80,7 @@ Ext.define('Admin.view.employ.EmployManagerController', {
         
         form.findField(pro).setValue(rec.get(pro)); //设置值
         var image = rec.get('empImage');
-        var src = "resources/images/user-profile/" + image;
+        var src = "resources/images/employee/" + image;
         Ext.getCmp('imagelookId').setSrc(src);
             
         }
@@ -94,15 +88,15 @@ Ext.define('Admin.view.employ.EmployManagerController', {
 	},
 
 
-    /****添加员工模块****/
-    openAddWindow:function(){
-        var win = this.lookupReference('AddEmpWindow');
-        if (!win) {
-            win = new Admin.view.employ.addEmp.AddEmpWindow();
-            this.getView().add(win);
-        }
-        win.show();
-    },
+    // /****添加员工模块****/
+    // openAddWindow:function(){
+    //     var win = this.lookupReference('AddEmpWindow');
+    //     if (!win) {
+    //         win = new Admin.view.employ.addEmp.AddEmpWindow();
+    //         this.getView().add(win);
+    //     }
+    //     win.show();
+    // },
 
 
     /**********查询*********/
@@ -123,18 +117,25 @@ Ext.define('Admin.view.employ.EmployManagerController', {
         var store = Ext.data.StoreManager.lookup('EmployStoreid')
         store.load();
         var departmentvalue = this.lookupReference('searchdepartment').getValue();        
-        Ext.apply(store.proxy.extraParams, {department:departmentvalue});
+        Ext.apply(store.proxy.extraParams, {deptName:departmentvalue});
         store.load({params:{start:0, limit:20, page:1}});
     },
     /*Quick Search*/    
     quickSearch:function(btn){
         var searchField = this.lookupReference('searchFieldName').getValue();
         var searchValue = this.lookupReference('searchFieldValue').getValue();
+
         var searchDataFieldValue = this.lookupReference('searchDataFieldValue').getValue();
         var searchDataFieldValue2 = this.lookupReference('searchDataFieldValue2').getValue();
+
         var store = Ext.data.StoreManager.lookup('EmployStoreid');
-        Ext.apply(store.proxy.extraParams, {empName:"",empNo:"",idcard:"",createTimeStart:"",createTimeEnd:""});
         
+        Ext.apply(store.proxy.extraParams, {empName:"",userName:"",empNo:"",idcard:"",createTimeStart:"",createTimeEnd:""});
+        
+        if(searchField==='userName'){
+            Ext.apply(store.proxy.extraParams, {userName:searchValue});
+        }
+
         if(searchField==='empName'){
             Ext.apply(store.proxy.extraParams, {empName:searchValue});
         }
@@ -165,7 +166,7 @@ Ext.define('Admin.view.employ.EmployManagerController', {
                     var rows = selModel.getSelection();
                     var selectIds = []; //要删除的id
                     Ext.each(rows, function (row) {
-                        selectIds.push(row.data.id);
+                        selectIds.push(row.data.emp_id);
                     });
                     Ext.Ajax.request({ 
                         url : '/employ/deletes', 
@@ -191,10 +192,75 @@ Ext.define('Admin.view.employ.EmployManagerController', {
             Ext.Msg.alert("错误", "没有任何行被选中，无法进行删除操作！");
         }
     },
-    refreshController:function(btn){
+    openSearchWindow:function(btn){
         var store = Ext.data.StoreManager.lookup('EmployStoreid');
+        Ext.apply(store.proxy.extraParams, {empName:"",userName:"",deptName:"",empNo:"",idcard:"",createTimeStart:"",createTimeEnd:""});
         store.load({params:{start:0, limit:20, page:1}});
-        
+    },
+    onClickUploadSumbitButton: function (btn) {
+        var form = btn.up('window').down('form');
+        form.getForm().submit({       
+            url:'/employ/file',
+            method : 'post',
+            waitMsg: '正在上传，请耐心等待....',
+            success: function(form, action){    
+                Ext.Msg.alert('Success', action.result.msg,function(){
+                    btn.up('window').close();
+                    Ext.data.StoreManager.lookup('EmployStoreid').load();
+                });       
+            }, 
+            failure: function(form, action){
+                Ext.Msg.alert('Error', action.result.msg);
+            }
+        });
+    },
+    exportExcel:function(btn, rowIndex, colIndex){
+        var grid = btn.up('gridpanel');
+        var selModel = grid.getSelectionModel();
+            if (selModel.hasSelection()) {
+                var rows = selModel.getSelection();
+                var selectIds = [];//要查询的id
+                Ext.each(rows,function(row){
+                    selectIds.push(row.data.emp_id);
+                })
+                window.location.href = '/employ/exportExcel/' + selectIds;
+            } else{
+                alert('未选择记录！');
+            }     
+    },
+    InputExcel:function(btn){
+        btn.up("panel").up("panel").up("container").add(Ext.widget('uploadExcelWindow')).show();
+    },
+
+    onClickupfileSumbitButton:function(btn){
+        var form = btn.up('window').down('form');
+        var filedir = Ext.getCmp("upfile").getValue();
+        var suffix = filedir.substr(filedir.lastIndexOf("."));
+        if("" == filedir){
+            Ext.Msg.alert('Error', "选择需要导入的Excel文件！");
+        }
+
+        if(".xls" != suffix || ".xlsx" != suffix ){
+            Ext.Msg.alert('Error', "选择Excel格式的文件导入！");
+        }
+
+        if(".xls" == suffix || ".xlsx" == suffix){
+            form.getForm().submit({       
+            url:'/employ/uploadExcel',
+            method : 'post',
+            waitMsg: '正在上传，请耐心等待....',
+            success: function(form, action){    
+                Ext.Msg.alert('Success', action.result.msg,function(){
+                    btn.up('window').close();
+                    Ext.data.StoreManager.lookup('EmployStoreid').load();
+                });       
+            }, 
+            failure: function(form, action){
+                Ext.Msg.alert('Error', action.result.msg);
+            }
+        });
+        }
+
     }
 
 

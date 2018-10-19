@@ -64,27 +64,30 @@ public class WorkflowService implements IWorkflowService {
 			results = new ArrayList<WorkflowDTO>();
 			for(Task task : tasks) {
 				String processInstanceId = task.getProcessDefinitionId();
-				ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().
-						processDefinitionId(processInstanceId).active().singleResult();
-				String businessKey = processInstance.getBusinessKey();//获得入库申请的id
-				if(businessKey == null) {
-					continue;
+				List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().
+						processDefinitionId(processInstanceId).active().list();
+				for (ProcessInstance processInstance : processInstances) {
+					String businessKey = processInstance.getBusinessKey();//获得入库申请的id
+					if(businessKey == null) {
+						continue;
+					}
+					WorkflowDTO dto = new WorkflowDTO();
+					dto.setProcessInstanceId(processInstanceId);
+					dto.setBusinessKey(processInstance.getBusinessKey());
+					
+					dto.setTaskId(task.getId());
+					dto.setTaskName(task.getName());
+					dto.setTaskCreateTime(task.getCreateTime());
+					dto.setAssignee(task.getAssignee());
+					
+					dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
+					dto.setSuspended(processInstance.isSuspended());
+					ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
+					dto.setProcessDefinitionId(processDefinition.getId());
+					dto.setVersion(processDefinition.getVersion());
+					results.add(dto);
 				}
-				WorkflowDTO dto = new WorkflowDTO();
-				dto.setProcessInstanceId(processInstanceId);
-				dto.setBusinessKey(processInstance.getBusinessKey());
 				
-				dto.setTaskId(task.getId());
-				dto.setTaskName(task.getName());
-				dto.setTaskCreateTime(task.getCreateTime());
-				dto.setAssignee(task.getAssignee());
-				
-				dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
-				dto.setSuspended(processInstance.isSuspended());
-				ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
-				dto.setProcessDefinitionId(processDefinition.getId());
-				dto.setVersion(processDefinition.getVersion());
-				results.add(dto);
 			}
 		}
 		return results;
@@ -176,6 +179,23 @@ public class WorkflowService implements IWorkflowService {
 	public void deleteGroup(String id) {
 		// TODO Auto-generated method stub
 		identityService.deleteGroup(id);
+		
+	}
+
+
+	@Override
+	public void addUser2(String name, String password) {
+		// TODO Auto-generated method stub
+		User user = identityService.newUser(name);
+		user.setPassword(password);
+		identityService.saveUser(user);
+	}
+
+
+	@Override
+	public void deleteUser2(String name) {
+		// TODO Auto-generated method stub
+		identityService.deleteUser(name);
 		
 	}
 }

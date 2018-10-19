@@ -32,7 +32,7 @@ public class LoginController {
     private EmployeeService  employService;
     /** 登录系统**/
     @RequestMapping(value = "/login")
-    public @ResponseBody ExtAjaxResponse logon(@RequestParam("userName") String userName, @RequestParam("password") String password, HttpSession session) {
+    public @ResponseBody ExtAjaxResponse logon(@RequestParam("userName") String userName,@RequestParam("logintype") String logintype, @RequestParam("password") String password, HttpSession session) {
     	logger.debug("logon request: {userName={}, password={}}", userName, password);
         boolean checkPassword = identityService.checkPassword(userName, password);
         if (checkPassword) {
@@ -50,7 +50,7 @@ public class LoginController {
                 groupNames[i] = groupList.get(i).getName();
             }
             SessionUtil.setGroupNames(session, ArrayUtils.toString(groupNames));//"groupNames"  : "admin,hrManager"
-            
+            SessionUtil.setLogintype(session, logintype);
             Map<String,String> map=new HashMap<String, String>();
             map.put("userName", userName);
             map.put("msg", "登录成功!");

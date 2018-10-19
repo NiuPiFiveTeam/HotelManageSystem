@@ -37,6 +37,11 @@ Ext.define('Admin.view.group.GroupEditWindow', {
             allowBlank: false
         },{
             xtype: 'textfield',
+            name: 'money',
+            fieldLabel: '时薪',
+            allowBlank: false
+        },{
+            xtype: 'textfield',
             name: 'departmentName',
             fieldLabel: '所属部门',
             allowBlank: false

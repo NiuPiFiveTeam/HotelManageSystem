@@ -15,7 +15,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
             day:{
                 startTime: 0,
                 endTime: 24,
-                timezoneOffset: 0,
+                timezoneOffset: -480,
                 listeners: {
                     eventadd: function(view, context) {
                     console.log('Event ' + context.event.data.calendarId+ ' was added');
@@ -27,7 +27,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                     var calendarId = context.event.data.calendarId;
                     var description = context.event.data.description;
                     var empName = context.event.data.empName;
-                    var deptName = context.event.data.deptName;
+                    var empNo = context.event.data.empNo;
                     Ext.Ajax.request({
                         url: '/CalendarEvent/add',
                         method: 'post',
@@ -41,7 +41,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                             calendarId : calendarId,
                             description : description,
                             empName : empName,
-                            deptName : deptName
+                            empNo : empNo
                         },
 
                         success:function(){
@@ -66,7 +66,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                     var calendarId = context.event.data.calendarId;
                     var description = context.event.data.description;
                     var empName = context.event.data.empName;
-                    var deptName = context.event.data.deptName;
+                    var empNo = context.event.data.empNo;
                     Ext.Ajax.request({
                         url: '/CalendarEvent/edit',
                         method: 'post',
@@ -79,7 +79,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                             calendarId : calendarId,
                             description : description,
                             empName : empName,
-                            deptName : deptName
+                            empNo : empNo
                         },
 
                         success:function(){
@@ -119,7 +119,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
             week:{
                 startTime: 0,
                 endTime: 24,
-                timezoneOffset: 0,
+                timezoneOffset: -480,
                 listeners: {
                     eventadd: function(view, context) {
                     console.log('Event ' + context.event.data.calendarId+ ' was added');
@@ -131,7 +131,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                     var calendarId = context.event.data.calendarId;
                     var description = context.event.data.description;
                     var empName = context.event.data.empName;
-                    var deptName = context.event.data.deptName;
+                    var empNo = context.event.data.empNo;
                     Ext.Ajax.request({
                         url: '/CalendarEvent/add',
                         method: 'post',
@@ -144,7 +144,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                             calendarId : calendarId,
                             description : description,
                             empName : empName,
-                            deptName : deptName
+                            empNo : empNo
                         },
 
                         success:function(){
@@ -169,7 +169,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                     var calendarId = context.event.data.calendarId;
                     var description = context.event.data.description;
                     var empName = context.event.data.empName;
-                    var deptName = context.event.data.deptName;
+                    var empNo = context.event.data.empNo;
                     Ext.Ajax.request({
                         url: '/CalendarEvent/edit',
                         method: 'post',
@@ -183,7 +183,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                             calendarId : calendarId,
                             description : description,
                             empName : empName,
-                            deptName : deptName
+                            empNo : empNo
                         },
 
                         success:function(){
@@ -222,6 +222,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
             },
 
             month:{
+                timezoneOffset:-480,
                 listeners: {
                     eventadd: function(view, context) {
                     console.log('Event ' + context.event.data.calendarId+ ' was added');
@@ -233,7 +234,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                     var calendarId = context.event.data.calendarId;
                     var description = context.event.data.description;
                     var empName = context.event.data.empName;
-                    var deptName = context.event.data.deptName;
+                    var empNo = context.event.data.empNo;
                     Ext.Ajax.request({
                         url: '/CalendarEvent/add',
                         method: 'post',
@@ -246,7 +247,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                             calendarId : calendarId,
                             description : description,
                             empName : empName,
-                            deptName : deptName
+                            empNo : empNo
                         },
 
                         success:function(){
@@ -271,7 +272,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                     var calendarId = context.event.data.calendarId;
                     var description = context.event.data.description;
                     var empName = context.event.data.empName;
-                    var deptName = context.event.data.deptName;
+                    var empNo = context.event.data.empNo;
                     Ext.Ajax.request({
                         url: '/CalendarEvent/edit',
                         method: 'post',
@@ -284,7 +285,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                             calendarId : calendarId,
                             description : description,
                             empName : empName,
-                            deptName : deptName
+                            empNo : empNo
                         },
 
                         success:function(){
@@ -322,7 +323,7 @@ Ext.define('Admin.view.calendar.Daysweek', {
                 }
             }
         },
-        timezoneOffset: 0,
+        timezoneOffset: -480,
    
         store: {
             autoLoad: true,

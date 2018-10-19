@@ -73,7 +73,7 @@ public class CalendarContreller
 		}
 	}
 	
-	@DeleteMapping("id")
+	@DeleteMapping("{id}")
 	public ExtAjaxResponse Delete(@PathVariable("id")Long id) {
 		try {
 			if(null != id) {

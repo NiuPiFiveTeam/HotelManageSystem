@@ -44,7 +44,7 @@ Ext.define('Ext.calendar.Event', {
                 tag: 'span',
                 cls: Ext.baseCSSPrefix + 'calendar-event-title'
             }, {
-                reference: 'deptNameElement',
+                reference: 'empNoElement',
                 tag: 'span',
                 cls: Ext.baseCSSPrefix + 'calendar-event-title'
             },{
@@ -101,9 +101,9 @@ Ext.define('Ext.calendar.Event', {
         empName = empName || this.getDefaultEmpName(empName);
         this.empNameElement.setText(empName);
     },
-    updateDeptName: function(deptName) {
-        deptName = deptName || this.getDefaultDeptName(deptName);
-        this.deptNameElement.setText(deptName);
+    updateEmpNo: function(empNo) {
+        empNo = empNo || this.getDefaultEmpNo(empNo);
+        this.empNoElement.setText(empNo);
     },
 
     privates: {
@@ -141,9 +141,9 @@ Ext.define('Ext.calendar.Event', {
                 return d;
             }
         },
-        getDefaultDeptName:function(d){
+        getDefaultEmpNo:function(d){
             if(d){
-                d=this.getEvent().getDeptName(d);
+                d=this.getEvent().getEmpNo(d);
                 return d;
             }
         }

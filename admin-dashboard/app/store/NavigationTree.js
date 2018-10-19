@@ -204,7 +204,7 @@
                     {
                         text: '人员信息管理',
                         iconCls: 'x-fa fa-user-circle',
-                        viewType: 'empManager',
+                        viewType: 'empTab',
                         leaf: true
                     },
                     {

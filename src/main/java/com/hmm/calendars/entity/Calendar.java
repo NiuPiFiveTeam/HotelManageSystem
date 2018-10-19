@@ -34,7 +34,7 @@ public class Calendar
 		return id;
 	}
     
-    @OneToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY,mappedBy="calendar")
+    @OneToMany(cascade=CascadeType.MERGE,mappedBy="calendar")
     public List<SchedulEvent> getEventStore() {
 		return eventStore;
 	}
