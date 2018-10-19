@@ -30,6 +30,8 @@ public class Guest {
 	private GuestState state; //状态,默认:临时用户,会员,重要客户,被加入黑名单
 	private Date registerTime; //第一次来本酒店的时间
 	
+	private String PhotoUrl;  //客人拍摄的照片
+	
 	//单向关联，多个用户对应一个房间
 	private Room room;
 	
@@ -96,12 +98,19 @@ public class Guest {
 	public void setRoom(Room room) {
 		this.room = room;
 	}
+	public String getPhotoUrl() {
+		return PhotoUrl;
+	}
+	public void setPhotoUrl(String photoUrl) {
+		PhotoUrl = photoUrl;
+	}
 	@Override
 	public String toString() {
 		return "Guest [guestId=" + guestId + ", realName=" + realName + ", phone=" + phone + ", gender=" + gender
 				+ ", idCard=" + idCard + ", address=" + address + ", state=" + state + ", registerTime=" + registerTime
-				+ "]";
-	} 
+				+ ", PhotoUrl=" + PhotoUrl + "]";
+	}
+	
 	
 	
 	
