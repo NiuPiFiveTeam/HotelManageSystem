@@ -87,7 +87,57 @@ addGuestLabel.addListener("click", function () {
             labelWidth: 90,
             layout: 'hbox'
         }, 
-        items:[
+        items:[{
+            xtype: 'form', 
+            width:530,
+            height:300,
+            reference: 'firstForm',
+            style:{
+                float:'right',
+                backgroundColor:'#f6f6f6'
+            },
+            items:[{
+                    xtype:'image',
+                    src: 'classic/resources/images/uploadPhoto.png',
+                    width: 250,
+                    height: 250,
+                    style:{
+                        border:'1px solid black'
+                    }
+                },
+                {
+                    xtype: 'fileuploadfield', // Same as filefield above
+                    buttonOnly: true,
+                    hideLabel: true,
+                    name:'file',
+                    buttonConfig: {
+                        text : '拍摄照片',
+                    },
+                    listeners: {
+                        change: function(field, filePath){  //点击upload后开始上传图片
+                          
+                           let form = field.up('form');
+                           form.getForm().submit({       
+                                url:'guest/uploadPhoto',
+                                method : 'POST',
+                                waitMsg: '正在上传，请耐心等待....',
+                                success: function(form, action){  
+                                    console.log(action);  
+                                    Ext.Msg.alert('Success', action.result.map.msg,function(){
+                                        form.owner.items.items[0].setSrc(action.result.map.src);    
+                                    });       
+                                }, 
+                                failure: function(form, action){
+                                    Ext.Msg.alert('Error', action.result.msg);
+                                }
+                            });
+                
+                        }
+                    },
+                    
+                }
+            ]
+        },
             {
                 xtype:'textfield',
                 fieldLabel: '身份证号',
@@ -118,7 +168,7 @@ addGuestLabel.addListener("click", function () {
                                     while(thisIndex > 0){  //最多检验到第一个fieldset
                                         let FrontfieldSet = addGuestFormPanel.items.get(thisIndex-1); //上一个fieldset
                                         console.log(FrontfieldSet);
-                                        let frontIdCard = FrontfieldSet.items.get(0).value; //取到上一个fieldSet的身份证号，判断是否相同
+                                        let frontIdCard = FrontfieldSet.items.get(1).value; //取到上一个fieldSet的身份证号，判断是否相同
                                         thisIndex--;
                                         if(cardNumber == frontIdCard){
                                             alert("身份证号重复！请核对后重新输入！");
@@ -204,24 +254,26 @@ function loadGuestInfo(idcard,result){
     }else{
         let resultArray = Ext.decode(result.responseText); //得到我们需要的数组
         console.log(resultArray);
-        fatherFiledSet.items.get(1).setValue(resultArray['realName']);
-        fatherFiledSet.items.get(2).setValue(resultArray['address']);
-        fatherFiledSet.items.get(3).setValue(resultArray['phone']);
+        fatherFiledSet.items.get(2).setValue(resultArray['realName']);
+        fatherFiledSet.items.get(3).setValue(resultArray['address']);
+        fatherFiledSet.items.get(4).setValue(resultArray['phone']);
         if(resultArray['gender'] == "MALE"){
-            fatherFiledSet.items.get(4).setValue("男性");
+            fatherFiledSet.items.get(5).setValue("男性");
         }else{
-            fatherFiledSet.items.get(4).setValue("女性");
+            fatherFiledSet.items.get(5).setValue("女性");
         }
         //CASUAL,MEMBER,STARMEMBER,BLACKLIST
         if(resultArray['guestState'] == "STARMEMBER"){
-            fatherFiledSet.items.get(5).setValue("星标会员");
+            fatherFiledSet.items.get(6).setValue("星标会员");
         }else if(resultArray['guestState'] == "MEMBER"){
-            fatherFiledSet.items.get(5).setValue("普通会员");
+            fatherFiledSet.items.get(6).setValue("普通会员");
         }else if(resultArray['guestState'] == "BLACKLIST"){
-            fatherFiledSet.items.get(5).setValue("黑名单");
+            fatherFiledSet.items.get(6).setValue("黑名单");
+        }else if(resultArray['guestState'] == "CASUAL"){
+            fatherFiledSet.items.get(6).setValue("临时客人");
         }
         var registerDate = resultArray['registerTime'].substr(0,10);
-        fatherFiledSet.items.get(6).setValue(registerDate);
+        fatherFiledSet.items.get(7).setValue(registerDate);
     }
 
 }
@@ -250,6 +302,57 @@ items:[
             layout: 'hbox'
         }, 
         items:[
+            {
+                xtype: 'form', 
+                width:530,
+                height:300,
+                reference: 'firstForm',
+                style:{
+                    float:'right',
+                    backgroundColor:'#f6f6f6'
+                },
+                items:[{
+                        xtype:'image',
+                        src: 'classic/resources/images/uploadPhoto.png',
+                        width: 250,
+                        height: 250,
+                        style:{
+                            border:'1px solid black'
+                        }
+                    },
+                    {
+                        xtype: 'fileuploadfield', // Same as filefield above
+                        buttonOnly: true,
+                        hideLabel: true,
+                        name:'file',
+                        buttonConfig: {
+                            text : '拍摄照片',
+                        },
+                        listeners: {
+                            change: function(field, filePath){  //点击upload后开始上传图片
+                              
+                               let form = field.up('form');
+                               form.getForm().submit({       
+                                    url:'guest/uploadPhoto',
+                                    method : 'POST',
+                                    waitMsg: '正在上传，请耐心等待....',
+                                    success: function(form, action){  
+                                        console.log(action);  
+                                        Ext.Msg.alert('Success', action.result.map.msg,function(){
+                                            form.owner.items.items[0].setSrc(action.result.map.src);    
+                                        });       
+                                    }, 
+                                    failure: function(form, action){
+                                        Ext.Msg.alert('Error', action.result.msg);
+                                    }
+                                });
+                    
+                            }
+                        },
+                        
+                    }
+                ]
+            },
             {
                 xtype:'textfield',
                 fieldLabel: '身份证号',
@@ -320,6 +423,7 @@ items:[
                 fieldLabel: '客户状态',
                 name: 'state',  
                 allowBlank: false,
+                readOnly:true,
                 width:400 
             },{
                 xtype: 'datefield',
@@ -350,13 +454,14 @@ items:[
                     while(guestNumber > 0){
                         let guestInfor = guestInfoAddPanel.items.get(guestNumber - 1);
                         let data = {
-                          'idCard':guestInfor.items.items[0].value,
-                          'realName':guestInfor.items.items[1].value,
-                          'address':guestInfor.items.items[2].value,
-                          'phone':guestInfor.items.items[3].value,
-                          'gender':guestInfor.items.items[4].value,
-                          'state':guestInfor.items.items[5].value,
-                          'registerTime':guestInfor.items.items[6].value
+                          'idCard':guestInfor.items.items[1].value,
+                          'realName':guestInfor.items.items[2].value,
+                          'address':guestInfor.items.items[3].value,
+                          'phone':guestInfor.items.items[4].value,
+                          'gender':guestInfor.items.items[5].value,
+                          'state':guestInfor.items.items[6].value,
+                          'registerTime':guestInfor.items.items[7].value,
+                          'photoUrl':guestInfor.items.items[0].items.items[0].src
                         };
                         guestList[index] = data;
                         guestNumber--;
@@ -378,7 +483,29 @@ items:[
                             'guestList':JSON.stringify(guestList)
                         },
                         success : function(result) {
-
+                            if(result.responseText == "success"){
+                                Ext.MessageBox.alert("录入结果","信息录入成功！请安排客房！",function(){
+                                    let cleanGuestNumber = guestInfoAddPanel.items.length - 3;
+                                    while(cleanGuestNumber > 0){
+                                        let cleanguestInfor = guestInfoAddPanel.items.get(guestNumber - 1);
+                                        cleanguestInfor.items.items[1].setValue(" "),
+                                        cleanguestInfor.items.items[2].setValue(" "),
+                                        cleanguestInfor.items.items[3].setValue(" "),
+                                        cleanguestInfor.items.items[4].setValue(" "),
+                                        cleanguestInfor.items.items[5].setValue(" "),
+                                        cleanguestInfor.items.items[6].setValue(" "),
+                                        cleanguestInfor.items.items[0].items.items[0].setSrc("classic/resources/images/uploadPhoto.png");
+                                        guestNumber--;
+                                    }
+                                   
+                                    document.location.href="#emptyRoom";
+                                });
+                            }else{
+                                Ext.MessageBox.alert("录入结果","信息录入失败！请重新录入！",function(){
+                                    //code...
+                                    //关闭后执行的动作
+                                });
+                            }
                         }
                     });
                 }

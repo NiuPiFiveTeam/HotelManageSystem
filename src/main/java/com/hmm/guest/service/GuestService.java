@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.hmm.guest.dto.GuestInfoDto;
 import com.hmm.guest.entity.Guest;
 import com.hmm.guest.repository.GuestRepository;
 
@@ -27,5 +28,10 @@ public class GuestService implements IGuestService {
 			return null;
 		}
 		return allGuest;
+	}
+
+	@Override
+	public void save(Guest guest) {
+		guestRepository.save(guest);		
 	}
 }
