@@ -435,7 +435,7 @@ Ext.define('Ext.calendar.panel.Panel', {
      * @cfg defaultView
      * @inheritdoc Ext.calendar.view.Multi#cfg-defaultView
      */
-    defaultView: 'week',
+    defaultView: 'month',
 
     /**
      * @cfg cls

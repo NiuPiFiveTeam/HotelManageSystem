@@ -21,7 +21,10 @@ import com.hmm.calendars.entity.EventCalendarDTO;
 import com.hmm.calendars.entity.ExtResultJson;
 import com.hmm.calendars.entity.SchedulEvent;
 import com.hmm.calendars.entity.SchedulEventDto;
+import com.hmm.calendars.entity.SchedulEventEmpDTO;
 import com.hmm.calendars.entity.SchedulQueryDTO;
+import com.hmm.department.entity.Department;
+import com.hmm.employee.entity.Employee;
 
 
 
@@ -81,8 +84,9 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 			for (SchedulEvent schedulEvent : events) {
 				SchedulEventDto eventDto = new SchedulEventDto();
 				eventDto.setCalendarId(schedulEvent.getCalendar().getId());
-				eventDto.setEmpName(schedulEvent.getEmploy().getEmpName());
-				eventDto.setDeptName(schedulEvent.getEmploy().getDepartmentes().getDeptName());
+				Employee employee = schedulEvent.getEmploy();
+				eventDto.setEmpName(employee.getEmpName());
+				eventDto.setEmpNo(employee.getEmpNo());
 				dtos.add(eventDto);
 			}
 		}
@@ -116,8 +120,9 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 				SchedulEventDto dto = new SchedulEventDto();
 				SchedulEventDto.entityToDto(schedulEvent, dto);
 				dto.setCalendarId(calendar);
-				dto.setEmpName(schedulEvent.getEmploy().getEmpName());
-				dto.setDeptName(schedulEvent.getEmploy().getDepartmentes().getDeptName());
+				Employee employee = schedulEvent.getEmploy();
+				dto.setEmpName(employee.getEmpName());
+				dto.setEmpNo(employee.getEmpNo());
 				dtos.add(dto);
 			}
 			json.setLists(dtos);
@@ -132,13 +137,57 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 	}
 
 	@Override
-	public List<SchedulEvent> findStartDate(Date date, String userName) {
+	public SchedulEvent findStartDate(String date, String userName) {
 		// TODO Auto-generated method stub
 		return schedulEventdao.findStartDate(date, userName);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<SchedulEvent> findAllEmp(SchedulQueryDTO employQueryDTO) {
+		// TODO Auto-generated method stub
+		return schedulEventdao.findAll((Specification<SchedulEvent>) employQueryDTO);
+	}
+
+	@Override
+	public SchedulEvent findByEventDateAndEmploy(Date EventDate, Employee employee) {
+		// TODO Auto-generated method stub
+		SchedulEvent event = schedulEventdao.findByEventDateAndEmploy(EventDate, employee);
+		event.setCalendar(null);
+		return event;
+	}
+
+	@Override
+	public List<SchedulEvent> findByDTO(Specification<SchedulEvent> spec) {
+		// TODO Auto-generated method stub
+		return schedulEventdao.findAll(spec);
+	}
+
+	@Override
+	public Page<SchedulEventEmpDTO> findAllByEmpDto(Specification<SchedulEvent> spec, Pageable pageable) {
+		// TODO Auto-generated method stub
+		List<SchedulEvent> events = (List<SchedulEvent>) schedulEventdao.findAll(spec);
+		List<SchedulEventEmpDTO> dtos = null;
+		if(null != events) {
+			dtos = new ArrayList<>();
+			for (SchedulEvent schedulEvent : events) {
+				SchedulEventEmpDTO eventDto = new SchedulEventEmpDTO();
+				SchedulEventEmpDTO.entityToDto(schedulEvent, eventDto);
+				Employee employee = schedulEvent.getEmploy();
+				Department department = employee.getDepartmentes();
+				eventDto.setDeptName(department.getDeptName());
+				eventDto.setEmpName(employee.getEmpName());
+				eventDto.setEmpNo(employee.getEmpNo());
+				eventDto.setCalendar(schedulEvent.getCalendar().getTitle());
+				dtos.add(eventDto);
+			}
+		}
+		
+		return new PageImpl<SchedulEventEmpDTO>(dtos, pageable,null!=events?events.size():0);
+	}
 
 
+	
 	
 
 }

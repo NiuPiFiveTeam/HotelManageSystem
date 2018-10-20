@@ -56,7 +56,9 @@ public class FloorVoRoomVoRoomCleanDTO {
 			public Predicate toPredicate(Root<FloorVoRoomVoRoomClean> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 			
 				List<Predicate> predicate = new ArrayList<>();
-				
+				if (StringUtils.isNotBlank(floorVoRoomVoRoomCleanDTO.getFloorName())) {
+					predicate.add(criteriaBuilder.like(root.get("floorName").as(String.class),
+							"%" + floorVoRoomVoRoomCleanDTO.getFloorName()+ "%"));}
 				if (StringUtils.isNotBlank(floorVoRoomVoRoomCleanDTO.getRoomCleanState())) {
 					predicate.add(criteriaBuilder.like(root.get("roomCleanState").as(String.class),
 							"%" + floorVoRoomVoRoomCleanDTO.getRoomCleanState() + "%"));}

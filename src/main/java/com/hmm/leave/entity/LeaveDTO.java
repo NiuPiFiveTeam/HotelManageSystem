@@ -14,6 +14,10 @@ public class LeaveDTO {
     private Date endTime;
     private String leaveType;
     private String reason;
+    
+    private String empName;
+    private String empNo;
+    private String deptName;
     /*销假*/
     private Date realityStartTime;
     private Date realityEndTime;
@@ -34,6 +38,24 @@ public class LeaveDTO {
     
 	public Long getId() {
 		return id;
+	}
+	public String getEmpName() {
+		return empName;
+	}
+	public void setEmpName(String empName) {
+		this.empName = empName;
+	}
+	public String getEmpNo() {
+		return empNo;
+	}
+	public void setEmpNo(String empNo) {
+		this.empNo = empNo;
+	}
+	public String getDeptName() {
+		return deptName;
+	}
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
 	}
 	public String getUserId() {
 		return userId;

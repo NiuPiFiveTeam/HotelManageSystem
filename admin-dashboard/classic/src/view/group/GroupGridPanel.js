@@ -31,6 +31,7 @@ Ext.define('Admin.view.group.GroupGridPanel' , {
         {    text:'ID' , flex:1 ,hidden:true, align:'center' , dataIndex:'groupTable_id'},
         {    text:'角色ID' , flex:1 , align:'center' , dataIndex:'groupId'},
         {    text:'角色名称' , flex:1 , align:'center' , dataIndex:'groupName'},
+        {    text:'时薪（加班1.5倍）' , flex:1 , align:'center' , dataIndex:'money'},
         {    text:'所属部门' , flex:1 , align:'center' , dataIndex:'deptName'},
         {xtype: 'actioncolumn', width: 200,align:'center',text: '操作',
                     items: [

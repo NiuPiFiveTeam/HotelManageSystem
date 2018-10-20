@@ -36,6 +36,19 @@ Ext.define('Admin.view.authentication.Login', {
                     xtype: 'label',
                     text: 'Sign into your account'
                 },
+               
+                { xtype : 'combobox',allowBlank:false, name: 'logintype',
+                    store : new Ext.data.ArrayStore({
+                    fields : ['id', 'logintype'],
+                    data : [["1", '管理员'], ["2", '员工']]
+                    }),
+              
+                valueField : 'logintype',
+                displayField: 'logintype',
+                forceSelection:true,                
+                editable : false,
+                emptyText: '登入方式'
+                },
                 {
                     xtype: 'textfield',
                     cls: 'auth-textbox',
@@ -97,39 +110,40 @@ Ext.define('Admin.view.authentication.Login', {
                     listeners: {
                         click: 'onLoginButton'
                     }
-                },
-                {
-                    xtype: 'box',
-                    html: '<div class="outer-div"><div class="seperator">OR</div></div>',
-                    margin: '10 0'
-                },
-                {
-                    xtype: 'button',
-                    scale: 'large',
-                    ui: 'facebook',
-                    iconAlign: 'right',
-                    iconCls: 'x-fa fa-facebook',
-                    text: 'Login with Facebook',
-                    listeners: {
-                        click: 'onFaceBookLogin'
-                    }
-                },
-                {
-                    xtype: 'box',
-                    html: '<div class="outer-div"><div class="seperator">OR</div></div>',
-                    margin: '10 0'
-                },
-                {
-                    xtype: 'button',
-                    scale: 'large',
-                    ui: 'gray',
-                    iconAlign: 'right',
-                    iconCls: 'x-fa fa-user-plus',
-                    text: 'Create Account',
-                    listeners: {
-                        click: 'onNewAccount'
-                    }
                 }
+                //,
+                // {
+                //     xtype: 'box',
+                //     html: '<div class="outer-div"><div class="seperator">OR</div></div>',
+                //     margin: '10 0'
+                // },
+                // {
+                //     xtype: 'button',
+                //     scale: 'large',
+                //     ui: 'facebook',
+                //     iconAlign: 'right',
+                //     iconCls: 'x-fa fa-facebook',
+                //     text: 'Login with Facebook',
+                //     listeners: {
+                //         click: 'onFaceBookLogin'
+                //     }
+                // },
+                // {
+                //     xtype: 'box',
+                //     html: '<div class="outer-div"><div class="seperator">OR</div></div>',
+                //     margin: '10 0'
+                // },
+                // {
+                //     xtype: 'button',
+                //     scale: 'large',
+                //     ui: 'gray',
+                //     iconAlign: 'right',
+                //     iconCls: 'x-fa fa-user-plus',
+                //     text: 'Create Account',
+                //     listeners: {
+                //         click: 'onNewAccount'
+                //     }
+                // }
             ]
         }
     ],

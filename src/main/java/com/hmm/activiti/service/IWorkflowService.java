@@ -13,6 +13,7 @@ public interface IWorkflowService
 	public ProcessInstance startWorkflow(String authenticatedUserId,String processDefinitionKey, String businessKey, Map variables);
 	//2.查询流程任务
 	public List<WorkflowDTO> findTodoTasks(String employeeId);
+	public List<WorkflowDTO> findTodoTasks2(String employeeId);
 	//3.签收流程任务
 	public void claim(String taskId,String userId);
 	//4.完成流程任务
@@ -29,10 +30,11 @@ public interface IWorkflowService
 	
 	public void addGroup(String id,String name ,String type);
 	public void deleteGroup(String id);
-	
+	public void addUser2(String name , String  password);
 	public void addUser(String name , String  password , String groupName);
 	
-	public void deleteUser(String name ,  String groupName);
+	public void deleteUser(String name ,  String groupName);//删除关系
+	public void deleteUser2(String name);//删除用户
 	
 	public void editGUserMembership(String name , String  password ,  String groupName);
 	

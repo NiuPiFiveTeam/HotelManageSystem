@@ -5,12 +5,15 @@ import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -21,13 +24,20 @@ import com.hmm.employee.entity.Employee;
 @Entity
 @Table(name="t_work")
 public class Work {
-	private Long workid;
-	//private String workNo;
-	private Integer worktime;
-	private Date ontudytime;//上班打卡时间
-	private Date offdutytime;//下班打卡时间
-	private String flag;//打卡状态
+	private Long workid; //上班id
+	private Integer normal;//打卡状态(1.正常  2.迟到  3.缺卡 4.早退)
+	private Integer late;//迟到
+	private Integer lackCard;
+	private Integer leaveEarly;
+	private Float worktime;//正常工作时长
+	private Date ontudytime;//上班开始时间
+	private Date offdutytime;//下班时间
+	private Float overtime;//加班时长
+	private String calendar;
+	
+	private String workDate;//打卡日期
 	private Employee employ;
+
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -35,7 +45,7 @@ public class Work {
 		return workid;
 	}
 	
-	@ManyToOne(cascade=CascadeType.MERGE)
+	@ManyToOne(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
 	@JoinColumn(name="emp_id")
 	public Employee getEmploy() {
 		return employ;
@@ -82,12 +92,69 @@ public class Work {
 		this.employ = employ;
 	}
 
-	public Integer getWorktime() {
+	public Float getWorktime() {
 		return worktime;
 	}
 
-	public void setWorktime(Integer worktime) {
+	public void setWorktime(Float worktime) {
 		this.worktime = worktime;
+	}
+
+
+	public Integer getNormal() {
+		return normal;
+	}
+
+	public void setNormal(Integer normal) {
+		this.normal = normal;
+	}
+
+	public Integer getLackCard() {
+		return lackCard;
+	}
+
+	public void setLackCard(Integer lackCard) {
+		this.lackCard = lackCard;
+	}
+
+	public Integer getLeaveEarly() {
+		return leaveEarly;
+	}
+
+	public void setLeaveEarly(Integer leaveEarly) {
+		this.leaveEarly = leaveEarly;
+	}
+
+	public Integer getLate() {
+		return late;
+	}
+
+	public void setLate(Integer late) {
+		this.late = late;
+	}
+
+	public String getCalendar() {
+		return calendar;
+	}
+
+	public void setCalendar(String calendar) {
+		this.calendar = calendar;
+	}
+
+	public Float getOvertime() {
+		return overtime;
+	}
+
+	public void setOvertime(Float overtime) {
+		this.overtime = overtime;
+	}
+
+	public String getWorkDate() {
+		return workDate;
+	}
+
+	public void setWorkDate(String workDate) {
+		this.workDate = workDate;
 	}
 	
 

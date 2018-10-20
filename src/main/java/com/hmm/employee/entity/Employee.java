@@ -11,6 +11,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -71,7 +72,7 @@ public class Employee {
 		return emp_id;
 	}
 	
-	@Column(nullable=false , unique=true)
+	//@Column(unique=true)
 	public String getEmpNo() {
 		return empNo;
 	}
@@ -96,11 +97,13 @@ public class Employee {
 	}
 	
 	@ManyToOne(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
+	@JoinColumn(name="dept_id")
 	public Department getDepartmentes() {
 		return departmentes;
 	}
 	
 	@ManyToMany(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
+	//@JoinColumn(name="groupTable_id")
 	public List<GroupRole> getGroupRoles() {
 		return groupRoles;
 	}
@@ -113,11 +116,11 @@ public class Employee {
 		return empSex;
 	}
 
-	@Column(unique=true)
+	//@Column(unique=true)
 	public String getIdcard() {
 		return idcard;
 	}
-	@Column(unique=true)
+	//@Column(unique=true)
 	public String getTel() {
 		return tel;
 	}
@@ -148,7 +151,7 @@ public class Employee {
 
 
 	public void setIdcard(String idcard) {
-		this.idcard = idcard;
+		this.idcard = null!=idcard?idcard:null;
 	}
 	public void setTel(String tel) {
 		this.tel = tel;
@@ -244,7 +247,7 @@ public class Employee {
 //	}
 	
 	public void setEmp_id(Integer emp_id) {
-		this.emp_id = emp_id;
+		this.emp_id = null!=emp_id?emp_id:null;
 	}
 
 	public String getEmpName() {

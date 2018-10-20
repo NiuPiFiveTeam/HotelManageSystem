@@ -6,15 +6,58 @@ import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.hmm.department.entity.Department;
+import com.hmm.employee.entity.Employee;
+
 public class LeaveQueryDTO 
 {
 	private String userId;
+	private String userName;
+	private String empNo;
+	private String empName;
+	private String deptName;
+	private Department department;
 	
+	public String getEmpNo() {
+		return empNo;
+	}
+
+	public void setEmpNo(String empNo) {
+		this.empNo = empNo;
+	}
+
+	public String getEmpName() {
+		return empName;
+	}
+
+	public void setEmpName(String empName) {
+		this.empName = empName;
+	}
+
+	public String getDeptName() {
+		return deptName;
+	}
+
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+
+	public Department getDepartment() {
+		return department;
+	}
+
+	public void setDepartment(Department department) {
+		this.department = department;
+	}
+
+
 	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")  
 	private Date startTime;
    
@@ -54,6 +97,7 @@ public class LeaveQueryDTO
 			public Predicate toPredicate(Root<Leave> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 			
 				List<Predicate> predicate = new ArrayList<>();
+				
 		
 				if (null!=leaveQueryDTO.getUserId()) {
 					predicate.add(criteriaBuilder.equal(root.get("userId").as(String.class),
@@ -69,9 +113,37 @@ public class LeaveQueryDTO
 							leaveQueryDTO.getEndTime()));
 				}
 				
+				if(leaveQueryDTO.getEmpName()!= null) {
+					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
+					criteriaBuilder.like(join.get("empNo").as(String.class), "%" + leaveQueryDTO.getEmpName() + "%");
+				}
+				
+				if(leaveQueryDTO.getEmpNo()!= null) {
+					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
+					criteriaBuilder.equal(join.get("empNo").as(String.class), leaveQueryDTO.getEmpNo());
+				}
+				
+				if(leaveQueryDTO.getUserName()!= null) {
+					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
+					criteriaBuilder.equal(join.get("userName").as(String.class), leaveQueryDTO.getUserName());
+				}
+				
+				if(leaveQueryDTO.getDepartment()!= null) {
+					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
+					
+					criteriaBuilder.equal(join.get("departmentes").as(Department.class), leaveQueryDTO.getDepartment());
+				}
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();
 			}
 		};
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 }

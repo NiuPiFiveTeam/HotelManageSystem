@@ -148,7 +148,7 @@ Ext.define('Ext.calendar.model.Event', {
         name: 'description',
         type: 'string'
     }, {
-        name: 'deptName',
+        name: 'empNo',
         type: 'string'
     }, {
         name: 'empName',
@@ -200,8 +200,8 @@ Ext.define('Ext.calendar.model.Event', {
         return this.data.empName;
     },
 
-    getDeptName: function() {
-        return this.data.deptName;
+    getEmpNo: function() {
+        return this.data.empNo;
     },
 
     getDuration: function() {
@@ -271,8 +271,8 @@ Ext.define('Ext.calendar.model.Event', {
         this.set('empName', empName);
     },
 
-    setDeptName: function(deptName) {
-        this.set('deptName', deptName);
+    setEmpNo: function(empNo) {
+        this.set('empNo', empNo);
     },
 
     setDuration: function(duration) {

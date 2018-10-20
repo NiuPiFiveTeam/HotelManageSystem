@@ -14,7 +14,9 @@ import com.hmm.calendars.entity.EventCalendarDTO;
 import com.hmm.calendars.entity.ExtResultJson;
 import com.hmm.calendars.entity.SchedulEvent;
 import com.hmm.calendars.entity.SchedulEventDto;
+import com.hmm.calendars.entity.SchedulEventEmpDTO;
 import com.hmm.calendars.entity.SchedulQueryDTO;
+import com.hmm.employee.entity.Employee;
 
 
 public interface SchedulEventService {
@@ -25,11 +27,18 @@ public interface SchedulEventService {
 	boolean existsById(Long id);
 	void deleteById(Long id);
 	Page<SchedulEventDto> findAll(SchedulQueryDTO employQueryDTO, Pageable pageable);
+	List<SchedulEvent> findAllEmp(SchedulQueryDTO employQueryDTO);
 	long count(@Nullable Specification<SchedulEvent> spec);
 	public void deleteAll(Long[] ids);
-	List<SchedulEvent> findStartDate(Date date ,String userName);
+	SchedulEvent findStartDate(String date ,String userName);
 	public ExtResultJson<SchedulEventDto> findEvents(
 	Long calendar,
 	@DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") Date startDate,
 	@DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") Date endDate);
+	
+	SchedulEvent findByEventDateAndEmploy(Date EventDate , Employee employee);
+	
+	List<SchedulEvent> findByDTO(@Nullable Specification<SchedulEvent> spec);
+	
+	Page<SchedulEventEmpDTO> findAllByEmpDto(@Nullable Specification<SchedulEvent> spec, Pageable pageable);
 }

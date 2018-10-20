@@ -20,7 +20,8 @@ public class SchedulEventDto {
 	private Long calendarId=1L;
 	private String  description;
 	private String  empName;
-	private String  deptName;
+	private String  empNo;
+	
 	
 	//后到前：1.针对“前端”设计的数据封装对象(查询)
 	public static void entityToDto(SchedulEvent entity,SchedulEventDto dto ) {
@@ -43,13 +44,13 @@ public class SchedulEventDto {
 	}
 	//@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale = "zh", timezone = "GMT+8")
 	//@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+8")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
 	public Date getStartDate() {
 		return startDate;
 	}
 	//@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale = "zh", timezone = "GMT+8")
 	//@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+8")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
 	public Date getEndDate() {
 		return endDate;
 	}
@@ -86,12 +87,13 @@ public class SchedulEventDto {
 	public void setEmpName(String empName) {
 		this.empName = empName;
 	}
-	public String getDeptName() {
-		return deptName;
+	public String getEmpNo() {
+		return empNo;
 	}
-	public void setDeptName(String deptName) {
-		this.deptName = deptName;
+	public void setEmpNo(String empNo) {
+		this.empNo = empNo;
 	}
+
      
      
      

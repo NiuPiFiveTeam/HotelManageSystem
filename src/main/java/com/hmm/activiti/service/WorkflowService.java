@@ -37,6 +37,8 @@ public class WorkflowService implements IWorkflowService {
 
 	/*----------------------------------------------流程业务--------------------------------------------*/
 
+	
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public ProcessInstance startWorkflow(String authenticatedUserId,String processDefinitionKey, String businessKey, Map variables)
@@ -66,25 +68,66 @@ public class WorkflowService implements IWorkflowService {
 				String processInstanceId = task.getProcessDefinitionId();
 				ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().
 						processDefinitionId(processInstanceId).active().singleResult();
-				String businessKey = processInstance.getBusinessKey();//获得入库申请的id
-				if(businessKey == null) {
-					continue;
+				
+					String businessKey = processInstance.getBusinessKey();//获得入库申请的id
+					if(businessKey == null) {
+						continue;
+					}
+					WorkflowDTO dto = new WorkflowDTO();
+					dto.setProcessInstanceId(processInstanceId);
+					dto.setBusinessKey(processInstance.getBusinessKey());
+					
+					dto.setTaskId(task.getId());
+					dto.setTaskName(task.getName());
+					dto.setTaskCreateTime(task.getCreateTime());
+					dto.setAssignee(task.getAssignee());
+					
+					dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
+					dto.setSuspended(processInstance.isSuspended());
+					ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
+					dto.setProcessDefinitionId(processDefinition.getId());
+					dto.setVersion(processDefinition.getVersion());
+					results.add(dto);
+				
+				
+			}
+		}
+		return results;
+	}
+	
+	public List<WorkflowDTO> findTodoTasks2(String employeeId){
+		List<WorkflowDTO> results = null;
+		//根据act_ru_identitylink中对应的用户 查找act_ru_task表中对应的任务
+		TaskQuery  taskQuery = taskService.createTaskQuery().taskCandidateOrAssigned(employeeId);
+		List<Task> tasks = taskQuery.list();
+		if(tasks!=null) {
+			results = new ArrayList<WorkflowDTO>();
+			for(Task task : tasks) {
+				String processInstanceId = task.getProcessDefinitionId();
+				List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().
+						processDefinitionId(processInstanceId).active().list();
+				for (ProcessInstance processInstance : processInstances) {
+					String businessKey = processInstance.getBusinessKey();//获得入库申请的id
+					if(businessKey == null) {
+						continue;
+					}
+					WorkflowDTO dto = new WorkflowDTO();
+					dto.setProcessInstanceId(processInstanceId);
+					dto.setBusinessKey(processInstance.getBusinessKey());
+					
+					dto.setTaskId(task.getId());
+					dto.setTaskName(task.getName());
+					dto.setTaskCreateTime(task.getCreateTime());
+					dto.setAssignee(task.getAssignee());
+					
+					dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
+					dto.setSuspended(processInstance.isSuspended());
+					ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
+					dto.setProcessDefinitionId(processDefinition.getId());
+					dto.setVersion(processDefinition.getVersion());
+					results.add(dto);
 				}
-				WorkflowDTO dto = new WorkflowDTO();
-				dto.setProcessInstanceId(processInstanceId);
-				dto.setBusinessKey(processInstance.getBusinessKey());
 				
-				dto.setTaskId(task.getId());
-				dto.setTaskName(task.getName());
-				dto.setTaskCreateTime(task.getCreateTime());
-				dto.setAssignee(task.getAssignee());
-				
-				dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
-				dto.setSuspended(processInstance.isSuspended());
-				ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
-				dto.setProcessDefinitionId(processDefinition.getId());
-				dto.setVersion(processDefinition.getVersion());
-				results.add(dto);
 			}
 		}
 		return results;
@@ -176,6 +219,23 @@ public class WorkflowService implements IWorkflowService {
 	public void deleteGroup(String id) {
 		// TODO Auto-generated method stub
 		identityService.deleteGroup(id);
+		
+	}
+
+
+	@Override
+	public void addUser2(String name, String password) {
+		// TODO Auto-generated method stub
+		User user = identityService.newUser(name);
+		user.setPassword(password);
+		identityService.saveUser(user);
+	}
+
+
+	@Override
+	public void deleteUser2(String name) {
+		// TODO Auto-generated method stub
+		identityService.deleteUser(name);
 		
 	}
 }

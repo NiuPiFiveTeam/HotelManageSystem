@@ -9,6 +9,7 @@ public class GroupRoleDTO {
 	private String groupId;
 	private String deptName;
 	private Float money;
+	//private Float lowerMoney;
 
 
 	//后到前：1.针对“前端”设计的数据封装对象(查询)

@@ -153,7 +153,7 @@ Ext.define('Admin.view.main.MainController', {
                     Ext.getCmp('loginUserName').setText(json.map.userName);
                     me.redirectTo('dashboard',true);
                 }else{
-                    Ext.Msg.alert('未登入', json.msg);
+                    //Ext.Msg.alert('未登入', json.msg);
                     me.redirectTo('login',true);
                 }
             }

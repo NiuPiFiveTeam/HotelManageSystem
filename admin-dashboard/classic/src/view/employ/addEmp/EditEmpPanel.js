@@ -1,130 +1,283 @@
-Ext.QuickTips.init();
 Ext.define('Admin.view.employ.addEmp.EditEmpPanel', {
     extend: 'Ext.window.Window',
-    xtype: 'form-vboxlayout',
-    
-    reference: 'EditEmpwindow',
+    xtype: 'editEmpPanel',
+    alias: 'widget.editEmpPanel',
+    reference: 'editEmpwindow',
     
 
     title: '修改员工信息',
-    border: true,
-    layout: 'fit',
-    plain: true,
-    height:600,
-    width:600,
-    layout: {
-            type: 'hbox',
-            align: 'stretch'
-        },
+    padding:'20 20 0 150',
+    scrollable:true,
+    width: 1000,
+    autoHeight : true,
+    region: "center",
+
+    fieldDefaults: {
+        labelAlign: 'right',
+        labelWidth: 115,
+        //labelAlign: 'top',
+        msgTarget: 'side'
+    },
+
     items: [{
-        xtype: 'form',
-        reference: 'EditEmpForm',
+        xtype:'form',
+        reference: 'editEmpForm',
+        items:[
+            {
+        xtype: 'fieldset',
+        title: '工作信息',
         defaultType: 'textfield',
-        margin: '0 5 0 30',
-        bodyPadding: 5,
-
+        layout: 'hbox',
         defaults: {
-            anchor: '100%'
+            anchor: '100%',
+            componentCls: ""
         },
-        labelWidth:200,
+        items: [{
+            xtype: 'container',
+            layout: 'vbox',
+            defaultType: 'textfield',
+            margin: '0 0 0 0',
 
-        items: [
-                { allowBlank:false,fieldLabel:'员工ID' ,hidden: true , name:'emp_id'},
-                { allowBlank:false,fieldLabel: '员工姓名', name: 'empName', emptyText: '员工姓名' },
-                { allowBlank:false,fieldLabel: '员工编号', name: 'empNo', emptyText: '员工编号' },
-                { allowBlank:false,fieldLabel: '员工登入账户', name: 'userName', emptyText: '员工登入账户' },
-                { allowBlank:false,fieldLabel: '员工登入密码', name: 'password', emptyText: '员工登入密码' },
-                {
-                    //下拉列表框
-                    xtype: 'combobox', //9
-                    fieldLabel: '性别',
-                    displayField: 'empSex',
-                    name:'empSex',
-                    store: Ext.create('Ext.data.Store', {
+            items: [{
+                fieldLabel: '员工姓名',
+                name: 'empName',
+                allowBlank: true
+            }, {
+                xtype : 'combobox',
+                fieldLabel: '部门',
+                name: 'deptName',
+                //store: Stores,
+                store : new Ext.data.ArrayStore({
                     fields: [
-                    {type: 'string', name: 'empSex'}
+                        {type: 'string',name: 'deptName'},
                     ],
-                    data: [
-                    {"empSex":"男"},
-                    {"empSex":"女"}
                     
-                    ]
-                    }),
-                    value:'男',
-                    editable : false,
-                    emptyText: '请选性别',
-                    queryMode: 'local'
+                    proxy: {
+                    type: 'rest',
+                    url: '/dept',
+                    reader:{
+                        type:'json',
+                        rootProperty:'content',  //对应后台返回的结果集名称
+                        totalProperty: 'totalElements'//分页需要知道总记录数
                     },
-                { allowBlank:false, fieldLabel: '身份证号码', name: 'idcard', emptyText: 'user idcard'},
-                { xtype:'filefield',id: 'uploadEdit', name: 'empImage',fieldLabel: '证件照',
-                        listeners : {
-                            'render' : function() {
-                             Ext.getCmp('uploadEdit').on('change',function(field, newValue, oldValue) {
-                            var file = field.fileInputEl.dom.files.item(0);
-                            var fileReader = new FileReader('file://'+newValue);
-                            fileReader.readAsDataURL(file);
-                            fileReader.onload=function(e){
-                            Ext.getCmp('imageEditId').setSrc(e.target.result);
-                        }
-                });
-            }
-        }
-                },
-                { allowBlank:false, fieldLabel: '籍贯', name: 'address', emptyText: '住址'},
-                {
-                xtype : 'combobox',            
-                name:'deptName',           
-                fieldLabel:'选择部门',
-                store: Stores,
-              
+                    writer:{
+                        type:'json'
+                    },
+                    simpleSortMode: true
+                    },
+
+                    autoSync: true,
+                    remoteSort: true,//全局排序
+                    pageSize: 20,
+                    sorters: {
+                        direction: 'DESC',
+                        property: 'dept_id'
+                    }
+
+
+
+                }),
                 valueField : 'deptName',
                 displayField: 'deptName',
                 forceSelection:true,                
                 editable : false,
-                emptyText: '请选部门',
-                value : '服务员'
-               },
-               {
-                xtype : 'combobox',            
-                labelWidth : 100,
-                labelAlign : '',    
-                width: 300,            
-                fieldLabel:'选择职称',
-                name:'groupName',
-                store: rolestore,
+                allowBlank: true
+
+                
+            }, {
+                xtype: 'combobox',
+                fieldLabel: '性别',
+                name: 'empSex',
+                store : new Ext.data.ArrayStore({
+                    fields : ['empSexid', 'empSex'],
+                    data : [["1", '男'], ["2", '女']]
+                    }),
+                valueField : 'empSex',
+                displayField: 'empSex',
+                editable : false,
+                emptyText: '请选性别',
+                queryMode: 'local',    
+
+                allowBlank: true
+            }, {
+                xtype : 'combobox',
+                fieldLabel: '类别',
+                name: 'jobtype',
+                store : new Ext.data.ArrayStore({
+                    fields : ['jobtypeid', 'jobtype'],
+                    data : [["1", '试用工'], ["2", '正式工']]
+                    }),
+              
+                valueField : 'jobtype',
+                displayField: 'jobtype',
+                forceSelection:true,                
+                editable : false,
+
+                allowBlank: true
+            }, {
+                xtype:'datefield',
+                format:'Y-m-d',
+                fieldLabel: '离职时间',
+                name: 'endDate',
+                //labelWidth: 100,
+                allowBlank: true
+            }]
+            
+        },{
+            xtype: 'container',
+            layout: 'vbox',
+            defaultType: 'textfield',
+            margin: '0 0 5 0',
+
+            items: [{
+                fieldLabel: '员工编号',
+                name: 'empNo',
+                //labelWidth: 100,
+                allowBlank: true
+            }, {
+                fieldLabel: '员工账户',
+                name: 'userName',
+                //labelWidth: 100,
+                allowBlank: true
+            }, {
+                xtype : 'combobox',
+                fieldLabel: '职称',
+                name: 'groupName',
+                //store: rolestore,
+                store : new Ext.data.ArrayStore({
+                    fields: [
+                        {type: 'string',name: 'groupName'},
+                    ],
+                    
+                    proxy: {
+                    type: 'rest',
+                    url: '/group',
+                    reader:{
+                        type:'json',
+                        rootProperty:'content',  //对应后台返回的结果集名称
+                        totalProperty: 'totalElements'//分页需要知道总记录数
+                    },
+                    writer:{
+                        type:'json'
+                    },
+                    simpleSortMode: true
+                    },
+
+                    autoSync: true,
+                    remoteSort: true,//全局排序
+                    pageSize: 20,
+                    sorters: {
+                        direction: 'DESC',
+                        property: 'groupTable_id'
+                    }
+
+
+
+                }),
                 valueField : 'groupName',
                 displayField: 'groupName',
                 forceSelection:true,                
                 editable : false,
-                emptyText: '请选职称'
-               },
-               { allowBlank:false, fieldLabel: '类别', name: 'jobtype'},
-                { allowBlank:false, fieldLabel: '联系方式', name: 'tel', emptyText: '联系方式'},
-                { xtype:'datefield',format: 'Y-m-d',allowBlank:false, fieldLabel: '入职时间', name: 'entryDate'},
-                { xtype:'datefield',format: 'Y-m-d',allowBlank:true, fieldLabel: '离职时间', name: 'endDate'},
-                { xtype: 'textareafield', name: 'introduce',fieldLabel: '员工简介',value: '输入文本框'}
-                
-                
-                
-               ]
-    },{
-
-            height: 650,
-            width: 300,
-            padding: '100 0 0 60',
+                //labelWidth: 100,
+                allowBlank: true
+            }, {
+                xtype:'datefield',
+                format:'Y-m-d',
+                fieldLabel: '入职日期',
+                name: 'entryDate',
+                //labelWidth: 100,
+                allowBlank: true
+            }, {
+                fieldLabel: '员工ID',
+                name: 'emp_id',
+                hidden:true,
+                //labelWidth: 100,
+                allowBlank: true
+            }, {
+                fieldLabel: '证件照',
+                name: 'empImage',
+                hidden:true,
+                //labelWidth: 100,
+                allowBlank: true
+            }, {
+                fieldLabel: '初始密码',
+                name: 'password',
+                //value:'8888',
+                //labelWidth: 100,
+                //emptyText: '默认8888',
+                allowBlank: true
+            }]
+        } ,{
+            xtype: 'container',
+            layout: 'vbox',
+            defaultType: 'textfield',
+            margin: '0 0 5 0',
+            padding: '0 0 0 50',
             items:[{
-                 
-                xtype: 'image', name: 'profile_pic',
-                id: 'imageEditId',
-                src: '',
-                }]
+                xtype: 'image',
+                id: 'imageEditID',
+                //name:"empImage",
+                src: 'resources/images/user-profile/1.png',
+                height: 160,
+                width: 140 
+                },{
+                xtype:'button',
+                text:'上传图片',
+                width: 140,
+                handler: 'onOpenPhotoButton'
+            }]
+             
+        }   
+        ]}, {
+
+        xtype: 'fieldset',
+        title: '个人信息',
+        defaultType: 'textfield',
+        layout: 'anchor',
+        defaults: {
+            anchor: '100%',
+            componentCls: ""
+        },
+        items: [{
+            xtype: 'container',
+            layout: 'hbox',
+            defaultType: 'textfield',
+            margin: '0 0 5 0',
+
+            items: [{
+                fieldLabel: '身份证号码',
+                name: 'idcard',
+                allowBlank: true
+
+            }, {
+                fieldLabel: '电话号码',
+                name: 'tel',
+                allowBlank: true
+                
+            }]
+        },{
+            fieldLabel: '家庭住址',
+            name: 'address',
+            allowBlank: true
+        },{
+            xtype:'textareafield',
+            fieldLabel: '员工简介',
+            name: 'introduce',
+            allowBlank: true
+        }]    
+    }
+        ]
     }],
 
     buttons: [{
-        text: '提交',
+        xtype:'button',
+        text: '修改',
         handler:'EditEmpFormSubmit'
     },{
+        xtype:'button',
         text: '退出',
-        handler:'EditEmpFormCancel'
+        handler: function(btn) {
+            btn.up('window').close();
+        }
     }]
 });

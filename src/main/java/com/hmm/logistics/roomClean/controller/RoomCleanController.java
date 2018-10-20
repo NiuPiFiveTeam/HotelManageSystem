@@ -37,8 +37,10 @@ public class RoomCleanController {
 	@Autowired
 	private IRoomCleanService roomCleanService;
 	
+	//先更新，后查询
 	@GetMapping
 		public Page<FloorVoRoomVoRoomClean> getPages(FloorVoRoomVoRoomCleanDTO floorVoRoomVoRoomCleanDTO,ExtjsPageRequest pageRequest){
+			roomCleanService.saveAllFloorVoRoomVoRoomCleanDTO();//更新数据
 			return roomCleanService.findAllFloorVoRoomVoRoomCleanDTO(FloorVoRoomVoRoomCleanDTO.getWhereClause(floorVoRoomVoRoomCleanDTO), pageRequest);
 		}
 //	@RequestMapping("/data")

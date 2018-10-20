@@ -38,6 +38,12 @@ Ext.define('Admin.view.group.GroupAddWindow', {
             
             allowBlank: false
         },{
+            xtype: 'textfield',
+            name: 'money',
+            fieldLabel: '时薪',
+            
+            allowBlank: false
+        },{
                 xtype : 'combobox',            
                 labelWidth : 100,
                 labelAlign : 'right',    
