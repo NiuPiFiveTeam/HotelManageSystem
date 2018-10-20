@@ -28,6 +28,7 @@ public class Room {
 	private RoomType type; //房间类型， 单人房 双人房 三人房 钟点房
 	private RoomState state; //房间状态， 空闲、入住、需要清洁、需要补充日用品
 	private String roomPass;  //房卡密码，跟房卡进行绑定
+	private String price; 	//房间单价
 	
 	//其他属性
 //	@JsonIgnore
@@ -84,11 +85,14 @@ public class Room {
 		this.floorNode = floorNode;
 	}
 
-	@Override
-	public String toString() {
-		return "Room [roomId=" + roomId + ", roomNo=" + roomNo + ", type=" + type + ", state=" + state + ", roomPass="
-				+ roomPass + "]";
+	public String getPrice() {
+		return price;
 	}
+
+	public void setPrice(String price) {
+		this.price = price;
+	}
+
 	
 
 	
