@@ -186,12 +186,18 @@ quickSearchStock:function(btn){
 },
 
 
-	StockAdd:function(){
-		alert("StockAdd");
+	StockAdd:function(toolbar,rowIndex, colIndex){
+		toolbar.up('panel').up('container').add(Ext.widget('stockAddWindow')).show();
 	},
-
-	alarm:function(){
-		alert("alarm");
+	allStock:function(btn){
+		var store =	btn.up('gridpanel').getStore();
+		Ext.apply(store.proxy.extraParams, {goodsName:"",stockType:"",amount:0});
+		store.load({params:{start:0, limit:20, page:1}});
+	},
+	alarm:function(btn){
+		var store =	btn.up('gridpanel').getStore();
+		Ext.apply(store.proxy.extraParams, {amount:10});
+		store.load({params:{start:0, limit:20, page:1}});
 	},
 
 })

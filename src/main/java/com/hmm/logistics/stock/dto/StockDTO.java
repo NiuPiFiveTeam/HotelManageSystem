@@ -8,20 +8,22 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.logistics.stock.entity.Stock;
+import com.hmm.logistics.stock.util.StockType;
 
 public class StockDTO {
-	private int id;
+	private long id;
 	private String goodsName;
 	private String unit;
 	private float amount;
 	private String stockType;
-	public int getId() {
+	public long getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 	public String getGoodsName() {
@@ -56,7 +58,17 @@ public class StockDTO {
 			public Predicate toPredicate(Root<Stock> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 			
 				List<Predicate> predicate = new ArrayList<>();
-				
+				if (StringUtils.isNotBlank(stockDTO.getGoodsName())) {
+					predicate.add(criteriaBuilder.like(root.get("goodsName").as(String.class),
+							"%" + stockDTO.getGoodsName() + "%"));}
+				if (StringUtils.isNotBlank(stockDTO.getStockType())) {
+					if(stockDTO.getStockType().equals("COMMODITY")) {
+						predicate.add(criteriaBuilder.equal(root.get("stockType").as(StockType.class),StockType.COMMODITY));}
+					if(stockDTO.getStockType().equals("DURABLE")) {
+						predicate.add(criteriaBuilder.equal(root.get("stockType").as(StockType.class),StockType.DURABLE));
+					}}
+				if (10==stockDTO.getAmount()) {
+					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("amount").as(float.class), stockDTO.getAmount()));}
 				
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();

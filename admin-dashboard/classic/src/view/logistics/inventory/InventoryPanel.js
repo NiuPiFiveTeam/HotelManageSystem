@@ -274,6 +274,7 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
             xtype: 'gridpanel',
             cls: 'user-grid',
             title: '库存',
+            id:"Stock",
             bind: '{Stock}',
             scrollable: false,
             columns: [
@@ -336,7 +337,13 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
 		        text: 'Search',
 		        iconCls: 'fa fa-search',
 		        handler: 'quickSearchStock'
-            },'->',
+            },
+            {
+		        text: '显示全部',
+		        iconCls: 'fa fa-search',
+		        handler: 'allStock'
+            }
+            ,'->',
             {
                 text: '添加库存物品',
                 tooltip: '添加库存物品',
