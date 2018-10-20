@@ -26,11 +26,11 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
                 deferEmptyText:false,},
             columns: [
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'inStorageId',text: '入库编号',align:'center',flex: 1,},
-                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'applyTime',text: '处理日期',align:'center',flex: 1,},
-                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'StartDate',text: '申请日期',align:'center',flex: 1,},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'vender', text: '采购商家', align:'center',flex: 1,},
+                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'applyTime',text: '处理日期',align:'center',flex: 1,formatter: 'date("Y/m/d H:i:s")'},
+                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'doDate',text: '申请日期',align:'center',flex: 1,formatter: 'date("Y/m/d H:i:s")'},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'amount', text: '总价', align:'center',flex: 1,},
-                {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '详细表',align:'center',}
+                {xtype: 'gridcolumn',width: 60,dataIndex: 'sendWorker',text: '申请员工',align:'center',flex: 1,},
+                {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '申请明细表',align:'center',}
             ],
             tbar:[
                 "->",{
@@ -61,10 +61,12 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
             scrollable: false,
             columns: [
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'inStorageId',text: '入库编号',align:'center',flex: 1,},
-                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'applyTime',text: '处理日期',align:'center',flex: 1,},
-                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'inStorageDate',text: '入库日期',align:'center',flex: 1,},
+                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'doDate',text: '申请日期',align:'center',flex: 1,formatter: 'date("Y/m/d H:i:s")'},
+                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'inStorageDate',text: '入库日期',align:'center',flex: 1,formatter: 'date("Y/m/d H:i:s")'},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'vender', text: '采购商家', align:'center',flex: 1,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'amount', text: '总价', align:'center',flex: 1,},
+                {xtype: 'gridcolumn',width: 60,dataIndex: 'sendWorker',text: '申请员工',align:'center',flex: 1,},
+                {xtype: 'gridcolumn',width: 60,dataIndex: 'Worker',text: '处理员工',align:'center',flex: 1,},
                 {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '详细表',align:'center',}
             ],
             tbar: [{//自定义主件
@@ -183,8 +185,8 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center',/* hidden :true,*/},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomNo',text: '房间号码', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'reason',  text: '出库原因', align:'center',flex: 1},
-                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'outDate',text: '出库日期',align:'center',},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'worker',  text: '工作人员', align:'center',flex: 1},
+                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'outDate',text: '出库日期',align:'center',formatter: 'date("Y/m/d H:i:s")'},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'worker',  text: '出库员工', align:'center',flex: 1},
                 {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '出库详细',align:'center',}
             ],
             tbar: [{//自定义主件
@@ -345,7 +347,7 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
                 text: '预警物品',
                 tooltip: '预警物品',
                 iconCls: 'fa fa-plus',
-                handler: 'StockAdd'
+                handler: 'alarm'
             }, ],
             dockedItems: [{
                 xtype: 'pagingtoolbar',

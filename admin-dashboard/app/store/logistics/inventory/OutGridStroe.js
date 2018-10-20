@@ -1,11 +1,11 @@
-   Ext.define('Admin.store.logistics.inventory.InGridStroe', {
+   Ext.define('Admin.store.logistics.inventory.OutGridStroe', {
     extend: 'Ext.data.Store',
-	alias: 'store.inGridStroe',
-	model:'Admin.model.logistics.inventory.InModel',
-	storeId:'inGridStroe',//方便写事件时找到它
+	alias: 'store.outGridStroe',
+	model:'Admin.model.logistics.inventory.OutModel',
+	storeId:'outGridStroe',//方便写事件时找到它
 	proxy: {
 		type: 'rest',
-		url: '/In',
+		url: '/Out',
 		reader:{
 			type:'json',
 			rootProperty:'content',//对应后台返回的结果集名称
@@ -24,7 +24,7 @@
 	sorters: [
 		{
 		direction: 'ASC',
-		property: 'inStorageDate'
+		property: 'outDate'
 		}
 ]
 	
