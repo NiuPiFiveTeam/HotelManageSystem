@@ -13,6 +13,7 @@ public interface IWorkflowService
 	public ProcessInstance startWorkflow(String authenticatedUserId,String processDefinitionKey, String businessKey, Map variables);
 	//2.查询流程任务
 	public List<WorkflowDTO> findTodoTasks(String employeeId);
+	public List<WorkflowDTO> findTodoTasks2(String employeeId);
 	//3.签收流程任务
 	public void claim(String taskId,String userId);
 	//4.完成流程任务
