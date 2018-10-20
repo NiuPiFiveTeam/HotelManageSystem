@@ -167,7 +167,7 @@
                     },{
                         text: '考勤打卡',
                         iconCls: 'x-fa fa-check',
-                        viewType: 'attenceCenterPanel',
+                        viewType: 'workTab',
                         leaf: true
                    },{
                         text: '请假管理模块',
