@@ -8,7 +8,7 @@ Ext.define('Admin.view.logistics.inventory.InventoryViewController', {
 		var searchField = this.lookupReference('searchFieldNameIn').getValue();
         if(searchField==='inStorageId')
 		{//显示入库编号搜索条件框
-			alert(searchField);
+			// alert(searchField);
 			this.lookupReference('searchInStorageDate').hide();
 			this.lookupReference('searchInStorageDate2').hide();
 			this.lookupReference('searchVender').hide();
@@ -184,5 +184,14 @@ quickSearchStock:function(btn){
 	}
 	store.load({params:{start:0, limit:20, page:1}});
 },
+
+
+	StockAdd:function(){
+		alert("StockAdd");
+	},
+
+	alarm:function(){
+		alert("alarm");
+	},
 
 })
