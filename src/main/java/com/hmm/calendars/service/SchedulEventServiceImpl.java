@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -184,6 +185,18 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 		}
 		
 		return new PageImpl<SchedulEventEmpDTO>(dtos, pageable,null!=events?events.size():0);
+	}
+
+	@Override
+	public float findattenceTotalTime(String userbname) {
+		// TODO Auto-generated method stub
+		return schedulEventdao.findattenceTotalTime(userbname);
+	}
+
+	@Override
+	public int findWorkTotalDay(String username) {
+		// TODO Auto-generated method stub
+		return schedulEventdao.findWorkTotalDay(username);
 	}
 
 

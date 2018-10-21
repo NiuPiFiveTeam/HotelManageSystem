@@ -2,7 +2,7 @@ package com.hmm.calendars.dao;
 
 import java.util.Date;
 import java.util.List;
-
+import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -23,5 +23,20 @@ public interface SchedulEventDao extends JpaSpecificationExecutor<SchedulEvent>,
 	SchedulEvent findStartDate(String date ,String userName);
 	
 	SchedulEvent findByEventDateAndEmploy(Date EventDate , Employee employee);
+	
+	@Query("select SUM(UNIX_TIMESTAMP(s.endDate)- UNIX_TIMESTAMP(s.startDate))  from "
+			+ "SchedulEvent s , Employee e , Calendar c where date_format(s.endDate,'%Y-%m')=date_format(now(),'%Y-%m')  "
+			+ "AND e.userName = ?1 and s.employ.emp_id = e.emp_id and c.title <> '休息' and c.id = s.calendar.id ")
+	public float findattenceTotalTime(String userbname);
+	
+	
+	
+	@Query("select COUNT(*)  from "
+			+ "SchedulEvent s , Employee e , Calendar c where date_format(s.endDate,'%Y-%m')=date_format(now(),'%Y-%m')  "
+			+ "AND e.userName = ?1 and s.employ.emp_id = e.emp_id  and c.title <> '休息'  and c.title <> '加班'  and c.id = s.calendar.id ")
+	public int findWorkTotalDay(String username);
+	
+	
+	
 	
 }

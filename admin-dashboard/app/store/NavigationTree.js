@@ -160,9 +160,9 @@
                 children: [
         
                     {
-                        text: '账户管理',
+                        text: '信息管理',
                         iconCls: 'x-fa fa-user-circle',
-                        viewType: 'editPassword',
+                        viewType: 'selfEmpTab',
                         leaf: true
                     },{
                         text: '考勤打卡',

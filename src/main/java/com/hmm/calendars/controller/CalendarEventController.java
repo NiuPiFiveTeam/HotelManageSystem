@@ -186,7 +186,6 @@ public class CalendarEventController {
 		}
 	}
 	
-	
 	@InitBinder	
 	public void initBinder(WebDataBinder binder, WebRequest request) {					
 		DateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");		

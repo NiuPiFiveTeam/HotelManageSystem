@@ -99,7 +99,7 @@ public class WorkQueryDTO {
 				}
 				
 				if(workQueryDTO.getOffdutytime()!= null) {
-					predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("offdutytime").as(Date.class),
+					predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("ontudytime").as(Date.class),
 							workQueryDTO.getOffdutytime()));
 				}
 				

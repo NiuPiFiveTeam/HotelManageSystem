@@ -11,13 +11,14 @@ import org.springframework.lang.Nullable;
 
 import com.hmm.Work.entity.Work;
 import com.hmm.Work.entity.WorkEmpDTO;
+import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.employee.entity.Employee;
 
 
 
 
 public interface workService {
-	void save(Date dayetime,String userId);
+	ExtAjaxResponse save(String userId);
 	void save(Work entity);
 	Optional<Work> findById(Long id);
 	boolean existsById(Long id);
@@ -30,4 +31,12 @@ public interface workService {
 	Work findByWorkDateAndEmploy(Date workDate,Employee employee);
 	
 	List<Work> findByDto(@Nullable Specification<Work> spec);
+	
+	int findByEmployAndOntudytimelate(String userName);
+	int findByEmployAndOntudytimelackCard(String userName);//缺卡次数（当月
+	int findByEmployAndOntudytimeleaveEarly(String userName);//早退次数（当月）
+	int findByEmployAndOntudytimenormal(String userName);//不正常次数（当月）
+	public float findattenceTotalworktime(String userbname);//当月上班时间
+	public float findattenceTotalovertime(String userbname);//当月加班时间
+	
 }

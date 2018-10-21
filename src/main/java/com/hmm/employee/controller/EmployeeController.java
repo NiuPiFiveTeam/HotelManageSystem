@@ -4,11 +4,14 @@ package com.hmm.employee.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.activiti.engine.IdentityService;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hmm.activiti.service.IWorkflowService;
+import com.hmm.common.SessionUtil;
 import com.hmm.common.beans.BeanUtils;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
@@ -41,6 +45,7 @@ import com.hmm.employee.entity.EmployeeDTO;
 import com.hmm.employee.entity.EmployeeQueryDTO;
 import com.hmm.employee.service.EmployeeService;
 import com.hmm.employee.util.ExportExcel;
+import com.hmm.employee.util.ExtForm;
 import com.hmm.userRole.entity.GroupRole;
 import com.hmm.userRole.service.GroupRoleService;
 
@@ -177,7 +182,7 @@ public class EmployeeController {
 
 	
 	@GetMapping
-	public Page<EmployeeDTO> getPage(EmployeeQueryDTO employQueryDTO , ExtjsPageRequest pageRequest) 
+	public Page<EmployeeDTO> getPage(EmployeeQueryDTO employQueryDTO , ExtjsPageRequest pageRequest,HttpSession httpSession) 
 	{
 		return employServiceImpl.findAll(EmployeeQueryDTO.getWhereClause(employQueryDTO), 		
 				pageRequest.getPageable());
@@ -257,6 +262,54 @@ public class EmployeeController {
 	@RequestMapping(value = "/uploadExcel",method={RequestMethod.GET,RequestMethod.POST})
 	public ExtAjaxResponse ajaxUploadExcel(HttpServletRequest request,HttpServletResponse response) {
 		return employServiceImpl.ajaxUploadExcel(request, response);
+	}
+	
+	
+
+	@RequestMapping("/lookselfmassage")
+	public ExtForm findselfmassage(HttpSession httpSession) {
+		String username = SessionUtil.getUserName(httpSession);
+		Employee employee = null;
+		EmployeeDTO employeeDTO = null;
+		if(null!= username) {
+			employee = employServiceImpl.findByUserName(username);
+			if(null != employee) {
+				employeeDTO = new EmployeeDTO();
+				EmployeeDTO.entityToDto(employee, employeeDTO);
+				Department department = employee.getDepartmentes();
+				List<GroupRole> groupRole = employee.getGroupRoles();
+				String roles = "";
+				if(null != groupRole) {
+					for(GroupRole groupRole2 : groupRole) {
+						roles = roles +" "+ groupRole2.getGroupName();
+					}
+				}
+				if(null != roles) {
+					employeeDTO.setGroupName(roles);
+				}
+				
+				if(null != department) {
+					employeeDTO.setDeptName(department.getDeptName());
+				}
+			}
+//			Map data = null; 
+//			try {
+//				data = org.apache.commons.beanutils.BeanUtils.describe(employeeDTO);
+//			} catch (IllegalAccessException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			} catch (InvocationTargetException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			} catch (NoSuchMethodException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			data.remove("class");
+			return new ExtForm(true, employeeDTO);
+		}else {
+			return null;
+		}
 	}
 	
 		
