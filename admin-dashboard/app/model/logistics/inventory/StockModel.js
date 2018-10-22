@@ -9,6 +9,8 @@ Ext.define('Admin.model.logistics.inventory.StockModel', {
 		{type: 'string',name: 'unit'},//单位
 		{type: 'float',name: 'amount'},//数量
 		{type: 'string',name: 'stockType'},//类型
+		{type: 'string',name: 'goodsNo'},//类型
+		{type: 'string',name: 'yesOrNoSend'},//是否已申请入库
 	],
 	proxy: {
 		type: 'rest',

@@ -9,7 +9,7 @@ Ext.define('Admin.view.logistics.inventory.StockAddWindow', {
     title: '添加库存种类',
     closable: true,
     constrain: true,
-
+    viewModel: {type: 'inventoryViewModel'},
     defaultFocus: 'textfield',
     modal:true,
     layout:'anchor',
@@ -25,6 +25,13 @@ Ext.define('Admin.view.logistics.inventory.StockAddWindow', {
           fieldLabel: 'id',
           value:0,
           name:'id'
+        },
+        {
+          xtype: 'textfield',
+          hidden: true,
+          fieldLabel: 'goodsNo',
+          value:Ext.util.Format.date(new Date(),"Ymd")+Math.floor(Math.random()*(99999999-10000000+1)+10000000),
+          name:'goodsNo'
         }
         ,{
           xtype: 'textfield',
@@ -46,6 +53,7 @@ Ext.define('Admin.view.logistics.inventory.StockAddWindow', {
             { name: '个', value: '个' },
             { name: '瓶', value: '瓶' },
             { name: '张', value: '张' },
+            { name: '支', value: '支' },
               ]
           }),
         displayField: 'name',
@@ -79,7 +87,15 @@ Ext.define('Admin.view.logistics.inventory.StockAddWindow', {
       hidden: true,
       name:'amount',
       value:0,
-  }]
+      },
+      {
+        xtype: 'textfield',
+        hidden: true,
+        fieldLabel: 'yesOrNoSend',
+        value:"未申请",
+        name:'yesOrNoSend'
+      },
+]
     }],
 	  buttons: ['->',{
         xtype: 'button',

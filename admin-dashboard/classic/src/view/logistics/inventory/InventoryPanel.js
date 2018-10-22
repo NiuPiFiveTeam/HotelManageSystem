@@ -33,12 +33,12 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
                 {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '申请明细表',align:'center',}
             ],
             tbar:[
-                "->",{
-                    text: '申请进货',
-                    tooltip: '申请进货',
-                    iconCls: 'fa fa-plus',
-                    handler: 'InSendAdd'
-                }, "->"
+                '->',{
+                    text: '未处理申请',
+                    tooltip: '未处理申请',
+                    reference:'doNot',
+                    handler: 'doNot'
+                },'->'
             ],
             dockedItems: [{
                 xtype: 'pagingtoolbar',
@@ -277,12 +277,45 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
             id:"Stock",
             bind: '{Stock}',
             scrollable: false,
+            viewConfig:{
+                forceFit:false,
+                emptyText:"<div style='text-align:center;padding:8px;font-size:16px;'>无查询记录</div>",
+                deferEmptyText:false,},
             columns: [
                 {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center'},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'goodsName',text: '商品名', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'unit',  text: '单位', align:'center',flex: 1},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'amount',  text: '数量', align:'center',flex: 1},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'amount',  text: '数量', align:'center',flex: 1,
+                renderer: function(val, metadata, r, rowIndex, colIndex, store) {
+		            if (val <=10) {
+                        if(r.data.yesOrNoSend=='未申请'){
+                            return '<span style="color:red;font-weight:800;">'+val+'</span>';
+                        }
+                        if(r.data.yesOrNoSend=='已申请'){
+                            return '<span style="color:#D9B300;font-weight:800;">'+val+'</span>';
+                        }
+			        } 
+			        return val;
+                },
+                },
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'stockType',  text: '类型', align:'center',flex: 1},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'goodsNo',  text: '物品编号', align:'center',flex: 1},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'yesOrNoSend',  text: '库存状态', align:'center',flex: 1,reference:'yesOrNo',
+                renderer: function(val) {
+		            if (val =='未申请') {
+			            return '<span style="color:red;font-weight:800;">'+val+'入库'+'</span>';
+                    } 
+                    if (val =='已申请') {
+			            return '<span style="color:#D9B300;font-weight:800;">'+val+'入库'+'</span>';
+                    }
+                    if (val =='库存足够') {
+			            return '<span style="color:green;">'+val+'</span>';
+			        }
+			        return val;
+                },
+
+
+                },
             ],
             tbar: [{//自定义主件
 	            xtype: 'combobox',
@@ -355,7 +388,16 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
                 tooltip: '预警物品',
                 iconCls: 'fa fa-plus',
                 handler: 'alarm'
-            }, ],
+            },
+            {
+                text: '申请入库',
+                tooltip: '申请入库',
+                iconCls: 'fa fa-plus',
+                hidden :true,
+                reference:'ssend',
+                handler: 'send'
+            },
+        ],
             dockedItems: [{
                 xtype: 'pagingtoolbar',
                 dock: 'bottom',

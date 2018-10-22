@@ -191,13 +191,17 @@ quickSearchStock:function(btn){
 	},
 	allStock:function(btn){
 		var store =	btn.up('gridpanel').getStore();
-		Ext.apply(store.proxy.extraParams, {goodsName:"",stockType:"",amount:0});
+		Ext.apply(store.proxy.extraParams, {goodsName:"",stockType:"",amount:0,yesOrNoSend:''});
 		store.load({params:{start:0, limit:20, page:1}});
+		this.lookupReference('ssend').hide();
 	},
 	alarm:function(btn){
 		var store =	btn.up('gridpanel').getStore();
-		Ext.apply(store.proxy.extraParams, {amount:10});
+		Ext.apply(store.proxy.extraParams, {amount:10,yesOrNoSend:'未申请'});
 		store.load({params:{start:0, limit:20, page:1}});
+		this.lookupReference('ssend').show();
 	},
-
+	send:function(toolbar,rowIndex, colIndex){
+		toolbar.up('panel').up('container').add(Ext.widget('inSendAddWindow')).show();
+	}
 })
