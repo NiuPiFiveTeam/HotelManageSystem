@@ -49,10 +49,10 @@ public class InSendController {
 	@Autowired
 	private IDoSendService iDoSendService;
 	
-//	@GetMapping
-//	public Page<InSendDTO> getInSendPage(InSendDTO inSendDTO,ExtjsPageRequest pageRequest){
-//		return null;
-//	}
+	@GetMapping
+	public Page<InSendDTO> getInSendPage(InSendDTO inSendDTO,ExtjsPageRequest pageRequest){
+		return null;
+	}
 	
 	@PostMapping
 	public ExtAjaxResponse saveSend(String inStorageId,String listString,HttpSession session) {
@@ -93,22 +93,4 @@ public class InSendController {
 		}
 		
 	}
-	
-//	public void save(String jsonStr,EmployeeDTO employee){
-//		JSONArray goodsArray = new JSONArray(jsonStr);
-//		for (int i = 0; i < goodsArray.length(); i++) {
-//			JSONObject jsonObject = (JSONObject) goodsArray.get(i);
-//			TransferRecord transferRecord = new TransferRecord();
-//			transferRecord.setApplyDate(new Date());
-//			transferRecord.setApplyRecorder(employee.getName());
-//			transferRecord.setDepositNumber(jsonObject.getString("depositNumber"));
-//			transferRecord.setReason(jsonObject.getString("reason"));
-//			transferRecord.setStatus(TransferRecordStatusEmun.WAITFORAPPROVE);
-//			transferRecord.setTransferNum(jsonObject.getDouble("transferNum"));
-//			WareHouseGoods wareHouseGoods = wareHouseGoodsServiceImpl.findByDepositNumber(jsonObject.getString("depositNumber"));
-//			transferRecord.setTransferWareHouseIdFrom(wareHouseGoods.getWareHouseId());
-//			transferRecord.setTransferWareHouseIdTo(employee.getWarehouseId());
-//			transferRecordDao.save(transferRecord);
-//		}
-//	}
 }
