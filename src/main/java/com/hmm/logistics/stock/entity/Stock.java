@@ -7,6 +7,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import com.hmm.logistics.stock.util.StockType;
+import com.hmm.logistics.stock.util.YesOrNoSend;
 /**
  * 
 * @Title: Stock.java
@@ -24,6 +25,8 @@ public class Stock {
 	private String unit;//单位，例：只
 	private float amount;//数量，例:100只
 	private  StockType stockType;//商品类型
+	private YesOrNoSend yesOrNoSend;
+	private String goodsNo;//物品编号
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -42,6 +45,12 @@ public class Stock {
 	public StockType getStockType() {
 		return stockType;
 	}
+	public YesOrNoSend getYesOrNoSend() {
+		return yesOrNoSend;
+	}
+	public String getGoodsNo() {
+		return goodsNo;
+	}
 	
 	
 	public void setId(Long id) {
@@ -58,5 +67,11 @@ public class Stock {
 	}
 	public void setStockType(StockType stockType) {
 		this.stockType = stockType;
+	}
+	public void setYesOrNoSend(YesOrNoSend yesOrNoSend) {
+		this.yesOrNoSend = yesOrNoSend;
+	}
+	public void setGoodsNo(String goodsNo) {
+		this.goodsNo = goodsNo;
 	}
 }

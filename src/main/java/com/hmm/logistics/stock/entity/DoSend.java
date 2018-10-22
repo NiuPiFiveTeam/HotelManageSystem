@@ -12,14 +12,17 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.employee.entity.Employee;
 import com.hmm.finance.logisticst.domain.InStorage;
+import com.hmm.logistics.stock.util.InIn;
 
 @Entity
 @Table(name="t_doSend")
 public class DoSend {
 	private Long id;
+	private InIn inin;
 	private Date doDate;//申请日期
 	private Employee sendWorker;//申请员工
 	private InStorage inAll;//入库申请
+	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	public Long getId() {
@@ -37,7 +40,9 @@ public class DoSend {
 	public InStorage getInAll() {
 		return inAll;
 	}
-	
+	public InIn getInin() {
+		return inin;
+	}
 	
 	
 	public void setId(Long id) {
@@ -51,5 +56,8 @@ public class DoSend {
 	}
 	public void setInAll(InStorage inAll) {
 		this.inAll = inAll;
+	}
+	public void setInin(InIn inin) {
+		this.inin = inin;
 	}
 }

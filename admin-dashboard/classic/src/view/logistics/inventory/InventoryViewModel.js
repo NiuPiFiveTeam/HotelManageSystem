@@ -16,6 +16,6 @@ Ext.define('Admin.view.logistics.inventory.InventoryViewModel', {
         In: {type: 'inGridStroe'},
         InSend:{type: 'inSendGridStroe'},
         Out:{type: 'outGridStroe'},
-        Stock:{type: 'stockGridStroe'},
+        Stock:{type: 'stockGridStroe'}
     }
 });
