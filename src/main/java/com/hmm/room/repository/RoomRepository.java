@@ -14,4 +14,9 @@ public interface RoomRepository extends PagingAndSortingRepository<Room, Long>{
 	
 	@Query("from Room r where r.floorNode.floorId = ?1 order by r.roomNo")
 	public List<Room> findFloorNodes(Long floorId);
+
+	
+
+	@Query("from Room r where r.roomNo = ?1 order by r.roomNo")
+	public Room findRoomByRoomNo(String selectRoomNo);
 }

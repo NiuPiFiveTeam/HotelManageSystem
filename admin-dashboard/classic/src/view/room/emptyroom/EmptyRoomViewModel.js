@@ -16,8 +16,11 @@ Ext.define('Admin.view.room.emptyroom.EmptyRoomViewModel', {
 
         emptyRoomLists: {type: 'emptyRoomStore'},
         floodList: {
-            type: 'emptyRoomTreeStore',//Store reference ==Store的属性 alias: 'store.orderStore',	
+            type: 'emptyRoomTreeStore',//Store reference ==Store的属性 alias: 'store.emptyRoomTreeStore',	
             autoLoad: true
+        },
+        guestList:{
+            type: 'guestStore',//Store reference ==Store的属性 alias: 'store.guestStore',	
         }
     }
 });

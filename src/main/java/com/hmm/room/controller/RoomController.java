@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.logistics.stock.service.IStockService;
 import com.hmm.room.dto.DailyNecessaryDto;
 import com.hmm.room.dto.RoomDto;
 import com.hmm.room.entity.Room;
 import com.hmm.room.service.IRoomService;
 import com.hmm.room.util.RoomState;
+import com.hmm.room.util.RoomType;
 
 /**
  * @Description 客房相关控制器
@@ -46,6 +48,7 @@ public class RoomController {
 		
 		Long floorIdL = Long.parseLong(floorId);
 		List<Room> roomList = roomService.findRoomByFloorId(floorIdL);
+		
 		List<RoomDto> roomDtos = null;
 		if (roomList.size()>0) {
 			roomDtos = new ArrayList<RoomDto>();
@@ -55,6 +58,15 @@ public class RoomController {
 				if (type.equals("empty")) {
 					if (room.getState() == RoomState.EMPTY) {
 						roomDto.setState(0);  //表示空闲状态
+						if (room.getType() == RoomType.SINGLEROOM) {  //说明是单人房
+							roomDto.setType(1);
+						}else if (room.getType() == RoomType.DOUBLEROOM) {
+							roomDto.setType(2);
+						}else if (room.getType() == RoomType.TRIPLEROOM) {
+							roomDto.setType(3);
+						}else if (room.getType() == RoomType.HOURROOM) {
+							roomDto.setType(4);
+						}
 					}else {
 						continue;
 					}
@@ -66,6 +78,15 @@ public class RoomController {
 							roomDto.setState(2);  //表示需要清洁状态
 						}else if(room.getState() == RoomState.NEED_DAILY_NECESSITIES){
 							roomDto.setState(3);  //表示需要日用品状态
+						}
+						if (room.getType() == RoomType.SINGLEROOM) {  //说明是单人房
+							roomDto.setType(1);
+						}else if (room.getType() == RoomType.DOUBLEROOM) {
+							roomDto.setType(2);
+						}else if (room.getType() == RoomType.TRIPLEROOM) {
+							roomDto.setType(3);
+						}else if (room.getType() == RoomType.HOURROOM) {
+							roomDto.setType(4);
 						}
 					}else {
 						continue;
@@ -80,6 +101,17 @@ public class RoomController {
 		
 		return roomDtos;
 	}
+	
+	@RequestMapping("/changeEmptyToCheckIn")
+	public ExtAjaxResponse changeEmptyToCheckIn(@RequestParam("selectRoomNo") String selectRoomNo,@RequestParam(name="guestList") String[] guestList) {
+		
+		for (String string : guestList) {
+			System.out.println(string);
+		}
+		roomService.changeEmptyToCheckIn(selectRoomNo);
+		return new ExtAjaxResponse(true,"入住成功！请安排旅客休息！");
+	}
+	
 	
 	/**
 	 * @Description 找出所有的 日用品清单项

@@ -8,10 +8,11 @@ public class RoomDto {
 	private Long roomId;  
  	private String roomNo;		//房间号码
 	
-	private RoomType type; //房间类型， 单人房 双人房 三人房 钟点房
+	private int type; //房间类型， 单人房 双人房 三人房 钟点房
 	private int state; //房间状态， 空闲、入住、需要清洁、需要补充日用品
 	private String roomPass;  //房卡密码，跟房卡进行绑定
 	private Long floorId;
+	private String price;
 	public Long getRoomId() {
 		return roomId;
 	}
@@ -24,10 +25,10 @@ public class RoomDto {
 	public void setRoomNo(String roomNo) {
 		this.roomNo = roomNo;
 	}
-	public RoomType getType() {
+	public int getType() {
 		return type;
 	}
-	public void setType(RoomType type) {
+	public void setType(int type) {
 		this.type = type;
 	}
 	public int getState() {
@@ -47,6 +48,12 @@ public class RoomDto {
 	}
 	public void setFloorId(Long floorId) {
 		this.floorId = floorId;
+	}
+	public String getPrice() {
+		return price;
+	}
+	public void setPrice(String price) {
+		this.price = price;
 	}
 	
 	

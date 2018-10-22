@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.hmm.room.entity.Room;
 import com.hmm.room.repository.RoomRepository;
+import com.hmm.room.util.RoomState;
 
 @Service
 public class RoomService implements IRoomService {
@@ -24,5 +25,18 @@ public class RoomService implements IRoomService {
 		roomList = roomRepository.findFloorNodes(floorId);
 		
 		return roomList.size() <= 0 ? null : roomList;
+	}
+
+
+	@Override
+	public void changeEmptyToCheckIn(String selectRoomNo) {
+		
+		Room room = roomRepository.findRoomByRoomNo(selectRoomNo);
+		room.setState(RoomState.CHECKIN);
+		
+		
+		
+		// TODO Auto-generated method stub
+		roomRepository.save(room);
 	}
 }
