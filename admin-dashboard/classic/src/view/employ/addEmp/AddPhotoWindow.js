@@ -1,7 +1,7 @@
 Ext.define('Admin.view.employ.addEmp.AddPhotoWindow', {
     extend: 'Ext.window.Window',
     alias: 'widget.addPhotoWindow',
-    controller: 'employViewController',
+    //controller: 'employViewController',
     requires: [
         'Ext.button.Button',
         'Ext.form.field.Text',

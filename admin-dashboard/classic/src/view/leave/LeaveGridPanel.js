@@ -12,7 +12,6 @@
 	layout: 'fit',
 	items: [{
 		xtype: 'gridpanel',
-		title: 'LeaveGrid Results',
 		//routeId: 'user',
 		bind: '{leaveLists}',
 		scrollable: false,

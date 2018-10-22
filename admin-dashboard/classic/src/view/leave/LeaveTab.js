@@ -1,7 +1,7 @@
 Ext.define('Admin.view.leave.LeaveTab', {
     extend: 'Ext.tab.Panel',
     xtype: 'leaveTab',
-    //controller: 'paiBanTabController',
+    controller: 'leaveViewController',
     requires: [
         'Ext.tab.Panel'
     ],
@@ -9,13 +9,13 @@ Ext.define('Admin.view.leave.LeaveTab', {
     items: [{
         xtype: 'panel',
         title: '申请请假',
-        xtype : 'workCenterPanel'
+        xtype : 'leaveGridPanel'
      
     },{
         xtype: 'panel',
       
         title: '请假审批',
-        xtype : 'attenceCenterPanel'
+        xtype : 'leaveApproveGrid'
     }
                         
            

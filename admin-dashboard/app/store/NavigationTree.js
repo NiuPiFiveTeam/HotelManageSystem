@@ -170,27 +170,17 @@
                         viewType: 'workTab',
                         leaf: true
                    },{
-                        text: '请假管理模块',
+                        text: '请假管理',
                         iconCls: 'x-fa fa-address-card',
-                        viewType: 'leaveCenterPanel',
+                        viewType: 'leaveTab',
                         leaf: true
                         
                     },{
-                        text: '请假审批',
+                        text: '出差管理',
                         iconCls: 'x-fa fa-address-card',
-                        viewType: 'leaveApproveCenterPanel',
-                        leaf: true
-                    },{
-                        text: '出差管理模块',
-                        iconCls: 'x-fa fa-address-card',
-                        viewType: 'travelCenterPanel',
+                        viewType: 'travelTab',
                         leaf: true
                         
-                    },{
-                        text: '出差审批',
-                        iconCls: 'x-fa fa-address-card',
-                        viewType: 'travelApproveCenterPanel',
-                        leaf: true
                     }
                 ]
                 
