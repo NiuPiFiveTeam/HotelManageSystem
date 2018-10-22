@@ -4,14 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.activiti.engine.HistoryService;
 import org.activiti.engine.IdentityService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +38,8 @@ public class WorkflowService implements IWorkflowService {
 	private TaskService taskService;
 	@Autowired
 	private RepositoryService repositoryService;
-
+	@Autowired
+	private HistoryService historyService;
 	/*----------------------------------------------流程业务--------------------------------------------*/
 
 	
@@ -56,7 +61,49 @@ public class WorkflowService implements IWorkflowService {
 		return processInstance;
 	}
 
+	//查询任务所有人全部任务
+	public List<WorkflowDTO> findOwnerTasks(String employeeId){
+		List<WorkflowDTO> results = null;
+		//根据用户id查询其所有用户实例
+		ProcessInstanceQuery  instanceQuery = runtimeService.createProcessInstanceQuery().startedBy(employeeId);
+		List<ProcessInstance> processInstances = instanceQuery.list();
+		if(processInstances!=null) {
+			results = new ArrayList<WorkflowDTO>();
+			for(ProcessInstance processInstance : processInstances) {
+				String processInstanceId = processInstance.getProcessInstanceId();
+				String businessKey = processInstance.getBusinessKey();//获得入库申请的id
+				if(businessKey == null) {
+					continue;
+				}
+				WorkflowDTO dto = new WorkflowDTO();
+				dto.setProcessInstanceId(processInstanceId);//为了生成[流程跟踪图]
+				dto.setBusinessKey(processInstance.getBusinessKey());//根据id在service获取入库类
 
+				//如果查找结果为null，则该流程实例已经走完，如果不为空，则查出来的activity 就是流程实例的下一环节。
+//					List<HistoricActivityInstance> task = historyService.createHistoricActivityInstanceQuery()
+//							.processInstanceId(processInstanceId)
+//							.unfinished().list(); 
+				HistoricTaskInstance task = historyService.createHistoricTaskInstanceQuery()
+						.processInstanceId(processInstanceId)
+						.unfinished().singleResult();
+//					for(HistoricTaskInstance a : task){
+//						System.out.println(a.getName());
+//					}
+//					dto.setTaskId(task.getId());
+				dto.setTaskName(task.getName());//显示[审批状态]
+//					dto.setTaskCreateTime(task.getCreateTime());
+				dto.setAssignee(task.getAssignee());//判断操作的按钮
+//					dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
+//					dto.setSuspended(processInstance.isSuspended());
+//					ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
+//					dto.setProcessDefinitionId(processDefinition.getId());
+//					dto.setVersion(processDefinition.getVersion());
+				results.add(dto);
+			}
+		}
+		return results;
+	}
+		
 	public List<WorkflowDTO> findTodoTasks(String employeeId){
 		List<WorkflowDTO> results = null;
 		//根据act_ru_identitylink中对应的用户 查找act_ru_task表中对应的任务
@@ -65,31 +112,29 @@ public class WorkflowService implements IWorkflowService {
 		if(tasks!=null) {
 			results = new ArrayList<WorkflowDTO>();
 			for(Task task : tasks) {
-				String processInstanceId = task.getProcessDefinitionId();
+				String processInstanceId = task.getProcessInstanceId();
 				ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().
-						processDefinitionId(processInstanceId).active().singleResult();
+						processInstanceId(processInstanceId).active().singleResult();
 				
-					String businessKey = processInstance.getBusinessKey();//获得入库申请的id
-					if(businessKey == null) {
-						continue;
-					}
-					WorkflowDTO dto = new WorkflowDTO();
-					dto.setProcessInstanceId(processInstanceId);
-					dto.setBusinessKey(processInstance.getBusinessKey());
-					
-					dto.setTaskId(task.getId());
-					dto.setTaskName(task.getName());
-					dto.setTaskCreateTime(task.getCreateTime());
-					dto.setAssignee(task.getAssignee());
-					
-					dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
-					dto.setSuspended(processInstance.isSuspended());
-					ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
-					dto.setProcessDefinitionId(processDefinition.getId());
-					dto.setVersion(processDefinition.getVersion());
-					results.add(dto);
+				String businessKey = processInstance.getBusinessKey();//获得入库申请的id
+				if(businessKey == null) {
+					continue;
+				}
+				WorkflowDTO dto = new WorkflowDTO();
+				dto.setProcessInstanceId(processInstanceId);
+				dto.setBusinessKey(processInstance.getBusinessKey());
 				
+				dto.setTaskId(task.getId());
+				dto.setTaskName(task.getName());
+				dto.setTaskCreateTime(task.getCreateTime());
+				dto.setAssignee(task.getAssignee());
 				
+				dto.setTaskDefinitionKey(task.getTaskDefinitionKey());
+				dto.setSuspended(processInstance.isSuspended());
+				ProcessDefinition processDefinition = getProcessDefinition(processInstance.getProcessDefinitionId());
+				dto.setProcessDefinitionId(processDefinition.getId());
+				dto.setVersion(processDefinition.getVersion());
+				results.add(dto);	
 			}
 		}
 		return results;
@@ -238,4 +283,18 @@ public class WorkflowService implements IWorkflowService {
 		identityService.deleteUser(name);
 		
 	}
+	
+	
+	public ProcessInstance getProcessInstanceByTaskId(String taskId) {
+   		Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+		ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+				.processInstanceId(task.getProcessInstanceId()).singleResult();
+		return processInstance;
+   	}
+   	
+   	public ProcessInstance getProcessInstanceById(String processInstanceId) {
+   		ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+   				.processInstanceId(processInstanceId).singleResult();
+        return processInstance;
+    }
 }
