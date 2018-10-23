@@ -74,4 +74,10 @@ public class StockService implements IStockService {
 		}
 	}
 
+	@Override
+	public Stock findByGoodsNo(String goodsNo) {
+		// TODO Auto-generated method stub
+		return stockRepository.findByGoodsNo(goodsNo);
+	}
+
 }

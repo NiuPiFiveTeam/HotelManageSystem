@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.common.SessionUtil;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
@@ -65,6 +66,8 @@ public class InSendController {
 			
 			InStorage inStorage=new InStorage();//b
 			inStorage.setInStorageId(inStorageId);
+			inStorage.setProcessStatus(ProcessStatus.NEW);
+			inStorage.setEmployee(employeeService.findByUserName(SessionUtil.getUserName(session)));
 			inStorageService.save(inStorage);
 			doSend.setInAll(inStorage);
 			iDoSendService.save(doSend);

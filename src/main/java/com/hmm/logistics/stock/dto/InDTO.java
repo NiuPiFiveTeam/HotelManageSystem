@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -13,7 +15,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.finance.logisticst.domain.InStorage;
+import com.hmm.logistics.stock.entity.DoSend;
+import com.hmm.logistics.stock.util.InIn;
 
 public class InDTO {
 	private String inStorageId;//入库编号
@@ -46,7 +51,7 @@ public class InDTO {
 	}
 
 
-
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 	public Date getDoDate() {
 		return doDate;
 	}
@@ -58,7 +63,7 @@ public class InDTO {
 	}
 
 
-
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 	public Date getInStorageDate() {
 		return inStorageDate;
 	}
@@ -167,34 +172,71 @@ public class InDTO {
 
 
 	@SuppressWarnings({ "serial"})
-	public static Specification<InStorage> getWhereClause(final InDTO inDTO) {
-		return new Specification<InStorage>() {
+	public static Specification<DoSend> getWhereClause(final InDTO inDTO) {
+		return new Specification<DoSend>() {
 			@Override
-			public Predicate toPredicate(Root<InStorage> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+			public Predicate toPredicate(Root<DoSend> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 			
 				List<Predicate> predicate = new ArrayList<>();
+				
+//				if (StringUtils.isNotBlank(inDTO.getInStorageId())) {
+//					predicate.add(criteriaBuilder.like(root.get("inStorageId").as(String.class),
+//							"%" + inDTO.getInStorageId() + "%"));}
+//				if (null!=inDTO.getCreateTimeStart()) {
+//					predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("StartDate").as(Date.class),
+//							inDTO.getCreateTimeStart()));
+//				}
+//				if (null!=inDTO.getCreateTimeEnd()) {
+//					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("StartDate").as(Date.class),
+//							inDTO.getCreateTimeEnd()));
+//				}
+//				if (StringUtils.isNotBlank(inDTO.getVender())) {
+//					predicate.add(criteriaBuilder.like(root.get("vender").as(String.class),
+//							"%" + inDTO.getVender() + "%"));}
+//				if (0!=inDTO.getAmountStart()) {
+//					predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("amountStart").as(float.class),
+//							inDTO.getAmountStart()));
+//				}
+//				if (0!=inDTO.getAmountEnd()) {
+//					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("amountEnd").as(float.class),
+//							inDTO.getAmountEnd()));
+//				}
+				
+				System.out.println(inDTO.getInStorageId());
 				if (StringUtils.isNotBlank(inDTO.getInStorageId())) {
-					predicate.add(criteriaBuilder.like(root.get("inStorageId").as(String.class),
-							"%" + inDTO.getInStorageId() + "%"));}
+					
+					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);
+					predicate.add(criteriaBuilder.like(join.get("inStorageId").as(String.class),
+							"%" + inDTO.getInStorageId() + "%"));
+					}
 				if (null!=inDTO.getCreateTimeStart()) {
-					predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("StartDate").as(Date.class),
+					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);
+					predicate.add(criteriaBuilder.greaterThanOrEqualTo(join.get("inStorageDate").as(Date.class),
 							inDTO.getCreateTimeStart()));
 				}
 				if (null!=inDTO.getCreateTimeEnd()) {
-					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("StartDate").as(Date.class),
+					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);
+					predicate.add(criteriaBuilder.lessThanOrEqualTo(join.get("inStorageDate").as(Date.class),
 							inDTO.getCreateTimeEnd()));
 				}
 				if (StringUtils.isNotBlank(inDTO.getVender())) {
-					predicate.add(criteriaBuilder.like(root.get("vender").as(String.class),
-							"%" + inDTO.getVender() + "%"));}
+					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);
+					predicate.add(criteriaBuilder.like(join.get("vender").as(String.class),
+							"%" + inDTO.getVender() + "%"));
+				}
 				if (0!=inDTO.getAmountStart()) {
-					predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("amountStart").as(float.class),
+					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);
+					predicate.add(criteriaBuilder.greaterThanOrEqualTo(join.get("amount").as(float.class),
 							inDTO.getAmountStart()));
 				}
 				if (0!=inDTO.getAmountEnd()) {
-					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("amountEnd").as(float.class),
+					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);
+					predicate.add(criteriaBuilder.lessThanOrEqualTo(join.get("amount").as(float.class),
 							inDTO.getAmountEnd()));
 				}
+				
+				predicate.add(criteriaBuilder.equal(root.get("inin"),
+						InIn.YES));
 				
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();

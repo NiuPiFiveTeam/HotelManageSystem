@@ -68,6 +68,9 @@ public class FloorVoRoomVoRoomCleanDTO {
 				if (StringUtils.isNotBlank(floorVoRoomVoRoomCleanDTO.getType())) {
 					predicate.add(criteriaBuilder.like(root.get("type").as(String.class),
 							"%" + floorVoRoomVoRoomCleanDTO.getType() + "%"));}
+				
+//				predicate.add(criteriaBuilder.(root.get("type").as(String.class),
+//						"%" + floorVoRoomVoRoomCleanDTO.getType() + "%"));
 						
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();
