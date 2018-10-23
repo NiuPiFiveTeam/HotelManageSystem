@@ -25,4 +25,5 @@ public interface IStockService {
 	public Stock findById(Long id);
 	public boolean existsById(Long id);
 	public void deleteAll(Long[] ids);
+	public Stock findByGoodsNo(String goodsNo);
 }

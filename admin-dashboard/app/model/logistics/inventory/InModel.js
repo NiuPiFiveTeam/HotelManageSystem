@@ -5,8 +5,8 @@ Ext.define('Admin.model.logistics.inventory.InModel', {
 	],
 	fields: [
 		{type: 'string',name: 'inStorageId'},//入库编号
-		{type: 'date',name: 'doDate',dateFormat:'Y/m/d H:i:s'},//申请日期
-		{type: 'date',name: 'inStorageDate',dateFormat:'Y/m/d H:i:s'},//入库日期
+		{type: 'date',name: 'doDate', dateFormat:'Y/m/d H:i:s'},//申请日期
+		{type: 'date',name: 'inStorageDate', dateFormat:'Y/m/d H:i:s'},//入库日期
 		{type: 'string',name: 'vender'},//采购商家
 		{type: 'float',name: 'amount'},//总价
 		{type: 'string',name: 'sendWorker'},//申请员工

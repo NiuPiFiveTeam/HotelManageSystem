@@ -47,8 +47,8 @@ Ext.define('Admin.view.logistics.inventory.InventoryViewController', {
     },
     
     /*Quick Search*/	
-	quickSearch:function(btn){
-        var searchField = this.lookupReference('searchFieldName').getValue();
+	quickSearchIn:function(btn){
+        var searchField = this.lookupReference('searchFieldNameIn').getValue();
         var searchInStorageId = this.lookupReference('searchInStorageId').getValue();
 		var searchInStorageDate = this.lookupReference('searchInStorageDate').getValue();
         var searchInStorageDate2 = this.lookupReference('searchInStorageDate2').getValue();
@@ -57,7 +57,7 @@ Ext.define('Admin.view.logistics.inventory.InventoryViewController', {
         var searchAmount2 = this.lookupReference('searchAmount2').getValue();
 		var store =	btn.up('gridpanel').getStore();
 		//var store = Ext.getCmp('userGridPanel').getStore();// Ext.getCmp(）需要在OrderPanel设置id属性
-		Ext.apply(store.proxy.extraParams, {inStorageId:"",createTimeStart:"",createTimeEnd:"",vender:"",amountStart:"",amountEnd:""});
+		Ext.apply(store.proxy.extraParams, {inStorageId:"",createTimeStart:"",createTimeEnd:"",vender:"",amountStart:0,amountEnd:0});
 		
 		if(searchField==='inStorageId'){
 			Ext.apply(store.proxy.extraParams, {inStorageId:searchInStorageId});
@@ -78,6 +78,46 @@ Ext.define('Admin.view.logistics.inventory.InventoryViewController', {
 				amountEnd:searchAmount2
 			});
 		}
+		store.load({params:{start:0, limit:20, page:1}});
+	},
+
+	synchro:function(){
+		Ext.Ajax.request({
+			url: '/In/synchro',
+			method: 'post',
+			success: function(response, options) {
+				var json = Ext.util.JSON.decode(response.responseText);
+				if (json.success) {
+					var store=Ext.getCmp('ininin').store;
+					Ext.apply(store.proxy.extraParams, {InStorageId:"",createTimeStart:null,createTimeEnd:null,amountStart:0,amountEnd:0,vender:''});
+					store.load({params:{start:0, limit:20, page:1}});
+					Ext.Msg.alert('同步信息', "同步入库信息成功");
+				} else {
+					var store=Ext.getCmp('ininin').store;
+					Ext.apply(store.proxy.extraParams, {InStorageId:"",createTimeStart:null,createTimeEnd:null,amountStart:0,amountEnd:0,vender:''});
+					store.load({params:{start:0, limit:20, page:1}});
+					Ext.Msg.alert('同步信息', "同步入库信息失败");
+				}
+			}
+		});
+	},
+
+	showAllIn:function(){
+		this.lookupReference('searchFieldNameIn').setValue("");
+		this.lookupReference('searchInStorageDate').hide();
+		this.lookupReference('searchInStorageDate2').hide();
+		this.lookupReference('searchVender').hide();
+		this.lookupReference('searchAmount1').hide();
+		this.lookupReference('searchAmount2').hide();
+		this.lookupReference('searchInStorageId').hide();
+		this.lookupReference('searchInStorageDate').setValue(null);
+		this.lookupReference('searchInStorageDate2').setValue(null);
+		this.lookupReference('searchVender').setValue("");
+		this.lookupReference('searchAmount1').setValue("");
+		this.lookupReference('searchAmount2').setValue("");
+		this.lookupReference('searchInStorageId').setValue("");
+		var store=Ext.getCmp('ininin').store;
+		Ext.apply(store.proxy.extraParams, {InStorageId:"",createTimeStart:null,createTimeEnd:null,amountStart:0,amountEnd:0,vender:''});
 		store.load({params:{start:0, limit:20, page:1}});
 	},
 /****************************************************	InSend	**************************************************************/
