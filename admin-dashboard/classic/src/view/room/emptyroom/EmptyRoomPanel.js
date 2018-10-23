@@ -188,7 +188,7 @@ Ext.define('Admin.view.room.emptyroom.EmptyRoomPanel', {
                             '<td style="border-left: 1px solid #E3E6EA; border-top: 1px solid #E3E6EA;padding-left:15px;">押金</td>',
                             '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;padding-left:15px;">100</td>',
                             '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;padding-left:15px;">'+new Date().toLocaleString().replace(/\//g,"-")+'</td>',
-                            '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;padding-left:15px;">陈子打</td>',
+                            '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;padding-left:15px;"></td>',
                         '</tr>',
                     '</table>',
                 '</div>',
