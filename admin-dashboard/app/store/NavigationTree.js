@@ -208,7 +208,7 @@
                         text: '考勤统计',
                         iconCls: 'x-fa fa-check',
                         //viewType: 'login',
-                        
+                        viewType: 'companyWorkTab',
                         leaf: true
                     },
                     
@@ -216,13 +216,6 @@
                         text: '部门管理',
                         iconCls: 'x-fa fa-lightbulb-o',
                         viewType: 'deptTab',
-                        leaf: true
-                    },
-                    {
-                        text: '员工意见',
-                        iconCls: 'fa fa-envelope-open-o',
-                       // viewType: 'passwordreset',
-                        
                         leaf: true
                     }
                     
