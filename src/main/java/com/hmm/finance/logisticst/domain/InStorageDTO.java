@@ -32,7 +32,20 @@ public class InStorageDTO {
     private boolean suspended;
     private int version;
     
-    
+	public InStorageDTO() {
+		super();
+	}
+	public InStorageDTO(String inStorageId, Date inStorageDate, String vender, Float amount, String employeeId,
+			Date applyTime,ProcessStatus processStatus) {
+		super();
+		this.inStorageId = inStorageId;
+		this.inStorageDate = inStorageDate;
+		this.vender = vender;
+		this.amount = amount;
+		this.employeeId = employeeId;
+		this.applyTime = applyTime;
+		this.processStatus = processStatus;
+	}
 	public String getInStorageId() {
 		return inStorageId;
 	}
@@ -134,9 +147,30 @@ public class InStorageDTO {
 	}
    
     
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null) {
+			return false;
+		}
+		if(this == obj) {
+			return true;
+		}
+		if(obj instanceof InStorageDTO) {
+			InStorageDTO inStorage = (InStorageDTO)obj;
+			
+			if(inStorage.inStorageId.equals(this.inStorageId))
+				return true;
+		}
+		return false;
+	}
 	
-	
-
+	/**
+     	* 重写hashcode 方法，返回的hashCode不一样才再去比较每个属性的值
+     */
+	@Override
+	public int hashCode() {
+		return inStorageId.hashCode();
+	}
     
     
 }

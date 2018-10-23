@@ -1,40 +1,62 @@
 Ext.define('Admin.view.finance.inStorage.task.ConfirmReceipt',{
-	extend:'Ext.form.Panel',
+	extend:'Ext.panel.Panel',
 	alias:'widget.confirmReceipt',
 	requires:[
 		'Ext.button.Button',
         'Ext.form.RadioGroup',
         'Ext.form.field.*'
 	],
-	bodyPadding: 10,
-    bodyBorder: true,
-    defaults: {
-        anchor: '100%'
-    },
-    fieldDefaults: {
-        labelAlign: 'left',
-        msgTarget: 'none',
-        invalidCls: '' 
-    },
+	width: 400,
+    bodyPadding: 5,
+
     items:[{
-    	xtype:'textfield',
-    	name:'taskId',
-    	fieldLabel:'任务id',
-    	hidden:true,
-    	readOnly:true
+        xtype:'form',
+        items:[{
+            xtype: 'fieldset',
+            title: '入库申请总览',
+            layout:'hbox',
+            defaultType: 'displayfield',
+            items: [{
+                xtype:'textfield',
+                name:'taskId',
+                hidden:true
+            },{
+                name:'amount',
+                fieldLabel:'总金额',
+                labelWidth:60,
+                flex: 1
+            },{
+                name:'vender',
+                fieldLabel:'供货商',
+                labelWidth:60,
+                flex: 1
+            }]
+        }]  
     },{
-    	xtype:'radiogroup',
-    	fieldLabel:'收货确认',
-    	defaults:{
-    		flex:1
-    	},
-    	items:[]
-    },{
-    	xtype:'textareafield',
-    	grow:true,
-    	name:'logisticstBackReason',
-    	fieldLabel:'驳回理由',
-    	anchor:'100%'
+        xtype: 'gridpanel',
+        store:'inStorageDetailedStore',
+        columns: [{
+            header:'名称',
+            dataIndex:'goodsName',
+            flex:1
+        },{
+            header:'单价',  
+            dataIndex:'amount',
+            flex:1 
+        },{
+            header:'数量', 
+            dataIndex:'unit', 
+            flex:1 
+        },{
+            header:'总价(元)',   
+            dataIndex:'price',
+            flex:1
+        }],
+        dockedItems: [{
+            xtype: 'pagingtoolbar',
+            dock: 'bottom',
+            store:'inStorageDetailedStore',
+        }]
     }],
 
     bbar:[{
@@ -54,3 +76,5 @@ Ext.define('Admin.view.finance.inStorage.task.ConfirmReceipt',{
     	}
     }]
 });
+
+

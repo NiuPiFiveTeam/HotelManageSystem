@@ -3,10 +3,13 @@ package com.hmm.finance.logisticst.service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.Task;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,7 +25,10 @@ import com.hmm.employee.dao.EmployeeDao;
 import com.hmm.employee.entity.Employee;
 import com.hmm.finance.logisticst.domain.InStorage;
 import com.hmm.finance.logisticst.domain.InStorageDTO;
+import com.hmm.finance.logisticst.domain.InStorageDetailedDTO;
 import com.hmm.finance.logisticst.repository.InStorageRepository;
+import com.hmm.logistics.stock.entity.InDetailed;
+import com.hmm.logistics.stock.repository.InDetailedRepository;
 
 @Service
 @Transactional
@@ -33,6 +39,9 @@ public class InStorageService implements IInStorageService {
 	private IWorkflowService workflowService;
 	@Autowired
 	private EmployeeDao employdao;
+	@Autowired
+	private InDetailedRepository inDetailedRepository;
+	
 	@Override
 	public void save(InStorage inStorage) {
 		inStorageRepository.save(inStorage);
@@ -55,7 +64,7 @@ public class InStorageService implements IInStorageService {
 		if(inStorage!=null) {
 			try {
 				processInstance = workflowService.startWorkflow(employeeId, "inStorageApply", inStorageId, variables);
-				inStorage.setProcessStatus(ProcessStatus.APPROVAL);//进入(审批中...)状态
+				inStorage.setProcessStatus(ProcessStatus.UNRECEIPTED);//进入(待签收)状态
 				inStorage.setProcessInstanceId(processInstance.getId());
 				inStorage.setApplyTime(new Date());
 			} catch (Exception e) {
@@ -66,13 +75,20 @@ public class InStorageService implements IInStorageService {
 	
 	@Override
 	public List<InStorageDTO> findTodoTasks(String employeeId,Pageable pageable){
-		List<InStorageDTO> inStorageDTOs = null;
-		//不可调换顺序，否则前端显示不正常.根据extjs id相同只显示list后面的数据
-		//1.查询待申请的入库单(根据employeeId查找员工自己的入库单[别的员工看不到])
+		Set<InStorageDTO> inStorageDTOs = null;
+		//1.根据员工id查询所属任务
+		List<WorkflowDTO> workflowLists = workflowService.findTodoTasks(employeeId);
+		inStorageDTOs = workflowToDTO(workflowLists,inStorageDTOs);
+		//2.查询申请人自己发起的任务
+		workflowLists = workflowService.findOwnerTasks(employeeId);
+		inStorageDTOs = workflowToDTO(workflowLists,inStorageDTOs);
+		//3.查询待申请的入库单(根据employeeId查找员工自己的入库单[别的员工看不到])
 		Employee emp = employdao.findByUserName(employeeId);
 		List<InStorage> inStorageLists = inStorageRepository.findByEmployee(emp);
 		if(inStorageLists != null) {
-			inStorageDTOs = new ArrayList<InStorageDTO>();
+			if(inStorageDTOs == null) {
+				inStorageDTOs = new HashSet<InStorageDTO>();
+			}
 			for(InStorage instorage2 : inStorageLists) {
 				InStorageDTO inStorageDTO = new InStorageDTO();
 				BeanUtils.copyProperties(instorage2, inStorageDTO);
@@ -80,11 +96,56 @@ public class InStorageService implements IInStorageService {
 				inStorageDTOs.add(inStorageDTO);
 			}	
 		}
-		//2.查询已进入申请状态的入库单
-		List<WorkflowDTO> workflowLists = workflowService.findTodoTasks(employeeId);
+		//3.返回数据
+		List<InStorageDTO> inStorageDTOs2 = new ArrayList<>(inStorageDTOs);
+		return inStorageDTOs2;
+	}
+	
+	 /**
+     * 签收流程任务
+     *
+     * @param taskId 任务ID
+     * @param userId 签收人用户ID
+     * @return
+     */
+	public void claim(String taskId, String employeeId) {
+		workflowService.claim(taskId, employeeId);
+		ProcessInstance processInstance = workflowService.getProcessInstanceByTaskId(taskId);
+		InStorage inStorage = inStorageRepository.findById(processInstance.getBusinessKey()).get();
+		inStorage.setProcessStatus(ProcessStatus.APPROVAL);//处于[审批中]状态
+	}
+	
+	 /**
+     * 完成流程任务
+     *
+     * @param taskId 任务ID
+     * @param variables 流程变量
+     * @return
+     */
+	public void complete(String taskId, Map<String, Object> variables) {
+		//1.先设置状态
+		ProcessInstance processInstance = workflowService.getProcessInstanceByTaskId(taskId);
+		InStorage inStorage = inStorageRepository.findById(processInstance.getBusinessKey()).get();
+		inStorage.setProcessStatus(ProcessStatus.UNRECEIPTED);//审批完成，重新回到[未签收]状态
+		//1.1若有供应商，则写入入库单实体类
+		if(variables.containsKey("supplier")) {
+			inStorage.setVender((variables.get("supplier")).toString());
+		}
+		//2.再完成，否则完成后查找不到任务id会报错
+		workflowService.complete(taskId, variables);
+		//完成时，若流程结束 则将流程状态设为COMPLETE
+		ProcessInstance processInstance2 = workflowService
+				.getProcessInstanceById(processInstance.getProcessInstanceId());
+		if(processInstance2 == null) {
+			inStorage.setProcessStatus(ProcessStatus.COMPLETE);
+		}
+	}
+	
+	//将workflow查询到的数据，赋值给dto
+	private Set<InStorageDTO> workflowToDTO(List<WorkflowDTO> workflowLists,Set<InStorageDTO> inStorageDTOs){
 		if(workflowLists!=null) {
 			if(inStorageDTOs == null) {
-				inStorageDTOs = new ArrayList<InStorageDTO>();
+				inStorageDTOs = new HashSet<InStorageDTO>();
 			}
 			for(WorkflowDTO workflow : workflowLists) {
 				String businessKey = workflow.getBusinessKey();
@@ -103,28 +164,22 @@ public class InStorageService implements IInStorageService {
 		}
 		return inStorageDTOs;
 	}
-	
-	 /**
-     * 签收流程任务
-     *
-     * @param taskId 任务ID
-     * @param userId 签收人用户ID
-     * @return
-     */
-	public void claim(String taskId, String employeeId) {
-		workflowService.claim(taskId, employeeId);
+
+	//查询入库详细记录
+	@Override
+	public Page<InStorageDetailedDTO> findInStorageDetailedByInStorageId(String inStorageId,Pageable pageable) {
+		List<InStorageDetailedDTO>  isdlist = null;
+		InStorage instorage = inStorageRepository.findById(inStorageId).get();
+		Page<InStorageDetailedDTO> lists = inDetailedRepository.findInStorageDetailedByInAll(instorage,pageable);
+		return lists;
 	}
 	
-	 /**
-     * 完成流程任务
-     *
-     * @param taskId 任务ID
-     * @param variables 流程变量
-     * @return
-     */
-	public void complete(String taskId, Map<String, Object> variables) {
-		workflowService.complete(taskId, variables);
+	//查询已完成入库订单
+	@Override
+	public Page<InStorageDTO> findCompleteInStorage(Pageable pageable) {
+		return inStorageRepository.findCompleteInStorage(pageable);
 	}
+	
 }
 
 

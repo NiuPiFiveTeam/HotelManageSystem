@@ -1,4 +1,4 @@
-Ext.define('Admin.model.finance.InStorageApplyModel', {
+Ext.define('Admin.model.finance.inStorageApply.InStorageApplyModel', {
     extend: 'Admin.model.Base',
     idProperty:'inStorageId',
     fields: [

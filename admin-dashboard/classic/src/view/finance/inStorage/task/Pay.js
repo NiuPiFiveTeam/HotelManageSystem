@@ -6,22 +6,12 @@ Ext.define('Admin.view.finance.inStorage.task.Pay',{
         'Ext.form.RadioGroup',
         'Ext.form.field.*'
 	],
-	bodyPadding: 10,
-    bodyBorder: true,
-    defaults: {
-        anchor: '100%'
-    },
-    fieldDefaults: {
-        labelAlign: 'left',
-        msgTarget: 'none',
-        invalidCls: '' 
-    },
+	width: 400,
+    height: 255,
+    bodyPadding: 10,
+
     items:[{
-    	xtype:'textfield',
-    	name:'taskId',
-    	fieldLabel:'任务id',
-    	hidden:true,
-    	readOnly:true
+    	//使用邮箱验证
     }],
 
     bbar:[{

@@ -91,6 +91,8 @@ public class GuestInfoDto {
 	public void setRoomPass(String roomPass) {
 		this.roomPass = roomPass;
 	}
+	
+	
 	@Override
 	public String toString() {
 		return "GuestInfoDto [realName=" + realName + ", phone=" + phone + ", gender=" + gender + ", idCard=" + idCard

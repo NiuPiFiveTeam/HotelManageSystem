@@ -93,7 +93,7 @@ public class RoomCleanController {
 	@RequestMapping("/dailyNecessarySupplement")
 	public @ResponseBody String dailyNecessarySupplement(@RequestParam("roomNo") String roomNo,@RequestParam("dailyTagData") String dailyTagData) {
 		System.out.println(roomNo+" "+dailyTagData);
-		return RoomState.NEEDCLEAN.toString();
+		return RoomState.NEED_DAILY_NECESSITIES.toString();
 	
 	}
 	

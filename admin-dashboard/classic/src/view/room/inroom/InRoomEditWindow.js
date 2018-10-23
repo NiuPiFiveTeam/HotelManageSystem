@@ -347,8 +347,7 @@ function dailyNecessaryServiceSubmit(roomNo){
             if(state=="NEED_DAILY_NECESSITIES"){ //说明后台返回的是房间需要日用品的状态
                 record.set('state',2);
             }
-  
-            roomstore.load();
+            // roomstore.load();
             alert("请求已提交");
             var fatherwin = form.up('window');
             fatherwin.close();
@@ -363,6 +362,7 @@ function dailyNecessaryServiceSubmit(roomNo){
  * 清洁服务请求提交函数
  */
 function cleanServiceSubmit(roomNo){
+    var form = Ext.getCmp('roomStateChange');
    var radio1 = Ext.getCmp("checkoutClean");  //获取哪个radio被选中
    var radio2 = Ext.getCmp("roomserviceClean");
 
@@ -396,7 +396,7 @@ function cleanServiceSubmit(roomNo){
                 if(state=="NEEDCLEAN"){ //说明后台返回的是房间需要清洁的状态
                     record.set('state',3);
                 }
-                roomstore.load();
+                // roomstore.load();
                 alert("请求已提交");
                 var fatherwin = form.up('window');
                 fatherwin.close();

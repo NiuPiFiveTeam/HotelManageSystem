@@ -2,6 +2,7 @@ package com.hmm.logistics.roomClean.repository;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
 
 import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
 /**
@@ -13,6 +14,7 @@ import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
 * @date 2018年10月17日
 * @version V1.0
  */
+@Repository
 public interface FloorVoRoomVoRoomCleanRepository extends PagingAndSortingRepository<FloorVoRoomVoRoomClean, Long>,JpaSpecificationExecutor<FloorVoRoomVoRoomClean>{
 
 }

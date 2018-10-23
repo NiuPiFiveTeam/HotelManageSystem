@@ -24,7 +24,7 @@
 	sorters: [
 		{
 		direction: 'ASC',
-		property: 'inStorageDate'
+		property: 'doDate'
 		}
 ]
 	

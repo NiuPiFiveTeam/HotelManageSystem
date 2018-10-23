@@ -108,7 +108,7 @@ Ext.define('Ext.ux.form.salaryMonthfield', {
         me.setValue(date);
         this.picker.hide();
         //this.blur();
-        var store = Ext.data.StoreManager.lookup('salaryOrderGridStroe');
+        var store = Ext.data.StoreManager.lookup('salaryOrderGridStore');
         Ext.apply(store.proxy.extraParams,{month:""});
         Ext.apply(store.proxy.extraParams,{
             month:Ext.util.Format.date(date, 'Y/m/d H:i:s')

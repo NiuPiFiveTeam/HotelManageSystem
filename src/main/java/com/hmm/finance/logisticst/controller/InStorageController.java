@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import org.activiti.engine.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -26,34 +25,41 @@ import com.hmm.employee.entity.Employee;
 import com.hmm.employee.service.EmployeeService;
 import com.hmm.finance.logisticst.domain.InStorage;
 import com.hmm.finance.logisticst.domain.InStorageDTO;
+import com.hmm.finance.logisticst.domain.InStorageDetailedDTO;
 import com.hmm.finance.logisticst.service.IInStorageService;
 import com.hmm.finance.salary.domain.SalaryOrderDTO;
+import com.hmm.logistics.stock.service.IInDetailedService;
 
 @RestController
 @RequestMapping(value="/inStorage")
 public class InStorageController {
 	@Autowired
 	private IInStorageService inStorageService;
-	
 	@Autowired
 	private EmployeeService employServiceImpl;
 	
-	private TaskService taskService;  
-	@PostMapping
-    public ExtAjaxResponse save(HttpSession session,@RequestBody InStorage inStorage) {
-    	try {
-    		String userId = SessionUtil.getUserName(session);
-    		if(userId != null) {
-    			Employee employee = employServiceImpl.findByEmpName(userId);
-    			inStorage.setEmployee(employee);
-    			inStorage.setProcessStatus(ProcessStatus.NEW);
-    			inStorageService.save(inStorage);
-    		}
-    		return new ExtAjaxResponse(true,"保存成功!");
-	    } catch (Exception e) {
-	    	e.printStackTrace();
-	        return new ExtAjaxResponse(false,"保存失败!");
-	    }
+	@RequestMapping("findCompleteInStorage")
+	public Page<InStorageDTO> findCompleteInStorage(ExtjsPageRequest pageable){
+		Page<InStorageDTO> page = null;
+		try {
+			page = inStorageService.findCompleteInStorage(pageable.getPageable());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return page;
+	}
+	
+	
+	
+	@RequestMapping(value = "/showInStorageDetailed")
+    public Page<InStorageDetailedDTO> findAllinStorageDetailed(String inStorageId,ExtjsPageRequest pageable) {
+		Page<InStorageDetailedDTO> page = null;
+		try {
+			page = inStorageService.findInStorageDetailedByInStorageId(inStorageId,pageable.getPageable());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return page;
     }
 	
 /*-------------------------------------流程引擎web层------------------------------------------*/
@@ -61,10 +67,10 @@ public class InStorageController {
     public ExtAjaxResponse start(@PathVariable String inStorageId) {
     	try {
     		inStorageService.startWorkflow(inStorageId);
-    		return new ExtAjaxResponse(true,"操作成功!");
+    		return new ExtAjaxResponse(true,"成功！");
 	    } catch (Exception e) {
 	    	e.printStackTrace();
-	        return new ExtAjaxResponse(false,"操作失败!");
+	        return new ExtAjaxResponse(false,"失败！");
 	    }
     }
 	
@@ -84,7 +90,7 @@ public class InStorageController {
      	* 签收任务
      */
     @RequestMapping(value = "claim/{id}")
-    public ExtAjaxResponse claim(@PathVariable("id") String taskId, HttpSession session) {
+    public @ResponseBody ExtAjaxResponse claim(@PathVariable("id") String taskId, HttpSession session) {
     	try{
     		String userName = SessionUtil.getUserName(session);
     		if(userName != null) {

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.department.entity.Department;
 import com.hmm.employee.entity.Employee;
 import com.hmm.finance.financeReport.domain.FinanceReport;
 import com.hmm.finance.salary.domain.SalaryOrder;
@@ -41,7 +42,9 @@ public class SalaryService implements ISalaryService{
 				SalaryOrderDTO.entityToDto(so, dto);
 				dto.setEmpNo(so.getEmployee().getEmpNo());
 				dto.setEmpName(so.getEmployee().getEmpName());
-				dto.setDeptName(so.getEmployee().getDepartmentes().getDeptName());
+				Department a = so.getEmployee().getDepartmentes();
+				if(a!=null)
+					dto.setDeptName(a.getDeptName());
 				salaryOrderDTOs.add(dto);
 			}
 		}

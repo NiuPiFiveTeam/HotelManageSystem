@@ -30,6 +30,9 @@ public class InDetailed {
 	private String unit;//单位，例：只
 	private float price;//单价，例：10元/只
 	private float amount;//数量，例:100只
+	private String goodsNo;//物品编号
+	
+	
 	private InStorage inAll;//父入库记录
 	
 	@Id
@@ -53,7 +56,9 @@ public class InDetailed {
 	public InStorage getInAll() {
 		return inAll;
 	}
-	
+	public String getGoodsNo() {
+		return goodsNo;
+	}
 	
 	public void setId(Long id) {
 		this.id = id;
@@ -73,7 +78,9 @@ public class InDetailed {
 	public void setInAll(InStorage inAll) {
 		this.inAll = inAll;
 	}
-	
+	public void setGoodsNo(String goodsNo) {
+		this.goodsNo = goodsNo;
+	}
 	
 
 	

@@ -16,148 +16,179 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyGrid', {
     items: [{
             xtype: 'gridpanel',
             selType: 'checkboxmodel',   
+            cls: 'inStorageApplyGrid',
             scrollable: true,
             bind: '{inStorageApplyStore}',
             columns: [{
             	header:'入库单号',
             	dataIndex:'inStorageId',
+                flex:0.8
+            },{
+                header:'申请时间',
+                dataIndex:'applyTime',
+                renderer: Ext.util.Format.dateRenderer('Y/m/d H:i'),
+                align:'center',
                 flex:1
             },{
             	header:'申请人',
             	dataIndex:'employeeId',
                 align:'center',
-                flex:1
+                flex:0.7
             },{
-            	header:'入库时间',
+                header: '签收人',
+                dataIndex: 'assignee',
+                align:'center',
+                flex:0.7
+            },{
+            	header:'入库时间',     //隐藏
             	dataIndex:'inStorageDate',
                 hidden:true,
             	renderer: Ext.util.Format.dateRenderer('Y/m/d H:i')
-            }
-            ,{
-            	header:'供货商',
-            	dataIndex:'vender',
-                align:'center',
-                flex:1
-            },{
-            	header:'金额',
-            	dataIndex:'amount',
-                align:'center',
-                renderer:function(val){
-                    if(val==0){
-                        return '';
-                    }
-                    return val;
-                },
-                flex:1
-            },{
-            	header:'申请时间',
-            	dataIndex:'applyTime',
-                renderer: Ext.util.Format.dateRenderer('Y/m/d H:i'),
-                align:'center',
-                flex:1
             },{ 
-            	header: 'taskId' ,
+            	header: 'taskId' , //隐藏
             	dataIndex: 'taskId',
                 hidden:true
             },{
-            	header: '签收人',
-            	dataIndex: 'assignee',
-                align:'center',
-                flex:1
-            },{
-            	header: '任务节点id',
-            	dataIndex: 'taskDefinitionKey',
-                align:'center',
-                hidden:true,
-                flex:1
-            },{
-                header: '任务节点',
-                dataIndex: 'taskName',
-                align:'center',
-                flex:1
-            },{
-                header: '流程实例id',
-                dataIndex: 'processInstanceId',
+                header: '流程实例id',//隐藏
+                dataIndex: 'processInstanceId',//获取流程实例[跟踪流程图]
                 hidden:true
             },{
-                header:'审批状态',
-                dataIndex:'processStatus',
-                flex:1,
-                align:'center',
-                renderer:function(val){
-                    if(val=='NEW'){
-                        return '<span style="color:green;">未申请</span>';
-                    }else if(val=='APPROVAL'){
-                        return '<span style="color:blue;">审批中...</span>';
-                    }else if(val=='COMPLETE'){
-                        return '<span style="color:orange;">完成审批</span>';
-                    }else{
-                        return '<span style="color:red;">取消审批</span>';
-                    }
-                    return val;
-                }
+            	header: '任务节点id',  //隐藏
+            	dataIndex: 'taskDefinitionKey',
+                hidden:true
             },{
-                xtype:'actioncolumn',
+                header: '任务节点', //隐藏
+                dataIndex: 'taskName',
+                hidden:true
+            },{     
+                xtype:'actioncolumn',   //流程跟踪
                 cls:'content-column',
                 width:120,
                 text:'查看流程进度',
                 tooltip:'edit',
-                flex:1,
+                flex:0.8,
                 align:'center',
                 items:[{
                     xtype:'button',
-                    iconCls:'x-fa fa-object-group',
+                    iconCls:'x-fa fa-image',
+                    getClass:function(v,meta,rec){
+                        if(rec.get('processInstanceId') ==''){
+                            return 'x-hidden';
+                        }else{
+                            return 'x-fa fa-image';
+                        }
+                    },
                     tooltip:'任务跟踪',
-                    handler: 'onClickGraphTraceButton'   //流程跟踪
+                    handler: 'onClickGraphTraceButton' 
                 }]
+            },{
+                header:'审批状态',
+                dataIndex:'processStatus',
+                flex:1.2,
+                align:'center',
+                renderer:function(value, metaData, record){
+                    if(value=='NEW'){
+                        return record.get('taskName') + '<span style="color:green;">待申请</span>';
+                        // '<span style="color:green;">待申请...</span>';
+                    }else if(value=='UNRECEIPTED'){
+                        return '[' + record.get('taskName') + ']' +  '<span style="color:blue;">待签收...</span>';
+                    }else if(value=='APPROVAL'){
+                        return '[' + record.get('taskName') + ']' +  '<span style="color:red;">审批中...</span>';
+                    }else if(value=='COMPLETE'){
+                        return '<span style="color:#C71585">已完成</span>';
+                    }else if(value=='CANCEL'){
+                        return '<span style="color:red;">已销毁</span>';
+                    }
+                    return value;
+                }
             },{ 
                 xtype:'actioncolumn',
                 cls:'content-column',
                 width:120,
                 text:'操作',
                 tooltip:'edit',
-                flex:1,
+                flex:0.4,
                 align:'center',
                 items:[{
                     xtype:'button',
-                    iconCls:'x-fa fa-edit',
+                    iconCls:'x-fa fa-address-card-o',
                     tooltip:'申请入库',
                     getClass:function(v,meta,rec){
-                        if (rec.get('processStatus') == 'NEW') {
-                            return 'x-fa fa-edit';
+                        if (rec.get('processStatus') == 'NEW') {    //新建状态，直接显示[申请入库]
+                            return 'x-fa fa-address-card-o';
                         }
                         return 'x-hidden';
                     },
                     handler:'InStorageApplyButton'
                 },{
                     xtype:'button',
-                    iconCls:'x-fa fa-pencil',
+                    iconCls:'x-fa fa-edit',
                     tooltip:'签收任务',
                     getClass:function(v,meta,rec){
-                        if (rec.get('processStatus') != 'NEW') {
-                            if(rec.get('assignee')!=''){
+                        if (rec.get('processStatus') == 'NEW') {
+                            return 'x-hidden';
+                        }else{
+                            if (rec.get('taskId') == '') {
                                 return 'x-hidden';
-                            }
-                            return 'x-fa fa-pencil';
+                            }else{
+                                if(rec.get('assignee') == '' ){
+                                    return 'x-fa fa-edit';
+                                }else{
+                                    return 'x-hidden';
+                                }
+                            } 
                         }
-                        return 'x-hidden';
                     },
                     handler:'InStorageClaimButton'
                 },{
                     xtype:'button',
-                    iconCls:'x-fa fa-edit',
+                    iconCls:'x-fa fa-pencil',
                     tooltip:'审批任务',
                     getClass:function(v,meta,rec){
-                        if (rec.get('processStatus') != 'NEW') {
-                            if(rec.get('assignee')==''){
+                        if (rec.get('processStatus') == 'NEW') {
+                            return 'x-hidden';
+                        }else{
+                            if (rec.get('taskId') == '') {
                                 return 'x-hidden';
-                            }
-                            return 'x-fa fa-edit';
+                            }else{
+                                if(rec.get('assignee') == '' ){
+                                    return 'x-hidden';
+                                }else{
+                                    if(rec.get('taskName') == '出纳付款'){
+                                        return 'x-hidden';
+                                    }else{
+                                        return 'x-fa fa-pencil';
+                                    }
+                                    
+                                }
+                            } 
                         }
-                        return 'x-hidden';
                     },
                     handler:'InStorageCompleteWindowButton'
                 }]
+            },{
+                xtype:'actioncolumn',
+                cls:'content-column',
+                text:'入库详情',
+                tooltip:'edit',
+                flex:0.6,
+                align:'center',
+                items:[{
+                    xtype:'button',
+                    iconCls:'x-fa fa-truck',
+                    tooltip:'查看详细入库情况',
+                    handler:'showInstorageDetailed'
+                }]
+            },{
+                header:'金额',
+                dataIndex:'amount',
+                align:'center',  
+                flex:0.6
+            },{
+                header:'供货商',
+                dataIndex:'vender',
+                align:'center',
+                flex:0.8
             }],
             tbar: ['->',{
                 text:'一键签收'
@@ -172,8 +203,6 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyGrid', {
                 dock: 'bottom',
                 displayInfo: true,
                 bind: '{inStorageApplyStore}'
-            },{
-
             }]
     }]
 });

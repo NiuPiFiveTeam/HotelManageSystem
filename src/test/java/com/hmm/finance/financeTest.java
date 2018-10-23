@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.hmm.finance.logisticst.util.MailUtil;
 import com.hmm.finance.salary.domain.SalaryOrder;
 import com.hmm.finance.salary.repository.SalaryOrderRepository;
 import com.hmm.room.repository.RoomRepository;
@@ -17,7 +18,7 @@ import com.hmm.room.repository.RoomRepository;
 public class financeTest {
 	@Autowired
 	private SalaryOrderRepository salaryOrderRepository;
-	
+//	
 //	@Test
 //	public void test() {
 //		List<SalaryOrder> a = salaryOrderRepository.findAmountByDay();
@@ -25,4 +26,9 @@ public class financeTest {
 //			System.out.println(b.getBasicwage());
 //		}
 //	}
+	@Test
+	public void test1(){
+		MailUtil mail = new MailUtil("1844365296@qq.com","aaa");
+		mail.sentEMail();
+	}
 }

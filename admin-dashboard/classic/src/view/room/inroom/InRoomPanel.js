@@ -29,6 +29,7 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
             xtype: 'treepanel',    //菜单树
             region: 'west',
             title:'<b>楼层</b>',
+            id:'inroomTreepanel',
            
             bind:'{floodList}',//viewModel
             // store:store,

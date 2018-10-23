@@ -6,60 +6,67 @@ Ext.define('Admin.view.finance.inStorage.task.FinanceManagerAudit',{
         'Ext.form.RadioGroup',
         'Ext.form.field.*'
     ],
+    width: 400,
+    height: 255,
     bodyPadding: 10,
-    bodyBorder: true,
-    defaults: {
-        anchor: '100%'
-    },
-    fieldDefaults: {
-        labelAlign: 'left',
-        msgTarget: 'none',
-        invalidCls: '' 
-    },
+
     items:[{
-        xtype:'textfield',
-        name:'taskId',
-        fieldLabel:'任务id',
-        hidden:true,
-        readOnly:true
-    },{
-        xtype:'radiogroup',
-        fieldLabel:'财务jingli审批',
-        defaults:{
-            flex:1
+        xtype: 'fieldset',
+        title: '财务经理审批',
+        defaultType: 'textfield',
+        defaults: {
+            anchor: '100%'
         },
-        items:[{
-            name:'financeManagerPass',
-            inputValue:true,
-            boxLabel:'财务同意',
-            checked:true
-        },{       
-            name:'financeManagerPass',
-            inputValue:false,
-            boxLabel:'财务不同意',
-        }]
-    },{
-        xtype:'textareafield',
-        grow:true,
-        name:'financeBackReason',
-        fieldLabel:'驳回理由',
-        anchor:'100%'
+        items: [
+            {
+                name:'taskId',
+                fieldLabel:'任务id',
+                hidden:true
+            },{
+                xtype: 'displayfield',
+                fieldLabel:'申请金额',
+                name:'amount',
+                hidden:true
+            },{
+                xtype:'radiogroup',
+                fieldLabel:'财务部门审批',
+                items:[{
+                    name:'financeManagerPass',
+                    inputValue:true,
+                    boxLabel:'同意',
+                    checked:true
+                },{
+                    name:'financeManagerPass',
+                    inputValue:false,
+                    boxLabel:'不同意',
+                }],
+                listeners:{
+                    'change':function(group, checked){
+                        var a = Ext.getCmp('financeManagerBackReason');
+                        if(checked.financeManagerPass == true){
+                           a.setDisabled(true);
+                        }else if(checked.financeManagerPass == false){
+                           a.setDisabled(false);
+                        }
+                    }
+                }
+            },{
+                xtype:'textareafield',
+                name:'financeManagerBackReason',
+                id:'financeManagerBackReason',
+                fieldLabel:'驳回理由',
+                anchor:'100%',
+                disabled:true
+            }
+        ]
     }],
 
-    bbar:[{
+    bbar:['->',{
         xtype:'button',
         ui:'soft-green',
         text:'提交',
-        handler:'FinanceManagerFormSubmitButton'
-    },{
-        xtype:'button',
-        ui:'gray',
-        text:'取消',
-        handler:function(btn){
-            var win = btn.up('window');
-            if(win){
-                win.close();
-            }
-        }
+        width:70,
+        height:40,
+        handler:'FinanceManagerFormSubmitButton'   
     }]
 });

@@ -13,6 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.util.StockType;
+import com.hmm.logistics.stock.util.YesOrNoSend;
 
 public class StockDTO {
 	private long id;
@@ -20,6 +21,22 @@ public class StockDTO {
 	private String unit;
 	private float amount;
 	private String stockType;
+	private String yesOrNoSend;
+	private String goodsNo;//物品编号
+	
+	
+	public String getGoodsNo() {
+		return goodsNo;
+	}
+	public void setGoodsNo(String goodsNo) {
+		this.goodsNo = goodsNo;
+	}
+	public String getYesOrNoSend() {
+		return yesOrNoSend;
+	}
+	public void setYesOrNoSend(String yesOrNoSend) {
+		this.yesOrNoSend = yesOrNoSend;
+	}
 	public long getId() {
 		return id;
 	}
@@ -69,7 +86,11 @@ public class StockDTO {
 					}}
 				if (10==stockDTO.getAmount()) {
 					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("amount").as(float.class), stockDTO.getAmount()));}
-				
+				if (StringUtils.isNotBlank(stockDTO.getYesOrNoSend())) {
+					if(stockDTO.getYesOrNoSend().equals("未申请")) {
+						predicate.add(criteriaBuilder.equal(root.get("yesOrNoSend").as(YesOrNoSend.class),YesOrNoSend.NO));}
+					
+				}
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();
 			}

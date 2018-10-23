@@ -1,5 +1,5 @@
 package com.hmm.activiti.domain;
 
 public enum ProcessStatus {
-	NEW,APPROVAL,COMPLETE,CANCEL
+	NEW,UNRECEIPTED,APPROVAL,COMPLETE,CANCEL
 }

@@ -83,7 +83,7 @@
                     {
                         text: '财务收入管理',
                         iconCls: 'x-fa fa-usd',
-                        // viewType: 'income',
+                        viewType: 'roomOrderPanel',
                         leaf: true
                     },
                     {

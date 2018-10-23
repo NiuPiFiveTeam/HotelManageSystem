@@ -4,10 +4,9 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyWindow',{
     autoShow: true,
     modal: true,
 
+    x:600,
+    y:130,
     layout: 'fit',
-
-    width: 500,
-    height: 600,
 
     afterRender: function () {
         var me = this;
@@ -36,13 +35,13 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyWindow',{
     },
 
     syncSize: function () {
-        var width = Ext.Element.getViewportWidth(),
-            height = Ext.Element.getViewportHeight();
+        // var width = Ext.Element.getViewportWidth(),
+        //     height = Ext.Element.getViewportHeight();
 
-        // We use percentage sizes so we'll never overflow the screen (potentially
-        // clipping buttons and locking the user in to the dialog).
+        // // We use percentage sizes so we'll never overflow the screen (potentially
+        // // clipping buttons and locking the user in to the dialog).
 
-        this.setSize(Math.floor(width * 0.4), Math.floor(height * 0.4));
-        this.setXY([ Math.floor(width * 0.05), Math.floor(height * 0.05) ]);
+        // this.setSize(Math.floor(width * 0.4), Math.floor(height * 0.4));
+        // this.setXY([ Math.floor(width * 0.05), Math.floor(height * 0.05) ]);
     }
 });

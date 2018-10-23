@@ -1,22 +1,21 @@
 Ext.define('Admin.model.finance.RoomOrderModel', {
     extend: 'Admin.model.Base',
     idProperty:'roomOrderId',
-    requires: [
-        'Ext.data.proxy.Rest'   //数据层 代理 Rest模式的工具类
-    ],
-
+ 
     fields: [
-        {type: 'int',name: 'orderId'}, 
-        {type: 'int',name: 'userId'},
-        {type: 'int',name: 'roomId'},
-        {type: 'date',name: 'comeDate',dateFormat:'Y/m/d H:i:s' }, //dateFormat:'Y/m/d H:i:s'
-        {type: 'date', name: 'leftDate',dateFormat:'Y/m/d H:i:s'},
-        {type: 'float',name: 'time' },
-        {type: 'float',name: 'amount'}
-    ],
+        {type: 'int',name: 'bookRoomNo'},//房间订单号   20181022161752
+        {type: 'string',name: 'roomType'},//房间类型  单人房
+        {type: 'string',name: 'booksource'},//订单来源,  到店订房
+        {type: 'float',name: 'roomPrice'},//房价, 100
 
-    proxy: {        //不加这个用不了Rest写法
-        type: 'rest',
-        url: '/roomOrder',
-    }
+        {type: 'date',name: 'checkInTime'},//入住时间,  2018-10-22 16:17:47
+        {type: 'date',name: 'checkOutTime'},//退房时间,  2018-10-22 16:17:47
+        {type: 'string',name: 'bookGuest'},//预定人
+        {type: 'string',name: 'bookPhone'},//预定号码, 无
+
+        {type: 'string',name: 'remark'},//备注
+        {type: 'float',name: 'totalAmout'},//订单总收入
+
+    ]
+    
 });

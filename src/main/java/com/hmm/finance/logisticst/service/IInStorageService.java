@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.hmm.finance.logisticst.domain.InStorage;
 import com.hmm.finance.logisticst.domain.InStorageDTO;
+import com.hmm.finance.logisticst.domain.InStorageDetailedDTO;
 
 
 public interface IInStorageService {
@@ -32,4 +33,9 @@ public interface IInStorageService {
 	//public Page<LeaveDTO> findFinishedProcessInstaces(Page<Leave> page, int[] pageParams);
 	//8.查询流程定义对象
 	//protected ProcessDefinition getProcessDefinition(String processDefinitionId);
+	
+	//查找入库详细记录
+	public Page<InStorageDetailedDTO> findInStorageDetailedByInStorageId(String inStorageId,Pageable pageable);
+	//查询已完成入库订单
+	public Page<InStorageDTO> findCompleteInStorage(Pageable pageable);
 }

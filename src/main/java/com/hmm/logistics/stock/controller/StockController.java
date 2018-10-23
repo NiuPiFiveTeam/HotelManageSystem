@@ -21,6 +21,7 @@ import com.hmm.logistics.stock.service.IOutDetailedService;
 import com.hmm.logistics.stock.service.IOutStorageService;
 import com.hmm.logistics.stock.service.IStockService;
 import com.hmm.logistics.stock.util.StockType;
+import com.hmm.logistics.stock.util.YesOrNoSend;
 
 @RestController
 @RequestMapping("Stock")
@@ -45,24 +46,35 @@ public class StockController {
 			stockDTOs.setAmount(stock.getAmount());
 			stockDTOs.setGoodsName(stock.getGoodsName());
 			stockDTOs.setUnit(stock.getUnit());
+			stockDTOs.setGoodsNo(stock.getGoodsNo());
 			if(stock.getStockType()==StockType.COMMODITY) {
 				stockDTOs.setStockType("日用品");
 			}
 			else if(stock.getStockType()==StockType.DURABLE) {
 				stockDTOs.setStockType("耐久品");
 			}
+			if(stock.getYesOrNoSend()==YesOrNoSend.YES) {
+				stockDTOs.setYesOrNoSend("已申请");
+			}
+			else if(stock.getYesOrNoSend()==YesOrNoSend.NO) {
+				stockDTOs.setYesOrNoSend("未申请");
+			}
+			else if(stock.getYesOrNoSend()==YesOrNoSend.ENOUGH) {
+				stockDTOs.setYesOrNoSend("库存足够");
+			}
 			listStockDTO.add(stockDTOs);
 		}
 		
 		return new PageImpl<StockDTO> (listStockDTO,  pageRequest.getPageable(), null!=listStockDTO?listStockDTO.size():0);
 	}
+	
 	@PostMapping
 	public ExtAjaxResponse saveEmploy(@RequestBody StockDTO stockDTO) {
 		try {
 			Stock stock=new Stock();
 			stock.setAmount(stockDTO.getAmount());
 			stock.setGoodsName(stockDTO.getGoodsName());
-			
+			stock.setYesOrNoSend(YesOrNoSend.NO);
 			if(stockDTO.getStockType().equals("COMMODITY")) {
 				stock.setStockType(StockType.COMMODITY);
 			}
@@ -70,6 +82,10 @@ public class StockController {
 				System.out.println(stockDTO.getStockType());
 				stock.setStockType(StockType.DURABLE);
 			}
+			if(stockDTO.getStockType().equals("COMMODITY")) {
+				stock.setStockType(StockType.COMMODITY);
+			}
+			stock.setGoodsNo(stockDTO.getGoodsNo());
 			stock.setUnit(stockDTO.getUnit());
 			stockService.save(stock);
 			return new ExtAjaxResponse(true,"添加成功");

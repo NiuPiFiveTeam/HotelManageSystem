@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional; 
 
 import com.hmm.logistics.stock.entity.DoSend;
 import com.hmm.logistics.stock.repository.DoSendRepository;
@@ -16,6 +17,7 @@ import com.hmm.logistics.stock.repository.DoSendRepository;
 @Service
 @Transactional
 public class DoSendService implements IDoSendService {
+	@Autowired
 	private DoSendRepository doSendRepository;
 	
 	
@@ -63,6 +65,15 @@ public class DoSendService implements IDoSendService {
 		if(doSend!=null) {
 			doSendRepository.deleteAll(doSend);
 		}
+	}
+
+	@Override
+	public List<DoSend> findAll() {
+		// TODO Auto-generated method stub
+		Iterable<DoSend> getd=doSendRepository.findAll();
+		List<DoSend> listd =new ArrayList<DoSend>();
+		getd.forEach(single ->{listd.add(single);});
+		return listd;
 	}
 
 }

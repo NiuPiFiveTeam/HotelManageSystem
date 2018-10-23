@@ -11,6 +11,7 @@
         'Ext.data.reader.Json'
     ],
     stores: {
-    	inStorageApplyStore: {type: 'inStorageApplyStore'}//调用组件2
+    	inStorageApplyStore: {type: 'inStorageApplyStore'},
+        inStorageDetailedStore:{type:'inStorageDetailedStore'}
     }
 });
