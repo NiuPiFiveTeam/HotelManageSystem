@@ -78,6 +78,19 @@ Ext.define('Admin.view.main.MainController', {
     onNavigationTreeSelectionChange: function (tree, node) {
         var to = node && (node.get('routeId') || node.get('viewType'));
 
+        if(node.get('viewType') == "allRoom"){
+            let huangxinjian =Ext.getCmp('allroomPanel');
+            let allRoomContainer1 = Ext.getCmp('allRoomContainer');
+            if(typeof(huangxinjian) == "undefined" && typeof(allRoomContainer1) != "undefined"){
+                 let newRoomStatusPanel = Ext.create('Admin.view.room.allroom.AllroomPanel'); 
+                 allRoomContainer1.add(newRoomStatusPanel);
+            }
+        }else{  
+             let allRoomContainer = Ext.getCmp('allRoomContainer');
+             if(typeof(allRoomContainer) != "undefined"){
+                allRoomContainer.removeAll();
+              }
+        }
         if (to) {
             this.redirectTo(to);
         }
