@@ -1,7 +1,8 @@
 Ext.define('Admin.store.room.EmptyRoomTreeStore', {
     extend: 'Ext.data.TreeStore',
     alias: 'store.emptyRoomTreeStore',
-    
+    storeId : 'emptyRoomTree',
+
     proxy: {
 		type: 'ajax',
 		url: 'floor/findNodes?type=empty',	//后台Controller中的接口url地址,这里我们只查询空房间
@@ -15,7 +16,11 @@ Ext.define('Admin.store.room.EmptyRoomTreeStore', {
         iconCls:'fa-university',
         expanded : true	 //发送node=root，这个设置true就是默认打开，打开就会访问ajax
       
-	}
+    },
+    
+    autoLoad:true,
+    autoSync:true
+    
 
 	// root: {
     //     text:'楼层',

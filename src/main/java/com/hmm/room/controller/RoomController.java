@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hmm.common.web.ExtAjaxResponse;
+import com.hmm.guest.entity.Guest;
+import com.hmm.guest.service.IGuestService;
 import com.hmm.logistics.stock.service.IStockService;
 import com.hmm.room.dto.DailyNecessaryDto;
 import com.hmm.room.dto.RoomDto;
@@ -34,6 +36,9 @@ public class RoomController {
 	private IRoomService roomService;
 	@Autowired
 	private IStockService stockService;
+	
+	@Autowired
+	private IGuestService guestService;
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass()); 
 	
@@ -105,10 +110,23 @@ public class RoomController {
 	@RequestMapping("/changeEmptyToCheckIn")
 	public ExtAjaxResponse changeEmptyToCheckIn(@RequestParam("selectRoomNo") String selectRoomNo,@RequestParam(name="guestList") String[] guestList) {
 		
+
 		for (String string : guestList) {
 			System.out.println(string);
 		}
-		roomService.changeEmptyToCheckIn(selectRoomNo);
+		Room room = roomService.changeEmptyToCheckIn(selectRoomNo);
+		int size = guestList.length;  //入住有多少个人
+		System.out.println(size);
+		for (String idCard : guestList) {
+			System.out.println(idCard+"123");
+			Guest guest = guestService.findGuestByIdCard(idCard);
+			Room guestRoom = guest.getRoom();
+			if (guestRoom == null) {  //说明是还没入住的旅客
+				guest.setRoom(room);
+			}
+			guestService.save(guest);
+		}
+		
 		return new ExtAjaxResponse(true,"入住成功！请安排旅客休息！");
 	}
 	

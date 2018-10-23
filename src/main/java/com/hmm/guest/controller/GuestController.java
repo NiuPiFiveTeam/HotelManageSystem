@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -15,6 +17,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,11 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.hmm.common.web.ExtAjaxResponse;
+import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.guest.dto.GuestDto;
 import com.hmm.guest.dto.GuestInfoDto;
 import com.hmm.guest.entity.Guest;
 import com.hmm.guest.service.IGuestService;
 import com.hmm.guest.util.Gender;
 import com.hmm.guest.util.GuestState;
+import com.hmm.logistics.roomClean.entity.RoomClean;
 import com.hmm.room.entity.Room;
 
 @RestController
@@ -36,6 +44,15 @@ public class GuestController {
 
 	@Autowired
 	private IGuestService guestService;
+	
+	@RequestMapping("/findAll")
+	public Page<GuestDto> getPages(ExtjsPageRequest pageable){
+		pageable.setSort("idCard");
+		Page<GuestDto> guestPage =  guestService.findAll(pageable.getPageable());
+		
+		return guestPage;
+	}
+	
 	
 	@RequestMapping("/findGuestByIdCard")
 	public @ResponseBody GuestInfoDto findGuestByIdCard(@RequestParam("cardNumber") String cardNumber) {

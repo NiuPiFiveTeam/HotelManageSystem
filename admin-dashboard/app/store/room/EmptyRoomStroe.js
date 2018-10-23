@@ -2,6 +2,7 @@ Ext.define('Admin.store.room.EmptyRoomStore', {
     extend:'Ext.data.Store',
 	alias: 'store.emptyRoomStore',
 	storeId:'emptyRoomStore',
+	
     model: 'Admin.model.room.RoomModel',
 
     // data: {

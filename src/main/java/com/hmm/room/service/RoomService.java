@@ -29,14 +29,11 @@ public class RoomService implements IRoomService {
 
 
 	@Override
-	public void changeEmptyToCheckIn(String selectRoomNo) {
+	public Room changeEmptyToCheckIn(String selectRoomNo) {
 		
 		Room room = roomRepository.findRoomByRoomNo(selectRoomNo);
 		room.setState(RoomState.CHECKIN);
 		
-		
-		
-		// TODO Auto-generated method stub
-		roomRepository.save(room);
+		return roomRepository.save(room);
 	}
 }

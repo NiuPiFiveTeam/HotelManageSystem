@@ -2,7 +2,7 @@ Ext.define('Admin.store.room.InRoomTreeStore', {
     extend: 'Ext.data.TreeStore',
     alias: 'store.inroomTreeStore',
     // model:'',
-    // storeId: 'inroomTree',
+    storeId: 'inroomTree',
     
     proxy: {
 		type: 'ajax',

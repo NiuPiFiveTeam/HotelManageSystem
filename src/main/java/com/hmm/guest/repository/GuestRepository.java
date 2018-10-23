@@ -2,17 +2,24 @@ package com.hmm.guest.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
+import com.hmm.guest.dto.GuestDto;
 import com.hmm.guest.entity.Guest;
+import com.hmm.logistics.roomClean.entity.RoomClean;
 
 @Repository
-public interface GuestRepository extends PagingAndSortingRepository<Guest, String>{
+public interface GuestRepository extends PagingAndSortingRepository<Guest, String>,JpaSpecificationExecutor<Guest>{
 
 	@Query("from Guest g where g.idCard = ?1 ")
 	public Guest findGuestByIdCard(String idCard);
 	
-
+	@Query("select new com.hmm.guest.dto.GuestDto(g.realName,g.idCard,g.phone,g.gender,g.state)"
+			+" from Guest g where g.room is null")
+	public Page<GuestDto> findGuestInfo(Pageable pageable);
 }

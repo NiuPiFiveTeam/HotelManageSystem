@@ -47,8 +47,9 @@ Ext.define('Admin.view.room.emptyroom.EmptyRoomPanel', {
             xtype: 'treepanel',    //菜单树
             region: 'west',
             title:'<b>楼层</b>',
+            id:'emptyTreePanel',
            
-            bind:'{floodList}',//viewModel
+            bind:'{emptyfloodList}',//viewModel
             // store:store,
             animate:true,
             animateShadow:true,

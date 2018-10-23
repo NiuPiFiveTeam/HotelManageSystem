@@ -221,7 +221,7 @@ function enterAccount(){
     while(guestLength > 1){
         if(guestLength-1 > 0){
             let idcard = GuestListTable.rows[guestLength-1].cells[1].innerText;
-            guestList.push(idcard);  
+            guestList.push(idcard.trim());  
         }
         guestLength--;   
     }
@@ -278,6 +278,8 @@ function enterAccount(){
                 },  
                 method : 'Get',			
                 success : function(success) {
+                    // var inroomTreepanel = Ext.StoreManager.lookup('inroomTree');
+                    // inroomTreepanel.load();
                     var resultArray = Ext.decode(success.responseText); //得到我们需要的数组
                     Ext.MessageBox.alert('成功提示',resultArray['msg']);
                     let erPanel = Ext.getCmp('emptyRoomPanel');
@@ -287,11 +289,23 @@ function enterAccount(){
                    let hiddenPanel = erPanel.items.get(2);
                    hiddenPanel.setHidden(false);
                    showPanel.setHidden(true);
-                    document.location.href="#inRoom";
 
+                  
+                   var emptyTree = Ext.getCmp('emptyTreePanel');
+                   emptyTree.getStore().load();
+                   var emptyRoom = Ext.getCmp('emptyRoomdataview');
+                   emptyRoom.getStore().load();
+                   document.location.href = '#inRoom';
+                   var inroomTree = Ext.getCmp('inroomTreepanel');
+                   inroomTree.getStore().load();
                 }
             });
         }
     });
     
+}
+
+function loadEmptyTree(){
+    var emptyRoomTree = Ext.StoreManager.lookup('emptyRoomTree');
+    console.log(emptyRoomTree);
 }

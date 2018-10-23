@@ -94,6 +94,24 @@ Ext.define('Admin.view.room.emptyroom.EmptyRoomEditWindow', {
             let checkOutDay = parseInt(checkOutMonthDay.substring(2,4)); //退房day
             let nowRoomPrice = editform.items.get(4).value;
 
+            let GuestListTable1 = document.getElementById('guestInfoTable');
+            let guestLength1 = GuestListTable1.rows.length;
+            while(guestLength1 > 1){
+                if(guestLength1-1 > 0){
+                    GuestListTable1.deleteRow(guestLength1-1);
+                }
+                guestLength1--;   
+            }
+
+            let CashTable1 = document.getElementById('cashInfoTable');
+            let cashLength1 = CashTable1.rows.length;
+            while(cashLength1 > 2){
+                CashTable1.deleteRow(cashLength1-1);
+                cashLength1--;   
+            }
+            document.getElementById('realGetPrice').innerText = 0;
+            document.getElementById('backPrice').innerText = 0;
+
             Array.prototype.in_array = function (e) {
                 var r=new RegExp(','+e+',');
                  return (r.test(',' + this.join(this.S) + ','));
