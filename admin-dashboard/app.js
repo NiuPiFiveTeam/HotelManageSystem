@@ -11,8 +11,8 @@ Ext.application({
         // This will automatically load all classes in the Admin namespace
         // so that application classes do not need to require each other.
         'Admin.*',
-        'Ext.chart.*'
-        
+        'Ext.chart.*',
+        'Ext.form.*'
     ],
 
     // The name of the initial view to create.

@@ -20,45 +20,54 @@ Ext.define('Admin.view.finance.cost.salaryCost.SalaryCostGrid', {
             xtype: 'gridpanel',
             scrollable: true,  
             itemId:'salaryCostGrid',
-            bind: '{salaryOrderGridStroe}',
+            bind: '{salaryOrderGridStore}',
             columns: [{   
                 header:'工资单id',
                 dataIndex:'salaryOrderId',
                 hidden:true
             },{   
             	header:'员工编号',
-            	dataIndex:'empNo'
+            	dataIndex:'empNo',
+                flex:1
             },{
             	header:'姓名',
-            	dataIndex:'empName'
+            	dataIndex:'empName',
+                flex:1
             },{
             	header:'部门',
-            	dataIndex:'deptName'
+            	dataIndex:'deptName',
+                flex:1
             },{
             	header:'基本工资',
-            	dataIndex:'basicwage'
+            	dataIndex:'basicwage',
+                flex:1
             },{
             	header:'加班工资',
-            	dataIndex:'overtimefee'
+            	dataIndex:'overtimefee',
+                flex:1
             },{
             	header:'出差工资',
-            	dataIndex:'allowance'
+            	dataIndex:'allowance',
+                flex:1
             },{
             	header:'请假所扣工资',
-            	dataIndex:'reducemoney'
+            	dataIndex:'reducemoney',
+                flex:1
             },{ 
             	header: '实发工资' ,
-                dataIndex: 'realwage'
+                dataIndex: 'realwage',
+                flex:1
             },{ 
                 header: '日期' ,
                 dataIndex: 'date',
-                renderer: Ext.util.Format.dateRenderer('Y年m月')
+                renderer: Ext.util.Format.dateRenderer('Y年m月'),
+                flex:1
             }],
             dockedItems: [{
                 xtype: 'pagingtoolbar',
                 dock: 'bottom',
                 displayInfo: true,
-                bind: '{salaryOrderGridStroe}'
+                bind: '{salaryOrderGridStore}'
             },{
                 xtype:'toolbar',
                 dock:'top',

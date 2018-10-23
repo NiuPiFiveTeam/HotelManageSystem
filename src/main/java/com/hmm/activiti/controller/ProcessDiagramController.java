@@ -48,7 +48,6 @@ public class ProcessDiagramController {
 	@RequestMapping("/process-trace")
 	public  void getFlowImgByInstanceId(String processInstanceId, OutputStream outputStream) {
 		try {
-			System.out.println(processInstanceId);
 			if (processInstanceId != null) {
 				// 获取历史流程实例
 				HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();

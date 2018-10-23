@@ -4,8 +4,8 @@
 
     items: [{
             iconCls: 'x-fa fa-plus',
-            // xtype:'inStorageApplyCenterPanel',
-            // title:'后勤支出'
+            xtype:'inStorageOrderCenterPanel',
+            title:'后勤支出'
         }, {
             iconCls: 'x-fa fa-plus',
             xtype:'salaryCostCenterPanel',

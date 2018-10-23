@@ -12,6 +12,7 @@ import com.hmm.finance.salary.domain.SalaryOrder;
 import com.hmm.finance.salary.domain.SalaryOrderDTO;
 import com.hmm.finance.salary.domain.SalaryOrderQueryDTO;
 
+
 public interface ISalaryService {
 
 	List<SalaryOrderDTO> findByMonth(SalaryOrderQueryDTO salaryOrderQueryDTO);

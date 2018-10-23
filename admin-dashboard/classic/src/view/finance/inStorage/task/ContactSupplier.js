@@ -2,62 +2,78 @@ Ext.define('Admin.view.finance.inStorage.task.ContactSupplier',{
 	extend:'Ext.form.Panel',
 	alias:'widget.contactSupplier',
 	requires:[
+        'Ext.form.Panel',
+        'Ext.toolbar.Paging',
+
+        'Ext.form.field.ComboBox',  //下拉列表框
+        'Ext.selection.CheckboxModel',
+        'Ext.grid.column.*',
 		'Ext.button.Button',
         'Ext.form.RadioGroup',
         'Ext.form.field.*'
 	],
-	bodyPadding: 10,
-    bodyBorder: true,
-    defaults: {
-        anchor: '100%'
-    },
-    fieldDefaults: {
-        labelAlign: 'left',
-        msgTarget: 'none',
-        invalidCls: '' 
-    },
+	width: 400,
+    bodyPadding: 10,
+
     items:[{
-    	xtype:'textfield',
-    	name:'taskId',
-    	fieldLabel:'任务id',
-    	hidden:true,
-    	readOnly:true
+        xtype: 'fieldset',
+        title: '联系供货商',
+        defaultType: 'textfield',
+        defaults: {
+            anchor: '100%'
+        },
+        items: [
+            {
+                name:'taskId',
+                fieldLabel:'任务id',
+                hidden:true
+            },{
+                xtype:'displayfield',
+                name:'amount',
+                labelAlign:'right',
+                fieldLabel:'总金额'
+            },{
+                name:'supplier',
+                labelAlign:'right',
+                fieldLabel:'请输入供货商',
+                allowBlank:false,
+                emptyText: 'Supplier Name'
+            }
+        ]
     },{
-        xtype:'textfield',
-        name:'amountMoney',
-        fieldLabel:'总金额',
-        value:9999,
-        hidden:true,
-        readOnly:true
-    },{
-    	xtype:'radiogroup',
-    	fieldLabel:'联系供货方',
-    	defaults:{
-    		flex:1
-    	},
-    	items:[]
-    },{
-    	xtype:'textareafield',
-    	grow:true,
-    	name:'logisticstBackReason',
-    	fieldLabel:'驳回理由',
-    	anchor:'100%'
+        xtype: 'gridpanel',
+        store:'inStorageDetailedStore',
+        columns: [{
+            header:'名称',
+            dataIndex:'goodsName',
+            flex:1
+        },{
+            header:'单价',  
+            dataIndex:'amount',
+            flex:1 
+        },{
+            header:'数量', 
+            dataIndex:'unit', 
+            flex:1 
+        },{
+            header:'总价(元)',   
+            name:'price',
+            flex:1
+        }],
+        dockedItems: [{
+            xtype: 'pagingtoolbar',
+            dock: 'bottom',
+            store:'inStorageDetailedStore',
+        }]
     }],
 
-    bbar:[{
-    	xtype:'button',
-    	ui:'soft-green',
-    	text:'提交',
-    	handler:'contactSupplierSubmitButton'
-    },{
-    	xtype:'button',
-    	ui:'gray',
-    	text:'取消',
-    	handler:function(btn){
-    		var win = btn.up('window');
-    		if(win){
-    			win.close();
-    		}
-    	}
+
+    bbar:['->',{
+      xtype:'button',
+      ui:'soft-green',
+      text:'提交',
+        width:70,
+        height:40,
+        handler:'contactSupplierSubmitButton'   
     }]
 });

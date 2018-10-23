@@ -43,6 +43,7 @@ public class InStorage {
 		return inStorageId;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
+	@Column(nullable=true)
 	public Date getInStorageDate() {
 		return inStorageDate;
 	}
@@ -54,10 +55,11 @@ public class InStorage {
 		return amount;
 	}
 	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
+	@Column(nullable=true)
 	public Date getApplyTime() {
 		return applyTime;
 	}
-	
+	  
 	@OneToMany(cascade=CascadeType.ALL,mappedBy="inAll",fetch=FetchType.LAZY)
 	public List<InDetailed> getInDetaileds() {
 		return inDetaileds;

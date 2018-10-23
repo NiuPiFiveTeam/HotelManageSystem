@@ -11,6 +11,6 @@
         'Ext.data.reader.Json'
     ],
     stores: {
-    	salaryOrderGridStroe: {type: 'salaryOrderGridStroe'}
+    	salaryOrderGridStore: {type: 'salaryOrderGridStore'}
     }
 });

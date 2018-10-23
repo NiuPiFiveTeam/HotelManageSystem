@@ -11,28 +11,19 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
             success:function(response,options){
                 var json = Ext.util.JSON.decode(response.responseText);
                 if(json.success){
-                    Ext.Msg.alert(json.msg,'入库单号:'+record.get('inStorageId')+' 已申请!',function(){
+                    Ext.Msg.alert(json.msg,'入库单号:'+record.get('inStorageId')+' 已申请！',function(){
                         view.getStore().reload();
                     });
                 }else{
-                    Ext.Msg.alert(json.msg,'入库单号:'+record.get('inStorageId')+' 申请失败!');
+                    Ext.Msg.alert(json.msg,'入库单号:'+record.get('inStorageId')+' 申请失败！');
                 }
             }
         });
     },
 
-// openAddWindow:function(){
-//         var win = this.lookupReference('AddEmpWindow');
-//         if (!win) {
-//             win = new Admin.view.employ.addEmp.AddEmpWindow();
-//             this.getView().add(win);
-//         }
-//         win.show();
-//     },
 
 
-
-
+    
 	//1.签收任务
 	InStorageClaimButton:function(view,recIndex,cellIndex,item,e,record){
 		Ext.Ajax.request({
@@ -55,31 +46,34 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
 		//选中点击的行 taskDefinitionKey == logisticstAudit
 		var taskDefinitionKey = record.get('taskDefinitionKey');
 		if(taskDefinitionKey == 'logisticstAudit'){
-			//后勤主管审批
-			var win = this.setCurrentView(view,taskDefinitionKey,'后勤主管审批');
+			var win = this.setCurrentView(view,taskDefinitionKey,'后勤经理审批');
 			win.down('form').getForm().loadRecord(record);
 		}else if(taskDefinitionKey == 'contactSupplier'){
-            //联系供货方
+            var store = Ext.data.StoreManager.lookup('inStorageDetailedStore');
+            Ext.apply(store.proxy.extraParams, {inStorageId:record.get('inStorageId')});
+            store.load({params:{start:0, limit:3, page:1}});
             var win = this.setCurrentView(view,taskDefinitionKey,'联系供货方');
             win.down('form').getForm().loadRecord(record);
         }else if(taskDefinitionKey == 'financeAudit'){
-            //财务审批
             var win = this.setCurrentView(view,taskDefinitionKey,'财务审批');
             win.down('form').getForm().loadRecord(record);
         }else if(taskDefinitionKey == 'pay'){
-            //出纳付款
-            var win = this.setCurrentView(view,taskDefinitionKey,'财务审批');
+            var win = this.setCurrentView(view,taskDefinitionKey,'出纳付款');
             win.down('form').getForm().loadRecord(record);
         }else if(taskDefinitionKey == 'confirmReceipt'){
-            //出纳付款
+            var store = Ext.data.StoreManager.lookup('inStorageDetailedStore');
+            Ext.apply(store.proxy.extraParams, {inStorageId:record.get('inStorageId')});
+            store.load({params:{start:0, limit:3, page:1}});
             var win = this.setCurrentView(view,taskDefinitionKey,'收货确认');
-            win.down('form').getForm().loadRecord(record);
+            win.down('panel').down('form').getForm().loadRecord(record);
         }else if(taskDefinitionKey == 'financeManagerAudit'){
-            //出纳付款
-            var win = this.setCurrentView(view,taskDefinitionKey,'财务经理审批(金额过大)');
+            var win = this.setCurrentView(view,taskDefinitionKey,'财务经理审批');
+            win.down('form').getForm().loadRecord(record);
+        }else if(taskDefinitionKey == 'modifyApply'){
+            var win = this.setCurrentView(view,taskDefinitionKey,'调整申请');
             win.down('form').getForm().loadRecord(record);
         }else{
-			Ext.Msg.alert('无人审批','无人审批 无人审批');
+			Ext.Msg.alert('暂无人审批！');
 		}
 	},
 	//2.创建审批表单（并绑定Task id）
@@ -94,7 +88,7 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
     	view.up('container').add(win);
     	return win;
     },
-    //3.后勤主管审批
+    //3.后勤经理审批
     LogisticstFormSubmitButton:function(btn){
     	var form = btn.up('form');
     	var values = form.getValues();
@@ -113,16 +107,24 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
     //4.联系供货方
     contactSupplierSubmitButton:function(btn){
         var form = btn.up('form');
-        var values = form.getValues();
-        var url = 'inStorage/complete/'+values.taskId;
-        var variables=[{
-            key:'amountMoney',
-            value:values.amountMoney, 
-            type:'N'
-        }];
-        this.complete(url,variables,form);
+        if(!form.isValid()){
+            return;
+        }else{
+            var values = form.getValues();
+            var url = 'inStorage/complete/'+values.taskId;
+            var variables=[{
+                key:'amountMoney',
+                value:values.amount, 
+                type:'F'
+            },{
+                key:'supplier',
+                value:values.supplier, 
+                type:'S'
+            }];
+            this.complete(url,variables,form);
+        }
     },
-    //5.财务部门审批
+    //5.财务部门(员工)审批
     FinanceFormSubmitButton:function(btn){
         var form = btn.up('form');
         var values = form.getValues();
@@ -138,7 +140,7 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
         }];
         this.complete(url,variables,form);
     },
-    //6.出纳付款
+    //6.出纳付款   
     paySubmitButton:function(btn){
         var form = btn.up('form');
         var values = form.getValues();
@@ -148,7 +150,7 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
     },
     //7.收货确认
     ConfirmReceiptSubmitButton:function(btn){
-        var form = btn.up('form');
+        var form = btn.up('panel').down('form');
         var values = form.getValues();
         var url = 'inStorage/complete/'+values.taskId;
         var variables=[];
@@ -210,8 +212,7 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
 
     //流程跟踪
     onClickGraphTraceButton:function(view,recIndex,cellIndex,item,e,record){
-        var processInstanceId = record.get('processInstanceId').replace('inStorageApply:2:','');
-        var diagramResourceUrl = 'process-trace?processInstanceId=' + processInstanceId;
+        var diagramResourceUrl = 'process-trace?processInstanceId=' + record.get('processInstanceId');
         var win = new Ext.window.Window({
             title:'入库申请流程',
             width:860,
@@ -224,5 +225,14 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
             })]
         });
         win.show();
+    },
+
+    //显示入库细节
+    showInstorageDetailed:function(view,recIndex,cellIndex,item,e,record){
+        var store = Ext.data.StoreManager.lookup('inStorageDetailedStore');
+        Ext.apply(store.proxy.extraParams, {inStorageId:record.get('inStorageId')});
+        store.load({params:{start:0, limit:3, page:1}});
+        var win = this.setCurrentView(view,'showInstorageDetailed','入库详情记录');
+        win.down('panel').down('form').getForm().loadRecord(record);
     }
 })
