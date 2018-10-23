@@ -193,7 +193,8 @@ function addCashTableItems(data){
 
             insertTd = insertTr.insertCell(4);
             insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;padding-left:15px;";
-            insertTd.innerHTML = '陈自达';
+            let empName = Ext.getCmp('loginUserName');
+            insertTd.innerHTML = empName.html;
 
             let emptyRoomPanel = Ext.getCmp('emptyRoomPanel');
             let oldHeight = emptyRoomPanel.height;
