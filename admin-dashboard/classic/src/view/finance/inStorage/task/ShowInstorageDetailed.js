@@ -41,15 +41,15 @@ Ext.define('Admin.view.finance.inStorage.task.ShowInstorageDetailed',{
             dataIndex:'goodsName',
             flex:1
         },{
-            header:'单价',  
+            header:'数量',  
             dataIndex:'amount',
             flex:1 
         },{
-            header:'数量', 
+            header:'单位', 
             dataIndex:'unit', 
             flex:1 
         },{
-            header:'总价(元)',   
+            header:'单价',
             dataIndex:'price',
             flex:1
         }],

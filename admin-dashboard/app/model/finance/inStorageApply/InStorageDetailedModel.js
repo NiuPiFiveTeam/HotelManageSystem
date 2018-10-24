@@ -5,7 +5,7 @@ Ext.define('Admin.model.finance.inStorageApply.InStorageDetailedModel', {
         {type: 'int',name: 'inStorageDetailedId'}
         ,{type: 'string'   ,name: 'goodsName'}
 		,{type: 'int'	 ,name: 'amount'}
-        ,{type: 'int'   ,name: 'unit'}
+        ,{type: 'string'   ,name: 'unit'}
 		,{type: 'int'	 ,name: 'price'}
     ]
 });

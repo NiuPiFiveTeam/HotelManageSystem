@@ -16,25 +16,27 @@ Ext.define('Admin.view.finance.financeReportDaily.FinanceReportDailyGrid', {
         renderer: Ext.util.Format.dateRenderer('Y/m/d'),
         dataIndex: 'date'
     }, {
-        text: '客房收入',
-        flex: 1,
-        dataIndex: 'roomIncome'
-    }, {
-        text: '后勤支出',
-        flex: 1,
-        dataIndex: 'logisticstCost'
-    }, {
-        text: '工资支出',
-        flex: 1,
-        dataIndex: 'salaryCost'
-    }, {
         text: '总收入',
         flex: 1,
-        dataIndex: 'totalIncome'
+        // dataIndex: 'totalIncome',
+        columns:[{
+            text: '客房收入',
+            flex: 1,
+            dataIndex: 'roomIncome'
+        }]
     }, {
         text: '总支出',
         flex: 1,
-        dataIndex: 'totalCost'
+        // dataIndex: 'totalCost',
+        columns:[ {
+            text: '后勤支出',
+            flex: 1,
+            dataIndex: 'logisticstCost'
+        }, {
+            text: '工资支出',
+            flex: 1,
+            dataIndex: 'salaryCost'
+        }]
     }, {
         text: '利润',
         flex: 1,

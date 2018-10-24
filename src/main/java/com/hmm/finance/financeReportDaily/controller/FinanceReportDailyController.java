@@ -60,7 +60,7 @@ public class FinanceReportDailyController {
     		HttpServletResponse response) throws IOException {
 		List<FinanceReportDaily> classmateList = financeReportDailyService.exportExcelBySelectIds(ids);
 	    HSSFWorkbook workbook = ExportExcel.exportExcel(classmateList);
-        String fileName = "czd"  + ".xls";//设置要导出的文件的名字
+        String fileName = "财务日志"  + ".xls";//设置要导出的文件的名字
         
         response.setContentType("application/octet-stream");
         response.setHeader("Content-disposition", "attachment;filename=" + fileName);
@@ -73,7 +73,7 @@ public class FinanceReportDailyController {
     		HttpServletResponse response) throws IOException {
 		List<FinanceReportDaily> classmateList = financeReportDailyService.exportExcelByYearAndMonth(date);
 	    HSSFWorkbook workbook = ExportExcel.exportExcel(classmateList);
-        String fileName = "czd"  + ".xls";//设置要导出的文件的名字
+        String fileName = "财务日志"  + ".xls";//设置要导出的文件的名字
         
         response.setContentType("application/octet-stream");
         response.setHeader("Content-disposition", "attachment;filename=" + fileName);
@@ -86,7 +86,7 @@ public class FinanceReportDailyController {
     public void exportExcelByYear(@PathVariable("year") Integer year, HttpServletResponse response) throws IOException {
 		List<FinanceReportDaily> classmateList = financeReportDailyService.exportExcelByYear(year);
 	    HSSFWorkbook workbook = ExportExcel.exportExcel(classmateList);
-        String fileName = "czd"  + ".xls";//设置要导出的文件的名字
+        String fileName = "财务日志"  + ".xls";//设置要导出的文件的名字
         
         response.setContentType("application/octet-stream");
         response.setHeader("Content-disposition", "attachment;filename=" + fileName);
@@ -99,46 +99,12 @@ public class FinanceReportDailyController {
     public void exportExcelByAll(HttpServletResponse response) throws IOException {
 		List<FinanceReportDaily> classmateList = financeReportDailyService.exportExcelByAll();
         HSSFWorkbook workbook = ExportExcel.exportExcel(classmateList);
-        String fileName = "czd"  + ".xls";//设置要导出的文件的名字
+        String fileName = "财务日志"  + ".xls";//设置要导出的文件的名字
         
         response.setContentType("application/octet-stream");
         response.setHeader("Content-disposition", "attachment;filename=" + fileName);
         response.flushBuffer();
         workbook.write(response.getOutputStream());
     }
-	
-	
-	
-	
-	
-	
-	
-	
-	//测试数据
-	@RequestMapping(value = "data")
-    public void SaveData() throws ParseException {
-		Date date = new Date();
-		SimpleDateFormat timeFormater = new SimpleDateFormat("yyyy-MM-dd");
-		String str = timeFormater.format(date);
-		Date da = timeFormater.parse(str);
-		
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(date);
-		
-		for(int i = 1;i<=12;i++) {
-			cal.set(Calendar.MONTH,i-1);
-			cal.set(Calendar.DATE, 1);
-			date = cal.getTime();
-			FinanceReportDaily financeReportDaily = new FinanceReportDaily();
-			financeReportDaily.setDate(date);
-			financeReportDaily.setLogisticstCost(i*10000+2000);
-			financeReportDaily.setRoomIncome(i*10000+5000);
-			financeReportDaily.setSalaryCost(i*11000+1000);
-			financeReportDaily.setTotalIncome(financeReportDaily.getRoomIncome());
-			financeReportDaily.setTotalCost(financeReportDaily.getLogisticstCost());
-			financeReportDaily.setProfit(financeReportDaily.getTotalIncome() - financeReportDaily.getTotalCost());
-			financeReportDailyService.save(financeReportDaily);
-		}
-	}
 	
 }

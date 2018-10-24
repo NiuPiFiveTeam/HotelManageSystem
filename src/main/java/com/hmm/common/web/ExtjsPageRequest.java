@@ -13,7 +13,7 @@ public class ExtjsPageRequest
 {
 	//分页条件
 	private int 	page 	= 0;
-	private int 	limit	= 20;
+	private int 	limit	= 2;
 	//排序条件
 	private String  sort	= "id";
 	private String  dir 	= "DESC";

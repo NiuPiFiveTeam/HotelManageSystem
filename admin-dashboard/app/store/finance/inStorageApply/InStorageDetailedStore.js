@@ -8,17 +8,25 @@ Ext.define('Admin.store.finance.inStorageApply.InStorageDetailedStore', {
 
     // data: {
     //     'lists':[{
-    //         "id": "1",
+    //         "inStorageDetailedId": "1",
     //         "goodsName":'牙刷',
     //         'amount':'20',
-    //         "unit": "50",
-    //         "price":'1000'
+    //         "unit": "50"
     //     },{
-    //         "id": "21",
+    //         "inStorageDetailedId": "21",
     //         "goodsName":'毛巾',
     //         'amount':'220',
-    //         "unit": "520",
-    //         "price":'10020'
+    //         "unit": "520"
+    //     },{
+    //         "inStorageDetailedId": "22",
+    //         "goodsName":'毛23巾',
+    //         'amount':'220',
+    //         "unit": "520"
+    //     },{
+    //         "inStorageDetailedId": "23",
+    //         "goodsName":'毛2巾',
+    //         'amount':'220',
+    //         "unit": "520"
     //     }]
     // },
 

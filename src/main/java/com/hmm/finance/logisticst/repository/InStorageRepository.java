@@ -24,6 +24,6 @@ public interface InStorageRepository extends PagingAndSortingRepository<InStorag
 
 	@Query("select new com.hmm.finance.logisticst.domain.InStorageDTO(i.inStorageId,i.inStorageDate,i.vender,"
 			+ "i.amount,i.employee.userName,i.applyTime,i.processStatus)"
-			+ " from InStorage i ")
+			+ " from InStorage i where processStatus = 'COMPLETE'")
 	Page<InStorageDTO> findCompleteInStorage(Pageable pageable);
 }
