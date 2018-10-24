@@ -77,11 +77,11 @@ public class RoomOrder {
 	public Float getRoomPrice() {
 		return roomPrice;
 	}
-	@JsonFormat(pattern="yyyy/MM/dd",timezone="GMT+8")
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 	public Date getCheckInTime() {
 		return checkInTime;
 	}
-	@JsonFormat(pattern="yyyy/MM/dd",timezone="GMT+8")
+	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss",timezone="GMT+8")
 	public Date getCheckOutTime() {
 		return checkOutTime;
 	}
