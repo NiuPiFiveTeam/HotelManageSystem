@@ -405,6 +405,10 @@ function cleanServiceSubmit(roomNo){
                 alert("请求已提交");
                 var fatherwin = form.up('window');
                 fatherwin.close();
+                if(selectValue == 'checkoutClean'){
+                    //跳转到订单
+                    overOrder();
+                }
             }
         });
    }else{
@@ -418,4 +422,16 @@ function cleanServiceSubmit(roomNo){
  */
 function roomcardServiceSubmit(){
     alert("房卡服务提交");
+}
+
+/**
+ * 结账
+ */
+function overOrder(){
+
+    let inroompanel = Ext.getCmp('inRoomPanel');
+    let showPanel = inroompanel.items.get(3);
+    let hiddenPanel = inroompanel.items.get(2);
+    hiddenPanel.setHidden(true);
+    showPanel.setHidden(false);
 }

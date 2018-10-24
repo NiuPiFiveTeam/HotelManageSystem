@@ -245,6 +245,7 @@ function enterAccount(){
     let remark = document.getElementById('remark').innerText;
     let backPirce = document.getElementById('backPrice').innerText;
     let totalMoney = document.getElementById('totalPrice').innerText;
+    let realGetPrice = document.getElementById('realGetPrice').innerText;
     console.log(backPirce);
     if(parseInt(backPirce) < 0){
         Ext.MessageBox.alert('错误提示','请重新核对输入金额是否正确！');
@@ -260,7 +261,8 @@ function enterAccount(){
         'bookGuest':bookGuest,
         'bookPhone':bookPhone,
         'remark':remark,
-        'totalMoney':totalMoney
+        'totalMoney':totalMoney,
+        'realGetPrice':realGetPrice
     };
 
     console.log(dataArray);
