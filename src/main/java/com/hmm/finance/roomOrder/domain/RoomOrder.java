@@ -31,16 +31,17 @@ public class RoomOrder {
 	private String remark;//备注
 	private Float totalIncome;//总收入(含押金)
 	private Float realIncome;//实际收入
+	private Float shouldIncome;//应收
+	
+	private Employee employee;
+	private RoomOrderStatus roomOrderStatus;
 	public Float getShouldIncome() {
 		return shouldIncome;
 	}
 	public void setShouldIncome(Float shouldIncome) {
 		this.shouldIncome = shouldIncome;
 	}
-	private Float shouldIncome;//应收
-	
-	private Employee employee;
-	private RoomOrderStatus roomOrderStatus;
+
 	@OneToOne
 	@JoinColumn(name="employeeId")
 	public Employee getEmployee() {

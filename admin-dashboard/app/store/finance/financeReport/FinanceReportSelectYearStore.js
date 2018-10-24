@@ -12,6 +12,6 @@ Ext.define('Admin.store.finance.financeReport.FinanceReportSelectYearStore', {
             type: 'json',
             rootProperty: 'data'
         }
-    }
-
+    },
+    autoLoad: 'true'
 });

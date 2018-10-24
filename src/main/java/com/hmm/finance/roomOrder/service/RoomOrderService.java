@@ -69,5 +69,19 @@ public class RoomOrderService implements IRoomOrderService{
 	public List<RoomOrder> findByRoomNo(String roomNo) {
 		return roomOrderRepository.findByRoomNo(Long.parseLong(roomNo));
 	}
+
+	@Override
+	public void save2(String bookRoomNo, User user) {
+		String userId = user.getId();
+		Employee employee = employeeDao.findByUserName(userId);
+		RoomOrder roomOrder = roomOrderRepository.findById(Long.parseLong(bookRoomNo)).get();
+		roomOrder.setRealIncome(roomOrder.getShouldIncome()-100);
+		roomOrder.setEmployee(employee);
+		roomOrder.setRoomOrderStatus(RoomOrderStatus.CHECKOUT);
+//			roomOrder.setBookRoomNo(Long.parseLong(dataArray[0]));
+//
+//			roomOrder.setEmployee(employee);
+//			roomOrderRepository.save(roomOrder);
+	}
 	
 }

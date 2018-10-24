@@ -1,6 +1,7 @@
 package com.hmm.finance.roomOrder.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -40,16 +41,16 @@ public class RoomOrderController {
     }
 	
 	//结账
-	@RequestMapping(value = "/save2")
-    public ExtAjaxResponse save2(@RequestParam(name="dataArray") String[] dataArray,HttpSession session) {
+	@RequestMapping("/overOrder")
+	public ExtAjaxResponse save2(String bookRoomNo, HttpSession session){
 		try {
 			User user = SessionUtil.getUser(session);
-			roomOrderService.save(dataArray,user);
+			roomOrderService.save2(bookRoomNo,user);
 			return new ExtAjaxResponse(true);
 		} catch (Exception e) {
 			return new ExtAjaxResponse(false);
 		}
-    }
+	}
 
 	//返回前台展示
 	@RequestMapping(value = "/getOrderInfo")
