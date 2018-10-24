@@ -35,8 +35,10 @@ import com.hmm.logistics.roomClean.util.RoomCleanState;
 import com.hmm.logistics.stock.entity.InDetailed;
 import com.hmm.logistics.stock.entity.OutDetailed;
 import com.hmm.logistics.stock.entity.OutStorage;
+import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.repository.OutDetailedRepository;
 import com.hmm.logistics.stock.repository.OutStorageRepository;
+import com.hmm.logistics.stock.service.IStockService;
 import com.hmm.room.repository.RoomRepository;
 import com.hmm.room.util.RoomState;
 
@@ -65,6 +67,8 @@ public class RoomCleanController {
 	private OutStorageRepository OutStorageService;
 	@Autowired
 	private OutDetailedRepository OutDetailedService;
+	@Autowired
+	private  IStockService stockService;
 	//先更新，后查询
 	@GetMapping
 		public Page<FloorVoRoomVoRoomClean> getPages(FloorVoRoomVoRoomCleanDTO floorVoRoomVoRoomCleanDTO,ExtjsPageRequest pageRequest){
@@ -75,7 +79,7 @@ public class RoomCleanController {
 //	public void save() {
 //		roomCleanService.saveAllFloorVoRoomVoRoomCleanDTO();
 //	}
-	
+//	
 //	@RequestMapping("/data")
 //	public void set() {
 //		roomCleanService.set();
@@ -88,12 +92,20 @@ public class RoomCleanController {
 			RoomClean entity=roomCleanService.findById(myId);
 			if(entity!=null) {
 				BeanUtils.copyProperties(dto, entity);
-				roomCleanService.save(entity);
+				roomCleanService.save(entity);//更改状态
 			};
 			if(dto.getRoomCleanState()==RoomCleanState.WAITING){
 				List<RoomCleanRecord> roomCleanRecords=roomCleanRecordService.findByRoomId(entity.getRoom().getRoomId());
 				for(RoomCleanRecord roomCleanRecord:roomCleanRecords) {
 					if(roomCleanRecord.getRoomWorker()==null) {
+						if(roomCleanRecord.getOutStorage()!=null) {
+							List<OutDetailed> outDetaileds=roomCleanRecord.getOutStorage().getOutDetailed();
+							for(OutDetailed outDetailed:outDetaileds) {
+								Stock stock=stockService.findByGoodsNo(outDetailed.getGoodsNo());
+								stock.setAmount(stock.getAmount()-outDetailed.getAmount());
+								stockService.save(stock);
+							}
+						}
 						roomCleanRecord.setRoomDate(new Date());
 						roomCleanRecord.setRoomWorker(employeeService.findByUserName(SessionUtil.getUserName(session)));
 						roomCleanRecordService.save(roomCleanRecord);
