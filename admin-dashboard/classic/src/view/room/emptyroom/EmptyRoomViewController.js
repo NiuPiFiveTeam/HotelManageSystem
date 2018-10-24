@@ -233,6 +233,7 @@ function enterAccount(){
         Ext.MessageBox.alert('错误提示','请添加收入类型！');
         return;
     }
+    let roomNo = document.getElementById('selectRoomNo').innerText;
     let bookRoomNo = document.getElementById('bookRoomNo').innerText;
     let selectRoomNo = (document.getElementById('selectRoomNo').innerText).substring(0,3);
     let roomType = document.getElementById('roomType').innerText;
@@ -262,7 +263,8 @@ function enterAccount(){
         'bookPhone':bookPhone,
         'remark':remark,
         'totalMoney':totalMoney,
-        'realGetPrice':realGetPrice
+        'realGetPrice':realGetPrice,
+        'roomNo':roomNo.substring(0,3).trim()
     };
 
     console.log(dataArray);

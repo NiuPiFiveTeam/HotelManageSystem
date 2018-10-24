@@ -429,6 +429,40 @@ function roomcardServiceSubmit(){
  */
 function overOrder(){
 
+    /**
+     * 访问后台获取订单信息
+     */
+
+    Ext.Ajax.request({			
+        url : '/roomOrder/getOrderInfo',
+        //从数据库中请求数据，动态获取items中的数据			
+        params : {
+            'dataArray':dataArray,
+        },  
+        method : 'Get',			
+        success : function(result) {
+
+        }
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     let inroompanel = Ext.getCmp('inRoomPanel');
     let showPanel = inroompanel.items.get(3);
     let hiddenPanel = inroompanel.items.get(2);
