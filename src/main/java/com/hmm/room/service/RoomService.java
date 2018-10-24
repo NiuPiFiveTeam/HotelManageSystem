@@ -36,4 +36,11 @@ public class RoomService implements IRoomService {
 		
 		return roomRepository.save(room);
 	}
+
+
+	@Override
+	public Iterable<Room> findAllRoom() {
+		
+		return roomRepository.findAll();
+	}
 }
