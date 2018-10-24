@@ -1,6 +1,8 @@
 package com.hmm.logistics.stock.controller;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +118,11 @@ public class StockController {
 			if(stockDTO.getStockType().equals("COMMODITY")) {
 				stock.setStockType(StockType.COMMODITY);
 			}
-			stock.setGoodsNo(stockDTO.getGoodsNo());
+			Double random =Math.random();
+			String ss=random.toString().substring(2, 11);
+			Date date = new Date();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			stock.setGoodsNo(sdf.format(date)+String.valueOf(ss));
 			stock.setUnit(stockDTO.getUnit());
 			stockService.save(stock);
 			return new ExtAjaxResponse(true,"添加成功");

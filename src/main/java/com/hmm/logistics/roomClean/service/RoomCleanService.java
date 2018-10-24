@@ -94,6 +94,35 @@ public class RoomCleanService implements IRoomCleanService{
 		// TODO Auto-generated method stub
 		return roomCleanRepository.findById(id).get();
 	}
+	
+	public void aloadRoomCleantoDTO(RoomClean roomClean) {
+			FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
+			//floorVoRoomVoRoomClean.setRoomCleanState(roomClean.getRoomCleanState());
+			if(roomClean.getRoomCleanState()==RoomCleanState.CLEAN) {
+				floorVoRoomVoRoomClean.setRoomCleanState("退房清洁");
+			}
+			else if(roomClean.getRoomCleanState()==RoomCleanState.CLEANING) {
+				floorVoRoomVoRoomClean.setRoomCleanState("清洁中");
+			}
+			else if(roomClean.getRoomCleanState()==RoomCleanState.SERVICE) {
+				floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
+			}
+			else if(roomClean.getRoomCleanState()==RoomCleanState.SERVICING) {
+				floorVoRoomVoRoomClean.setRoomCleanState("服务中");
+			}
+			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING) {
+				floorVoRoomVoRoomClean.setRoomOther("无");
+				floorVoRoomVoRoomClean.setRoomCleanState("等待中");
+			}
+			floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
+	}
+	
+	
+	
+	
+	
+	
+	
 
 	//设置FloorVoRoomVoRoomClean表或更新其数据
 	@Override
@@ -169,6 +198,11 @@ public class RoomCleanService implements IRoomCleanService{
 		RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
 		roomClean.setRoomCleanState(RoomCleanState.SERVICE);
 		roomCleanService.save(roomClean);//改变roomClean的状态为客房服务
+		FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
+		floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
+		floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
+		
+		
 		
 		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();
 		roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));//操作记录表
@@ -229,6 +263,9 @@ public class RoomCleanService implements IRoomCleanService{
 			roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));
 			roomCleanRecord.setRoomHandle("客房服务");
 			roomCleanRecord.setRoomOther("无");
+			FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
+			floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
+			floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
 			roomCleanRecordService.save(roomCleanRecord);
 		}
 		else if(selectValue.equals("checkoutClean")) {//退房清洁
@@ -242,9 +279,17 @@ public class RoomCleanService implements IRoomCleanService{
 			roomCleanRecord.setRoomHandle("退房清洁");
 			if(StringUtils.isNotBlank(remark)) {
 				roomCleanRecord.setRoomOther(remark);
+				FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
+				floorVoRoomVoRoomClean.setRoomCleanState("退房清洁");
+				floorVoRoomVoRoomClean.setRoomOther(remark);
+				floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
 			}
 			else {
 				roomCleanRecord.setRoomOther("无");
+				FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
+				floorVoRoomVoRoomClean.setRoomCleanState("退房清洁");
+				floorVoRoomVoRoomClean.setRoomOther(remark);
+				floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
 			}
 			roomCleanRecordService.save(roomCleanRecord);
 		}

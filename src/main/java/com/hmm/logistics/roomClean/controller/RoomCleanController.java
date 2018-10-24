@@ -40,6 +40,7 @@ import com.hmm.logistics.stock.repository.OutDetailedRepository;
 import com.hmm.logistics.stock.repository.OutStorageRepository;
 import com.hmm.logistics.stock.service.IStockService;
 import com.hmm.logistics.stock.util.YesOrNoSend;
+import com.hmm.room.entity.Room;
 import com.hmm.room.repository.RoomRepository;
 import com.hmm.room.util.RoomState;
 
@@ -73,7 +74,8 @@ public class RoomCleanController {
 	//先更新，后查询
 	@GetMapping
 		public Page<FloorVoRoomVoRoomClean> getPages(FloorVoRoomVoRoomCleanDTO floorVoRoomVoRoomCleanDTO,ExtjsPageRequest pageRequest){
-			roomCleanService.saveAllFloorVoRoomVoRoomCleanDTO();//更新数据
+			//roomCleanService.saveAllFloorVoRoomVoRoomCleanDTO();//更新数据
+			//roomCleanService.aloadRoomCleantoDTO();
 			return roomCleanService.findAllFloorVoRoomVoRoomCleanDTO(FloorVoRoomVoRoomCleanDTO.getWhereClause(floorVoRoomVoRoomCleanDTO), pageRequest);
 		}
 //	@RequestMapping("/data")
@@ -93,9 +95,17 @@ public class RoomCleanController {
 			RoomClean entity=roomCleanService.findById(myId);
 			if(entity!=null) {
 				BeanUtils.copyProperties(dto, entity);
+				roomCleanService.aloadRoomCleantoDTO(entity);
 				roomCleanService.save(entity);//更改状态
+				
 			};
 			if(dto.getRoomCleanState()==RoomCleanState.WAITING){
+				
+				Room room=entity.getRoom();
+				room.setState(RoomState.EMPTY);
+				roomRepository.save(room);
+				
+				
 				List<RoomCleanRecord> roomCleanRecords=roomCleanRecordService.findByRoomId(entity.getRoom().getRoomId());
 				for(RoomCleanRecord roomCleanRecord:roomCleanRecords) {
 					if(roomCleanRecord.getRoomWorker()==null) {

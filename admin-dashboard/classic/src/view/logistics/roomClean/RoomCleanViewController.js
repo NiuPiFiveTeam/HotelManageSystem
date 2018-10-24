@@ -12,7 +12,8 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 				var record = store.getById(gridStroe.get('id'));//获取id获取store中的数据
 				var values={"roomCleanState":"CLEANING"};
 				record.set(values);//rest put 
-				grid.store.reload();
+				grid.getStore().reload();
+				alert("可开始清洁");
 			}  
 		}  
 		);
@@ -32,6 +33,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 				var values={"roomCleanState":"WAITING"};
 				record.set(values);//rest put 
 				grid.store.reload();
+				alert("完成退房清洁");
 			}  
 		}  
 		);
@@ -48,6 +50,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 				var values={"roomCleanState":"SERVICING"};
 				record.set(values);//rest put 
 				grid.store.reload();
+				alert("可以开始客房服务");
 			}  
 		}  
 		);
@@ -71,6 +74,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 				var values={"roomCleanState":"WAITING"};
 				record.set(values);//rest put 
 				grid.store.reload();
+				alert("可以开始客房服务");
 			}  
 		}  
 		);
