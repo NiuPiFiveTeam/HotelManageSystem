@@ -202,7 +202,7 @@ public class InDTO {
 //							inDTO.getAmountEnd()));
 //				}
 				
-				System.out.println(inDTO.getInStorageId());
+				//System.out.println(inDTO.getInStorageId());
 				if (StringUtils.isNotBlank(inDTO.getInStorageId())) {
 					
 					Join<InStorage,DoSend> join=root.join("inAll",JoinType.LEFT);

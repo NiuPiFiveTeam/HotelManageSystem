@@ -1,4 +1,4 @@
-Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
+Ext.define('Admin.view.logistics.inventory.InventoryPanel', {
     extend: 'Ext.tab.Panel',
     xtype: 'inventoryPanel',
 
@@ -202,7 +202,12 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'vender', text: '采购商家', align:'center',width: 165,menuDisabled:true,sortable:false},
                 {xtype: 'gridcolumn',cls: 'content-column',width: 140,dataIndex: 'amount', text: '总价', align:'center',menuDisabled:true,sortable:false},
                 {xtype: 'gridcolumn',width: 140,dataIndex: 'sendWorker',text: '申请员工',align:'center',menuDisabled:true,sortable:false},
-                {xtype: 'actioncolumn',cls: 'content-column', width: 130,dataIndex: 'bool',text: '详细表',align:'center',menuDisabled:true,sortable:false,flex: 1,}
+                {xtype: 'actioncolumn',cls: 'content-column', width: 130,dataIndex: 'bool',text: '详细表',align:'center',menuDisabled:true,sortable:false,flex: 1,
+                items: [
+                    {xtype: 'button',handler: 'showInDetailedButton',tooltip : '显示详细入库物品', iconCls: 'x-fa fa-close'},
+                ],
+            
+                }
             ],
             tbar: [{//自定义主件
 	            xtype: 'combobox',
@@ -304,7 +309,7 @@ Ext.define('Admin.view.logistics.roomClean.InventoryPanel', {
 		        handler: 'showAllIn'
 		    }
             ,'->',{
-		        text: '同步入库记录',
+		        text: '同步已审批入库记录',
 		        iconCls: 'fa fa-search',
 		        handler: 'synchro'
 		    }],

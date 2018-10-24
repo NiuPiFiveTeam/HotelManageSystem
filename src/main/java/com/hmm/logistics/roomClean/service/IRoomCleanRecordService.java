@@ -23,6 +23,7 @@ public interface IRoomCleanRecordService {
 	public Page<RoomCleanRecord> findAll(Specification<RoomCleanRecord> spec, Pageable pageable);//分页查找数据
 	public void deleteById(Long id);//删除记录
 	public RoomCleanRecord findById(Long id);
+	public List<RoomCleanRecord> findByRoomId(Long roomId);
 //	public boolean existsById(Long id);
 //	public void deleteById(Long id);
 //	public void deleteAll(Long[] ids);

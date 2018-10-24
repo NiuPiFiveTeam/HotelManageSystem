@@ -74,4 +74,10 @@ public class InDetailedService implements IInDetailedService {
 		}
 	}
 
+	@Override
+	public List<InDetailed> findAll(Specification<InDetailed> spec) {
+		// TODO Auto-generated method stub
+		return inDetailedRepository.findAll(spec);
+	}
+
 }

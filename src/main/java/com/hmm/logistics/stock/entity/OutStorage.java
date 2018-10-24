@@ -17,7 +17,8 @@ import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.employee.entity.Employee;
-import com.hmm.logistics.roomClean.entity.RoomClean;
+import com.hmm.logistics.roomClean.entity.RoomCleanRecord;
+import com.hmm.room.entity.Room;
 
 /**
  * 
@@ -35,7 +36,7 @@ public class OutStorage {
 	private Long id;
 	private Date outDate;//出库总表的入库时间
 	private String reason;//出库原因
-	private RoomClean room;//出库的房间
+	private RoomCleanRecord roomCleanRecord;//操作记录
 	private Employee worker;//出库的工作人员
 	private List<OutDetailed> outDetailed=new ArrayList<OutDetailed>();//出库详情表
 	
@@ -55,8 +56,8 @@ public class OutStorage {
 		return reason;
 	}
 	@OneToOne
-	public RoomClean getRoom() {
-		return room;
+	public RoomCleanRecord getRoomCleanRecord() {
+		return roomCleanRecord;
 	}
 	@ManyToOne
 	public Employee getWorker() {
@@ -78,8 +79,8 @@ public class OutStorage {
 	public void setReason(String reason) {
 		this.reason = reason;
 	}
-	public void setRoom(RoomClean room) {
-		this.room = room;
+	public void setRoomCleanRecord(RoomCleanRecord roomCleanRecord) {
+		this.roomCleanRecord = roomCleanRecord;
 	}
 	public void setWorker(Employee worker) {
 		this.worker = worker;
