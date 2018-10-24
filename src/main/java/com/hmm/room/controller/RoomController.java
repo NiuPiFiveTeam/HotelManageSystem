@@ -260,16 +260,17 @@ public class RoomController {
 		
 //		List<Stock> stockList = ;
 		List<DailyNecessaryDto> dailyNecessaryList = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			DailyNecessaryDto dailyNecessaryDto = new DailyNecessaryDto();
-			
-			dailyNecessaryDto.setId("Daily_"+i);
-			dailyNecessaryDto.setShow("黄欣健"+i);
-			dailyNecessaryDto.setNumber(0);  //默认初始化为0
-			dailyNecessaryDto.setName("daily"+i);
-			
-			dailyNecessaryList.add(dailyNecessaryDto);
-		}
+//		for (int i = 0; i < 5; i++) {
+//			DailyNecessaryDto dailyNecessaryDto = new DailyNecessaryDto();
+//			
+//			dailyNecessaryDto.setId("Daily_"+i);
+//			dailyNecessaryDto.setShow("黄欣健"+i);
+//			dailyNecessaryDto.setNumber(0);  //默认初始化为0
+//			dailyNecessaryDto.setName("daily"+i);
+//			
+//			dailyNecessaryList.add(dailyNecessaryDto);
+//		}
+		dailyNecessaryList=stockService.findByStockType();
 		return dailyNecessaryList;
 	}
 	

@@ -63,7 +63,7 @@ public class RoomCleanRecord {
 	public Employee getRoomWorker() {
 		return roomWorker;
 	}
-	@OneToOne(cascade=CascadeType.ALL,mappedBy="roomCleanRecord",fetch=FetchType.LAZY)
+	@OneToOne(cascade=CascadeType.ALL,fetch=FetchType.LAZY)//mappedBy="roomCleanRecord"
 	public OutStorage getOutStorage() {
 		return outStorage;
 	}
