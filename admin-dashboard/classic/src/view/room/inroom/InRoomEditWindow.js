@@ -320,12 +320,17 @@ function dailyNecessaryServiceSubmit(roomNo){
     var dailyResult = form.items.get(2); //取到日用品的那个表单域
     var dailyStore = dailyResult.getStore(); //取到表单域的store
     var length = dailyStore.data.items.length;  //取到表单域的store的条目数量
-    var dailyTagData = new Array(); //封装好的数据
-    for(var i = 0; i < length ; i++){
-      var data = dailyStore.data.items[i].data;
-      dailyTagData[i] = data;
-    }
-    console.log(dailyTagData);
+    // var dailyTagData = new Array(); //封装好的数据
+    // for(var i = 0; i < length ; i++){
+    //   var data = dailyStore.data.items[i].data;
+    //   dailyTagData[i] = data;
+    // }
+    // console.log(dailyTagData);
+    var listString = []; //封装好的数据
+    Ext.each(dailyStore.getRange(), function(record) {
+        listString.push(record.data);
+    });
+    var dailyTagData=Ext.util.JSON.encode(listString);
     /**
      *  封装好数据后，开始转发到后台
      */

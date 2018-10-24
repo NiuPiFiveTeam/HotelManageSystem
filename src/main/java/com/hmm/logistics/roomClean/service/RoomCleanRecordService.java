@@ -60,5 +60,11 @@ public class RoomCleanRecordService implements IRoomCleanRecordService{
 		return roomCleanRecordRepository.findById(id).get();
 	}
 
+	@Override
+	public List<RoomCleanRecord> findByRoomId(Long roomId) {
+		// TODO Auto-generated method stub
+		return roomCleanRecordRepository.findByRoomId(roomId);
+	}
+
 
 }

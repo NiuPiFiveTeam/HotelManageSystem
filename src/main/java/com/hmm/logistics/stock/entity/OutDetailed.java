@@ -6,9 +6,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import com.hmm.finance.logisticst.domain.InStorage;
-
 /**
  * 
 * @Title: OutDetailed.java
@@ -24,7 +21,7 @@ import com.hmm.finance.logisticst.domain.InStorage;
 public class OutDetailed {
 	private Long id;
 	private String goodsName;//商品名，例：牙刷
-	private String unit;//单位，例：只
+	private String goodsNo;//商品编号
 	private float amount;//数量，例:100只
 	private OutStorage outStorage;//出库记录总表
 	
@@ -39,8 +36,8 @@ public class OutDetailed {
 	public String getGoodsName() {
 		return goodsName;
 	}
-	public String getUnit() {
-		return unit;
+	public String getGoodsNo() {
+		return goodsNo;
 	}
 	public float getAmount() {
 		return amount;
@@ -57,8 +54,8 @@ public class OutDetailed {
 	public void setGoodsName(String goodsName) {
 		this.goodsName = goodsName;
 	}
-	public void setUnit(String unit) {
-		this.unit = unit;
+	public void setGoodsNo(String goodsNo) {
+		this.goodsNo = goodsNo;
 	}
 	public void setAmount(float amount) {
 		this.amount = amount;

@@ -1,10 +1,13 @@
 package com.hmm.logistics.stock.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.logistics.stock.entity.Stock;
+import com.hmm.room.dto.DailyNecessaryDto;
 
 
 
@@ -26,4 +29,5 @@ public interface IStockService {
 	public boolean existsById(Long id);
 	public void deleteAll(Long[] ids);
 	public Stock findByGoodsNo(String goodsNo);
+	public List<DailyNecessaryDto> findByStockType();
 }

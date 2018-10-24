@@ -3,6 +3,9 @@ package com.hmm.logistics.roomClean.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,11 +14,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.employee.service.EmployeeService;
 import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
 import com.hmm.logistics.roomClean.entity.RoomClean;
+import com.hmm.logistics.roomClean.entity.RoomCleanRecord;
 import com.hmm.logistics.roomClean.repository.FloorVoRoomVoRoomCleanRepository;
+import com.hmm.logistics.roomClean.repository.RoomCleanRecordRepository;
 import com.hmm.logistics.roomClean.repository.RoomCleanRepository;
 import com.hmm.logistics.roomClean.util.RoomCleanState;
+import com.hmm.logistics.stock.entity.OutDetailed;
+import com.hmm.logistics.stock.entity.OutStorage;
+import com.hmm.logistics.stock.repository.OutDetailedRepository;
+import com.hmm.logistics.stock.repository.OutStorageRepository;
 import com.hmm.room.entity.Floor;
 import com.hmm.room.entity.Room;
 import com.hmm.room.repository.RoomRepository;
@@ -42,7 +52,16 @@ public class RoomCleanService implements IRoomCleanService{
 	private RoomRepository roomRepository;
 	@Autowired
 	private FloorVoRoomVoRoomCleanRepository floorVoRoomVoRoomCleanDTORepository;
-	
+	@Autowired
+	private IRoomCleanService roomCleanService;
+	@Autowired
+	private RoomCleanRecordRepository roomCleanRecordService;
+	@Autowired
+	private EmployeeService employeeService;
+	@Autowired
+	private OutStorageRepository OutStorageService;
+	@Autowired
+	private OutDetailedRepository OutDetailedService;
 	@Override
 	public RoomClean save(RoomClean entity) {
 		return roomCleanRepository.save(entity);
@@ -135,11 +154,48 @@ public class RoomCleanService implements IRoomCleanService{
 	}
 
 	
-	
 	@Override
 	public RoomClean findByRoomId(Long roomId) {
 		// TODO Auto-generated method stub
 		return roomCleanRepository.findByRoomId(roomId);
+	}
+	
+	
+	
+	
+	@Override
+	public void dailyNecessary(String roomNo,String dailyTagData) {
+		// TODO Auto-generated method stub
+		RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
+		roomClean.setRoomCleanState(RoomCleanState.SERVICE);
+		roomCleanService.save(roomClean);//改变roomClean的状态为客房服务
+		
+		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();
+		roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));//操作记录表
+		roomCleanRecord.setRoomHandle("客房服务");
+		roomCleanRecord.setRoomOther("无");
+		
+		
+		OutStorage outStorage=new OutStorage();//b
+		outStorage.setReason("客房服务");
+		outStorage.setRoomCleanRecord(roomCleanRecord);
+	//	OutStorageService.save(outStorage);
+		roomCleanRecord.setOutStorage(outStorage);
+		
+		
+		JSONArray list = new JSONArray(dailyTagData);
+		for (int i = 0; i < list.length(); i++) {//c
+			JSONObject jsonObject = (JSONObject) list.get(i);
+			OutDetailed outDetailed=new OutDetailed();
+			outDetailed.setAmount((float)jsonObject.getDouble("number"));
+			outDetailed.setGoodsName(jsonObject.getString("show"));
+			outDetailed.setGoodsNo(jsonObject.getString("name"));
+			outDetailed.setOutStorage(outStorage);
+			outStorage.getOutDetailed().add(outDetailed);
+			
+		}
+		//OutStorageService.save(outStorage);
+		roomCleanRecordService.save(roomCleanRecord);
 	}
 	
 	//设置RoomClean表
@@ -160,5 +216,37 @@ public class RoomCleanService implements IRoomCleanService{
 			ExtjsPageRequest pageRequest) {
 		// TODO Auto-generated method stub
 		return floorVoRoomVoRoomCleanDTORepository.findAll(spec, pageRequest.getPageable());
+	}
+
+	@Override
+	public void changeRoomState(String roomNo, String selectValue, String remark) {
+		// TODO Auto-generated method stub
+		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();
+		if(selectValue.equals("roomserviceClean")) {//客房清洁
+			RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
+			roomClean.setRoomCleanState(RoomCleanState.SERVICE);
+			roomCleanService.save(roomClean);
+			roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));
+			roomCleanRecord.setRoomHandle("客房服务");
+			roomCleanRecord.setRoomOther("无");
+			roomCleanRecordService.save(roomCleanRecord);
+		}
+		else if(selectValue.equals("checkoutClean")) {//退房清洁
+			RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
+			roomClean.setRoomCleanState(RoomCleanState.CLEAN);
+			if(StringUtils.isNotBlank(remark)) {
+				roomClean.setRoomOther(remark);
+			}
+			roomCleanService.save(roomClean);
+			roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));
+			roomCleanRecord.setRoomHandle("退房清洁");
+			if(StringUtils.isNotBlank(remark)) {
+				roomCleanRecord.setRoomOther(remark);
+			}
+			else {
+				roomCleanRecord.setRoomOther("无");
+			}
+			roomCleanRecordService.save(roomCleanRecord);
+		}
 	}
 }

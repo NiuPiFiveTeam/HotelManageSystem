@@ -1,9 +1,13 @@
 package com.hmm.logistics.roomClean.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
+import com.hmm.logistics.roomClean.entity.RoomClean;
 import com.hmm.logistics.roomClean.entity.RoomCleanRecord;
 
 /**
@@ -23,4 +27,6 @@ public interface RoomCleanRecordRepository extends PagingAndSortingRepository<Ro
 	
 //	 @Query("from User o where o.id = :id") 
 //	 public Order findByUserId(@Param("id") Long myid);
+	@Query("FROM RoomCleanRecord rcr WHERE rcr.room.roomId=?1") 
+	public List<RoomCleanRecord> findByRoomId(Long roomId);
 }

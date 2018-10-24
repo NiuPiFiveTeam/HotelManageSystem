@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.repository.StockRepository;
+import com.hmm.logistics.stock.util.StockType;
+import com.hmm.room.dto.DailyNecessaryDto;
 /**
  * 
 * @Title: StockService.java
@@ -78,6 +80,22 @@ public class StockService implements IStockService {
 	public Stock findByGoodsNo(String goodsNo) {
 		// TODO Auto-generated method stub
 		return stockRepository.findByGoodsNo(goodsNo);
+	}
+
+	@Override
+	public List<DailyNecessaryDto> findByStockType() {
+		// TODO Auto-generated method stub
+		List<DailyNecessaryDto> dailyNecessaryDtos=new ArrayList<DailyNecessaryDto>();
+		for(Stock stock:stockRepository.findByStockType(StockType.COMMODITY)) {
+			DailyNecessaryDto dailyNecessaryDto=new DailyNecessaryDto();
+			dailyNecessaryDto.setId("d"+stock.getId().toString());
+			dailyNecessaryDto.setName(stock.getGoodsNo());
+			dailyNecessaryDto.setNumber(0);
+			dailyNecessaryDto.setShow(stock.getGoodsName());
+			dailyNecessaryDtos.add(dailyNecessaryDto);
+		}
+		
+		return dailyNecessaryDtos;
 	}
 
 }
