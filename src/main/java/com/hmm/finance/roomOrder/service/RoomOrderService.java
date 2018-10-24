@@ -49,7 +49,7 @@ public class RoomOrderService implements IRoomOrderService{
 			roomOrder.setRemark(dataArray[8]);
 		
 			roomOrder.setRoomOrderStatus(RoomOrderStatus.CHECKIN);
-			roomOrder.setTotalIncome(Float.parseFloat(dataArray[9]));
+			roomOrder.setTotalIncome(Math.abs(Float.parseFloat(dataArray[9])));
 			roomOrder.setShouldIncome(Float.parseFloat(dataArray[10]));
 			roomOrder.setRoomNo(Long.parseLong(dataArray[11]));
 			roomOrder.setEmployee(employee);
@@ -75,7 +75,7 @@ public class RoomOrderService implements IRoomOrderService{
 		String userId = user.getId();
 		Employee employee = employeeDao.findByUserName(userId);
 		RoomOrder roomOrder = roomOrderRepository.findById(Long.parseLong(bookRoomNo)).get();
-		roomOrder.setRealIncome(roomOrder.getShouldIncome()-100);
+		roomOrder.setRealIncome(roomOrder.getTotalIncome()-100);
 		roomOrder.setEmployee(employee);
 		roomOrder.setRoomOrderStatus(RoomOrderStatus.CHECKOUT);
 //			roomOrder.setBookRoomNo(Long.parseLong(dataArray[0]));
