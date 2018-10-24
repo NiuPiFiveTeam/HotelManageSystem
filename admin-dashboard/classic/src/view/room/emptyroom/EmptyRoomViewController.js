@@ -244,6 +244,7 @@ function enterAccount(){
     let bookPhone = document.getElementById('bookPhone').innerText;  //预订电话
     let remark = document.getElementById('remark').innerText;
     let backPirce = document.getElementById('backPrice').innerText;
+    let totalMoney = document.getElementById('totalPrice').innerText;
     console.log(backPirce);
     if(parseInt(backPirce) < 0){
         Ext.MessageBox.alert('错误提示','请重新核对输入金额是否正确！');
@@ -259,6 +260,7 @@ function enterAccount(){
         'bookGuest':bookGuest,
         'bookPhone':bookPhone,
         'remark':remark,
+        'totalMoney':totalMoney
     };
 
     console.log(dataArray);
