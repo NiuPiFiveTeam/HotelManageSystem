@@ -142,32 +142,32 @@ function addRoomStatusChart(floorNumberArr,floorCINumberArr){
     let sixinumber = floorCINumberArr[5].replace("]","").trim();
 
     let firstFloorNumber = document.getElementById('firstFloorNumber');
-    firstFloorNumber.style.height= firnumber+'%';
+    firstFloorNumber.style.height= '86%';
     let firstFloorCINumber = document.getElementById('firstFloorCINumber');
     firstFloorCINumber.style.height= fircinumber+'%';
 
     let secondFloorNumber = document.getElementById('secondFloorNumber');
-    secondFloorNumber.style.height=secnumber+ '%';
+    secondFloorNumber.style.height='86%';
     let secondFloorCINumber = document.getElementById('secondFloorCINumber');
     secondFloorCINumber.style.height= seccinumber +'%';
     
     let thirdFloorNumber = document.getElementById('thirdFloorNumber');
-    thirdFloorNumber.style.height= thinumber +'%';
+    thirdFloorNumber.style.height= '86%';
     let thirdFloorCINumber = document.getElementById('thirdFloorCINumber');
     thirdFloorCINumber.style.height= thicinumber +'%';
 
     let fourFloorNumber = document.getElementById('fourFloorNumber');
-    fourFloorNumber.style.height=founumber  +'%';
+    fourFloorNumber.style.height='86%';
     let fourFloorCINumber = document.getElementById('fourFloorCINumber');
     fourFloorCINumber.style.height= foucinumber +'%';
 
     let fiveFloorNumber = document.getElementById('fiveFloorNumber');
-    fiveFloorNumber.style.height= fivnumber +'%';
+    fiveFloorNumber.style.height= '86%';
     let fiveFloorCINumber = document.getElementById('fiveFloorCINumber');
     fiveFloorCINumber.style.height= fivcinumber +'%';
 
     let sixFloorNumber = document.getElementById('sixFloorNumber');
-    sixFloorNumber.style.height= sixnumber +'%';
+    sixFloorNumber.style.height= '86%';
     let sixFloorCINumber = document.getElementById('sixFloorCINumber');
     sixFloorCINumber.style.height=sixinumber  +'%';
 
