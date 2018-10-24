@@ -39,6 +39,7 @@ import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.repository.OutDetailedRepository;
 import com.hmm.logistics.stock.repository.OutStorageRepository;
 import com.hmm.logistics.stock.service.IStockService;
+import com.hmm.logistics.stock.util.YesOrNoSend;
 import com.hmm.room.repository.RoomRepository;
 import com.hmm.room.util.RoomState;
 
@@ -103,6 +104,9 @@ public class RoomCleanController {
 							for(OutDetailed outDetailed:outDetaileds) {
 								Stock stock=stockService.findByGoodsNo(outDetailed.getGoodsNo());
 								stock.setAmount(stock.getAmount()-outDetailed.getAmount());
+								if((stock.getAmount()-outDetailed.getAmount()<10)) {
+									stock.setYesOrNoSend(YesOrNoSend.NO);
+								}
 								stockService.save(stock);
 							}
 						}
