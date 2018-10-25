@@ -207,11 +207,9 @@ Ext.define('Admin.view.room.emptyroom.EmptyRoomPanel', {
                 '<hr style="opacity: 0.5;margin-left:20px;margin-right:20px;margin-top:15px; width:75%"/>',
                 '<div style="width:750px;">',
                 '<div style="border-radius:5px;float:left;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;margin-left:20px;color: #35baf6;cursor:pointer;" onclick="enterAccount()">入账</div>',
-                '<div style="border-radius:5px;float:left;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #35baf6;cursor:pointer;">续住</div>',
-                '<div style="border-radius:5px;float:left;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #35baf6;cursor:pointer;">查看日志</div>',
+                
                
                 '<div style="border-radius:5px;float:right;border:1px solid #63a8eb;background-color:#63a8eb;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #fff;cursor:pointer;pointer-events: none;">结账</div>',
-                '<div style="border-radius:5px;float:right;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #35baf6;cursor:pointer;">保存修改</div>',
                 '</div>'
             ]
         }
