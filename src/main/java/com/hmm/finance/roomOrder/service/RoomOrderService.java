@@ -3,13 +3,16 @@ package com.hmm.finance.roomOrder.service;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.transaction.Transactional;
 
 import org.activiti.engine.identity.User;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -17,8 +20,10 @@ import org.springframework.stereotype.Service;
 import com.hmm.employee.dao.EmployeeDao;
 import com.hmm.employee.entity.Employee;
 import com.hmm.finance.roomOrder.domain.RoomOrder;
+import com.hmm.finance.roomOrder.domain.RoomOrderDTO;
 import com.hmm.finance.roomOrder.repository.RoomOrderRepository;
 import com.hmm.finance.roomOrder.util.RoomOrderStatus;
+import com.hmm.finance.salary.domain.SalaryOrderDTO;
 
 @Service
 @Transactional							 
@@ -61,8 +66,15 @@ public class RoomOrderService implements IRoomOrderService{
 	}
 
 	@Override
-	public Page<RoomOrder> findAll(Specification<RoomOrder> spec, Pageable pageable) {
-		return roomOrderRepository.findAll(spec, pageable);
+	public Page<RoomOrderDTO> findAll(Specification<RoomOrder> spec, Pageable pageable) {
+		Page<RoomOrder> a = roomOrderRepository.findAll(spec, pageable);
+		List <RoomOrderDTO> roomOrderDTOList = new ArrayList<>();
+		for(RoomOrder b : a.getContent()) {
+			RoomOrderDTO roomOrderDTO = new RoomOrderDTO();
+			BeanUtils.copyProperties(b, roomOrderDTO);
+			roomOrderDTOList.add(roomOrderDTO);
+		}
+		return new PageImpl<RoomOrderDTO>(roomOrderDTOList,pageable,roomOrderDTOList!=null?roomOrderDTOList.size():0);
 	}
 
 	@Override

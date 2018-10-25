@@ -9,12 +9,13 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.department.entity.DeptDTO;
 import com.hmm.finance.roomOrder.domain.RoomOrder;
+import com.hmm.finance.roomOrder.domain.RoomOrderDTO;
 
 public interface IRoomOrderService {
 	
 	void save(String[] dataArray,User user);
 
-	Page<RoomOrder> findAll(Specification<RoomOrder> whereClause, Pageable pageable);
+	Page<RoomOrderDTO> findAll(Specification<RoomOrder> whereClause, Pageable pageable);
 
 	List<RoomOrder> findByRoomNo(String roomNo);
 

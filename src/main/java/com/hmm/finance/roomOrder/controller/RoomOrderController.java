@@ -19,6 +19,7 @@ import com.hmm.common.web.ExtjsPageRequest;
 import com.hmm.employee.entity.EmployeeDTO;
 import com.hmm.employee.entity.EmployeeQueryDTO;
 import com.hmm.finance.roomOrder.domain.RoomOrder;
+import com.hmm.finance.roomOrder.domain.RoomOrderDTO;
 import com.hmm.finance.roomOrder.domain.RoomOrderQueryDTO;
 import com.hmm.finance.roomOrder.service.IRoomOrderService;
 
@@ -65,7 +66,7 @@ public class RoomOrderController {
     }
 	
 	@GetMapping
-	public Page<RoomOrder> findAll(RoomOrderQueryDTO roomOrderQueryDTO,ExtjsPageRequest pageRequest){
+	public Page<RoomOrderDTO> findAll(RoomOrderQueryDTO roomOrderQueryDTO,ExtjsPageRequest pageRequest){
 		return roomOrderService.findAll(RoomOrderQueryDTO.getWhereClause(roomOrderQueryDTO),
 				pageRequest.getPageable());
 	}

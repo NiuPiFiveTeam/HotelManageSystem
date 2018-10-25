@@ -15,5 +15,8 @@ public interface RoomOrderRepository extends PagingAndSortingRepository<RoomOrde
 
 	@Query("from RoomOrder where roomNo=?1 and realIncome is null")
 	List<RoomOrder> findByRoomNo(Long roomNo);
+
+	@Query("select sum(s.realIncome) from RoomOrder s where DATE_FORMAT(checkOutTime,'%Y-%m-%d') = ?1 group by checkOutTime ")
+	Float findRoomOrderByDay(String dateString);
 	
 }
