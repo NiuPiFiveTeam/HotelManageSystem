@@ -150,8 +150,8 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                 }
             ],
             tbar: ['->',{
-                text:"全部楼层",
-                tooltip : '一楼全部房间状态',
+                text:"更新楼层房间信息",
+                tooltip : '更新楼层房间信息',
                 iconCls: 'fa fa-university',
                 listeners: {
                     click: {

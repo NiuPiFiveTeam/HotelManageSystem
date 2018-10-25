@@ -37,5 +37,6 @@ public interface IRoomCleanService {
 //	public void deleteAll(Long[] ids);
 	public void dailyNecessary(String roomNo,String dailyTagData);
 	public void changeRoomState(String roomNo,String selectValue,String remark);
+	public void aloadRoomCleantoDTO(RoomClean roomClean);
 	
 }
