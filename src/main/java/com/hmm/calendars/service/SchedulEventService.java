@@ -2,6 +2,7 @@ package com.hmm.calendars.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -41,4 +42,11 @@ public interface SchedulEventService {
 	List<SchedulEvent> findByDTO(@Nullable Specification<SchedulEvent> spec);
 	
 	Page<SchedulEventEmpDTO> findAllByEmpDto(@Nullable Specification<SchedulEvent> spec, Pageable pageable);
+	public float  findattenceTotalTime(String userbname);
+	
+	public int findWorkTotalDay(String username);
+	
+	public Integer findTotalPerson();
+	
+	public List<SchedulEvent> findPassDay();//
 }

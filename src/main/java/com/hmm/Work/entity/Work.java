@@ -19,6 +19,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.entity.Employee;
 
 @Entity
@@ -27,7 +28,7 @@ public class Work {
 	private Long workid; //上班id
 	private Integer normal;//打卡状态(1.正常  2.迟到  3.缺卡 4.早退)
 	private Integer late;//迟到
-	private Integer lackCard;
+	private Integer lackCard;//
 	private Integer leaveEarly;
 	private Float worktime;//正常工作时长
 	private Date ontudytime;//上班开始时间
@@ -38,7 +39,10 @@ public class Work {
 	private String workDate;//打卡日期
 	private Employee employ;
 
+
 	
+	
+
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	public Long getWorkid() {

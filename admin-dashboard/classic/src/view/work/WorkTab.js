@@ -1,7 +1,8 @@
 Ext.define('Admin.view.work.WorkTab', {
     extend: 'Ext.tab.Panel',
     xtype: 'workTab',
-    //controller: 'paiBanTabController',
+    //controller: 'workTabController',
+
     requires: [
         'Ext.tab.Panel'
     ],
@@ -15,12 +16,17 @@ Ext.define('Admin.view.work.WorkTab', {
         xtype: 'panel',
       
         title: '统计',
-        xtype : 'attenceCenterPanel'
+        xtype : 'empworkYearchart'
     },{
         xtype: 'panel',
        
-        title: '历史',
-        xtype : ''
+        title: '补卡申请',
+        xtype : 'bcardGridPanel'
+    },{
+        xtype: 'panel',
+       
+        title: '补卡审批',
+        xtype : 'bcardApproveCenterPanel'
     }
                         
            

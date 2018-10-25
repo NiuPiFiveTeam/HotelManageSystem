@@ -145,13 +145,19 @@ public class TravelController {
 	{
 		Page<TravelEmpDTO> page;
 		String userId = SessionUtil.getUserName(session);
-		String groupName = SessionUtil.getGroupNames(session);
+		//String groupName = SessionUtil.getGroupNames(session);
 		//System.out.println(groupName);
 		if(userId!=null) {
-			if(groupName.indexOf("Manager")!= -1) {
+			List<Group> groupListuser = identityService.createGroupQuery().groupMember(userId).list();
+			String[] groupNames = new String[groupListuser.size()];
+			for (int i = 0; i < groupNames.length; i++) {
+	            groupNames[i] = groupListuser.get(i).getId();
+	        }
+			String groupUserList = ArrayUtils.toString(groupNames);
+			if(groupUserList.indexOf("Manager")!= -1) {
 				leaveQueryDTO.setApproval(SessionUtil.getUserName(session));
 				page = travelServiceImpl.findAllQueryDTO(TravelQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
-			}else if (groupName.indexOf("Admin") != -1) {
+			}else if (groupUserList.indexOf("Admin") != -1) {
 				//leaveQueryDTO.setApproval(SessionUtil.getUserName(session));
 				page = travelServiceImpl.findAllQueryDTO(TravelQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
 			}else {

@@ -160,9 +160,9 @@
                 children: [
         
                     {
-                        text: '账户管理',
+                        text: '信息管理',
                         iconCls: 'x-fa fa-user-circle',
-                        viewType: 'editPassword',
+                        viewType: 'selfEmpTab',
                         leaf: true
                     },{
                         text: '考勤打卡',
@@ -170,27 +170,17 @@
                         viewType: 'workTab',
                         leaf: true
                    },{
-                        text: '请假管理模块',
+                        text: '请假管理',
                         iconCls: 'x-fa fa-address-card',
-                        viewType: 'leaveCenterPanel',
+                        viewType: 'leaveTab',
                         leaf: true
                         
                     },{
-                        text: '请假审批',
+                        text: '出差管理',
                         iconCls: 'x-fa fa-address-card',
-                        viewType: 'leaveApproveCenterPanel',
-                        leaf: true
-                    },{
-                        text: '出差管理模块',
-                        iconCls: 'x-fa fa-address-card',
-                        viewType: 'travelCenterPanel',
+                        viewType: 'travelTab',
                         leaf: true
                         
-                    },{
-                        text: '出差审批',
-                        iconCls: 'x-fa fa-address-card',
-                        viewType: 'travelApproveCenterPanel',
-                        leaf: true
                     }
                 ]
                 
@@ -218,7 +208,7 @@
                         text: '考勤统计',
                         iconCls: 'x-fa fa-check',
                         //viewType: 'login',
-                        
+                        viewType: 'companyWorkTab',
                         leaf: true
                     },
                     
@@ -226,13 +216,6 @@
                         text: '部门管理',
                         iconCls: 'x-fa fa-lightbulb-o',
                         viewType: 'deptTab',
-                        leaf: true
-                    },
-                    {
-                        text: '员工意见',
-                        iconCls: 'fa fa-envelope-open-o',
-                       // viewType: 'passwordreset',
-                        
                         leaf: true
                     }
                     

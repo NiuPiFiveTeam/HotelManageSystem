@@ -11,16 +11,18 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.hmm.calendars.entity.SchedulEvent;
 import com.hmm.department.entity.Department;
 import com.hmm.employee.entity.Employee;
 
 public class WorkQueryDTO {
-	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern="yyyy-MM-dd")
 	private Date ontudytime;//上班开始时间
-	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+	@DateTimeFormat(pattern="yyyy-MM-dd")
 	private Date offdutytime;//下班时间
 	private Integer late;
 	private Integer lackCard;
@@ -31,6 +33,10 @@ public class WorkQueryDTO {
 	private String deptName;
 	private String calendar;//班次
 	private String workDate;
+	
+	private String requestType;
+	
+	
 	private Department department;
 	public Date getOntudytime() {
 		return ontudytime;
@@ -94,25 +100,25 @@ public class WorkQueryDTO {
 				List<Predicate> predicates = new ArrayList<>();
 				
 				if(workQueryDTO.getOntudytime() != null) {
-					predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("ontudytime").as(Date.class), 
+					predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("workDate").as(Date.class), 
 							workQueryDTO.getOntudytime()));
 				}
 				
 				if(workQueryDTO.getOffdutytime()!= null) {
-					predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("offdutytime").as(Date.class),
+					predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("workDate").as(Date.class),
 							workQueryDTO.getOffdutytime()));
 				}
 				
-				if(workQueryDTO.getWorkDate()!= null) {
+				if(StringUtils.isNotBlank(workQueryDTO.getWorkDate())) {
 					predicates.add(criteriaBuilder.equal(root.get("workDate").as(String.class),
 							workQueryDTO.getWorkDate()));
 				}
 				
-				if(workQueryDTO.getCalendar() != null) {
+				if(StringUtils.isNotBlank(workQueryDTO.getCalendar())) {
 					predicates.add(criteriaBuilder.equal(root.get("calendar").as(String.class),
 							workQueryDTO.getCalendar()));
 				}
-				if(workQueryDTO.getLate() != null) {
+				if(null!=workQueryDTO.getLate() ) {
 					predicates.add(criteriaBuilder.equal(root.get("late").as(Integer.class), 
 							workQueryDTO.getLate()));
 				}
@@ -127,36 +133,35 @@ public class WorkQueryDTO {
 							workQueryDTO.getLeaveEarly()));
 				}
 				
-				if(workQueryDTO.getEmpName()!= null) {
-					Join<Work, Employee> join = root.join("employ",JoinType.LEFT);
-					criteriaBuilder.like(join.get("empNo").as(String.class), "%" + workQueryDTO.getEmpName() + "%");
+				if(StringUtils.isNotBlank(workQueryDTO.getEmpName())) {
+					Join<Employee, Work> join = root.join("employ",JoinType.LEFT);
+					predicates.add(criteriaBuilder.like(join.get("empName").as(String.class), "%" + workQueryDTO.getEmpName() + "%"));
 				}
 				
-				if(workQueryDTO.getEmpNo()!= null) {
-					Join<Work, Employee> join = root.join("employ",JoinType.LEFT);
-					criteriaBuilder.equal(join.get("empNo").as(String.class), workQueryDTO.getEmpNo());
+				if(StringUtils.isNotBlank(workQueryDTO.getEmpNo())) {
+					Join<Employee, Work>  join = root.join("employ",JoinType.LEFT);
+					criteriaBuilder.like(join.get("empNo").as(String.class), workQueryDTO.getEmpNo());
 				}
 				
-				if(workQueryDTO.getUserName()!= null) {
-					Join<Work, Employee> join = root.join("employ",JoinType.LEFT);
-					criteriaBuilder.equal(join.get("userName").as(String.class), workQueryDTO.getUserName());
+				if(StringUtils.isNotBlank(workQueryDTO.getUserName())) {
+					Join<Employee, Work> join = root.join("employ",JoinType.LEFT);
+					predicates.add(criteriaBuilder.like(join.get("userName").as(String.class), workQueryDTO.getUserName()));
 				}
 				
 				if(workQueryDTO.getDepartment()!= null) {
-					Join<Work, Employee> join = root.join("employ",JoinType.INNER);
-					
-					criteriaBuilder.equal(join.get("departmentes").as(Department.class), workQueryDTO.getDepartment());
+					Join<Employee, Work> join = root.join("employ",JoinType.LEFT);
+					predicates.add(criteriaBuilder.equal(join.get("departmentes").as(Department.class), workQueryDTO.getDepartment()));
 				}
 				
-				if(workQueryDTO.getDeptName()!= null) {
-					Root<Employee> root2 = null;
-					@SuppressWarnings("null")
-					Join<Employee, Department> join = root2.join("departmentes",JoinType.INNER);
-					Join<Work, Employee> join2 = join.join("employ",JoinType.LEFT);
-					
-					criteriaBuilder.equal(join2.get("deptName").as(Department.class), workQueryDTO.getDeptName());
-				}
-				
+//				if(workQueryDTO.getDeptName()!= null) {
+//					Root<Employee> root2 = null;
+//					@SuppressWarnings("null")
+//					Join<Employee, Department> join = root2.join("departmentes",JoinType.INNER);
+//					Join<Work, Employee> join2 = join.join("employ",JoinType.LEFT);
+//					
+//					criteriaBuilder.equal(join2.get("deptName").as(Department.class), workQueryDTO.getDeptName());
+//				}
+//				
 				Predicate[] pre = new Predicate[predicates.size()];
 				return query.where(predicates.toArray(pre)).getRestriction();	
 			}
@@ -179,6 +184,12 @@ public class WorkQueryDTO {
 	}
 	public void setDepartment(Department department) {
 		this.department = department;
+	}
+	public String getRequestType() {
+		return requestType;
+	}
+	public void setRequestType(String requestType) {
+		this.requestType = requestType;
 	}
 
 }

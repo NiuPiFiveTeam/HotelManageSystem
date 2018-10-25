@@ -15,7 +15,18 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
     viewConfig: {
         stripeRows:true //True来实现隔行换颜色
     },
-    //layout: 'fit',
+
+    listeners: {
+        render: function(){
+            var store = Ext.data.StoreManager.lookup('workStoreId')
+            store.load();
+            var requestType = "personal";     
+            Ext.apply(store.proxy.extraParams, {requestType:requestType});
+            store.load({params:{start:0, limit:5, page:1}});
+            }
+    },
+
+    //
     items:[{
 
         
@@ -23,19 +34,33 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
         layout:'hbox',
         items:[{
             xtype:'form',
+            reference:'workFormTal',
             layout:'hbox',
-            padding:'20 0 20 20',
+            padding:'20 0 20 0',
+            listeners: {
+               'render': function(form) {
+                   form.getForm().load({  
+                                url: '/work/record',  
+                                waitTitle : '请等待' ,   
+                                success:function(form,action){
+                                },  
+                                failure:function(form,action){  
+                                Ext.Msg.alert('提示','保存失败！');  
+                                }  
+                  });                                 
+                }
+            },
             items:[{
                 xtype: 'displayfield',
-                name:'',//今天应该出勤
+                name:'attenceTotalTime',//今天应该出勤
                 style:'background:#FAEBD7;',
                 margin:'0 10 0 0',
-                width:150,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
-                            if(value==null){
+                            if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>本月应该出勤</p>"+
-                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+"8"+"小时"+"</p>";
+                                "<p style='text-align:center;font-size:14px;line-height:30px;color:red;'>"+value+"小时"+"</p>";
                             }
                             
                 }
@@ -43,75 +68,120 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
             },{
             //今天实际出勤
                 xtype: 'displayfield',
-                name:'',
+                name:'exactlyTime',
                 style:'background:#E6E6FA;',
                 margin:'0 10 0 0',
-                width:150,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
-                            if(value==null){
+                            if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>本月实际出勤</p>"+
-                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+"8"+"小时"+"</p>";
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"小时"+"</p>";
+                            }
+                            
+                }
+            },{
+            //加班时长
+                xtype: 'displayfield',
+                name:'worktime',//今天应该出勤
+                style:'background:#FFF0F5;',
+                margin:'0 10 0 0',
+                width:110,
+                padding:'10 5 10 0',
+                renderer: function(value) {
+                            if(value!=null){
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>基本时长</p>"+
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"小时"+"</p>";
+                            }
+                            
+                }
+            },{
+            //加班时长
+                xtype: 'displayfield',
+                name:'overtime',//今天应该出勤
+                style:'background:#FFF0F5;',
+                margin:'0 10 0 0',
+                width:110,
+                padding:'10 5 10 0',
+                renderer: function(value) {
+                            if(value!=null){
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>加班时长</p>"+
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"小时"+"</p>";
+                            }
+                            
+                }
+            },{
+            //加班时长
+                xtype: 'displayfield',
+                name:'travelAttence',//今天应该出勤
+                style:'background:#FFF0F5;',
+                margin:'0 10 0 0',
+                width:110,
+                padding:'10 5 10 0',
+                renderer: function(value) {
+                            if(value!=null){
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>出差应补工资</p>"+
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"元"+"</p>";
                             }
                             
                 }
             },{
             //迟到
                 xtype: 'displayfield',
-                name:'',//今天应该出勤
+                name:'totalLate',//今天应该出勤
                 style:'background:#FFF0F5;',
                 margin:'0 10 0 0',
-                width:150,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
-                            if(value==null){
+                            if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>迟到次数</p>"+
-                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+"8"+"次"+"</p>";
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"次"+"</p>";
                             }
                             
                 }
             },{
             //早退
                 xtype: 'displayfield',
-                name:'',//今天应该出勤
+                name:'totalleaveEarly',//今天应该出勤
                 style:'background:#D3D3D3;',
                 margin:'0 10 0 0',
-                width:150,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
-                            if(value==null){
+                            if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>早退次数</p>"+
-                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+"8"+"次"+"</p>";
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"次"+"</p>";
                             }
                             
                 }
             },{
             //未打卡
                 xtype: 'displayfield',
-                name:'',//今天应该出勤
+                name:'totalCard',//今天应该出勤
                 style:'background:#98FB98;',
                 margin:'0 10 0 0',
-                width:150,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
-                            if(value==null){
-                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>未打卡</p>"+
-                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+"8"+"次"+"</p>";
+                            if(value!=null){
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>未补卡</p>"+
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"次"+"</p>";
                             }
                             
                 }
             },{
-                //补卡
+                //正常
                 xtype: 'displayfield',
-                name:'',//今天应该出勤
+                name:'leaveTimes',//今天应该出勤
                 style:'background:#FFF5EE;',
                 margin:'0 10 0 0',
-                width:150,
-                padding:'10 10 10 0',
+                width:110   ,
+                padding:'10 5 10 0',
                 renderer: function(value) {
-                            if(value==null){
-                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>未补卡</p>"+
-                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+"8"+"次"+"</p>";
+                            if(value!=null){
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>请假次数</p>"+
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"次"+"</p>";
                             }
                             
                 }
@@ -165,6 +235,7 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
         ]},{
         xtype: 'gridpanel',
         scrollable: true,
+        layout: 'fit',
         bind: '{workLists}',
         //scrollable: false,
         selModel: {type: 'checkboxmodel',checkOnly: true},//开启复选框
@@ -176,31 +247,86 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
         //layout: 'fit',
         columns : [
             //{   xtype:'rownumberer',width:50,text:'序号', align:'center'},
-            {    text:'员工ID' , flex:1 ,hidden:true, align:'center' , dataIndex:'id'},
+            {    text:'ID' , flex:1 ,hidden:true, align:'center' , dataIndex:'workid'},
             {    text:'员工姓名' , flex:1 , align:'center' , dataIndex:'empName'},
             {    text:'员工编号' , flex:1 , align:'center' , dataIndex:'empNo'},
             {    text:'班次' , flex:1 , align:'center' , dataIndex:'calendar'},
-            {    text:'上班时间 ' , flex:1 , align:'center' , dataIndex:'startDate',xtype:'datecolumn',formatter: 'date("Y-m-d H:i:s")'},            
-            {    text:'下班时间',align:"center",flex:1,dataIndex:'endDate',xtype:'datecolumn',formatter:'date("Y-m-d H:i:s")'},
-            {    text:'迟到' , flex:1 , align:'center' , dataIndex:'deptName'},
-            {    text:'早退' , flex:1 , align:'center' , dataIndex:'deptName'},
-            {    text:'缺卡' , flex:1 , align:'center' , dataIndex:'deptName'},
-            {    text:'正常' , flex:1 , align:'center' , dataIndex:'deptName'},
-            {xtype: 'actioncolumn', flex:1 ,align:'center',text: '操作',
-                        items: [
-                            {xtype: 'button',iconCls: 'x-fa fa-pencil' ,text:"申请补卡",handler: 'onEditAttenceButton'},
-                        ]
-            }
-         
+            {    text:'上班时间 ' , flex:1 , align:'center' , dataIndex:'ontudytime',xtype:'datecolumn',formatter: 'date("Y-m-d H:i:s")'},            
+            {    text:'下班时间',align:"center",flex:1,dataIndex:'offdutytime',xtype:'datecolumn',formatter:'date("Y-m-d H:i:s")'},
+            {    text:'上班时长' , flex:1 , align:'center' , dataIndex:'worktime',
+                 renderer:function(value){
+                    return value.toFixed(1);
+                 }
+
+
+            },
+            {    text:'加班时长' , flex:1 , align:'center' , dataIndex:'overtime',
+                renderer:function(value){
+                    return value.toFixed(1);
+                 }
+
+            },
+            {    text:'迟到' , flex:1 , align:'center' , dataIndex:'late',
+                 renderer:function(value){
+                    if(value == 1){
+                        return '<span style="color:red;">迟到</span>';
+                    }else if(value == 0){
+                        return '<span style="color:green;">正常</span>';
+                    }else{
+                        return value;
+                    }
+                    
+                 }
+
+            },
+
+            {    text:'早退' , flex:1 , align:'center' , dataIndex:'leaveEarly',
+                renderer:function(value){
+                    if(value == 1){
+                        return '<span style="color:red;">早退</span>';
+                    }else if(value == 0){
+                        return '<span style="color:green;">正常</span>';
+                    }else{
+                        return value;
+                    }
+                    
+                 }},
+            {    text:'缺卡' , flex:1 , align:'center' , dataIndex:'lackCard',renderer:function(value){
+                    if(value == 1){
+                        return '<span style="color:red;">缺卡</span>';
+                    }else if(value == 0){
+                        return '<span style="color:green;">正常</span>';
+                    }else{
+                        return value;
+                    }
+                    
+                 }},
+            {    text:'正常' , flex:1 , align:'center' , dataIndex:'normal',renderer:function(value){
+                    if(value == 1){
+                        return '<span style="color:green;">正常</span>';
+                    }else if(value == 0){
+                        return '<span style="color:red;">异常</span>';
+                    }else{
+                        return value;
+                    }
+                    
+            }}
+
         ],
         dockedItems:[{
+            xtype: 'pagingtoolbar',
+            dock: 'bottom',
+            itemId: 'EmployPaginationToolbar',
+            displayInfo: true,
+            bind: '{workLists}'
+            },{
             xtype:'toolbar',
             dock:'top',
             items:[
             {
                 xtype: 'datefield',
                 fieldLabel: '请选择时间',
-                format: 'Y-m-d H:i:s',
+                format: 'Y-m-d',
                 reference:'searchDataFieldValue2',
                 name: 'to_date'
             },'-',{
@@ -215,6 +341,12 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 iconCls: 'fa fa-search-plus',
                 style:'background:#;',
                 handler: 'openSearchWindow' 
+            }, '-',{
+                xtype:'button',
+                text: '刷新统计',
+                iconCls: 'fa fa-search-plus',
+                style:'background:#;',
+                handler: 'workmonthrefresh' 
             },'->',{
                 xtype:'button',
                 text: '批量导出',

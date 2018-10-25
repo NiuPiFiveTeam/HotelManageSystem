@@ -1,5 +1,7 @@
 package com.hmm.guest.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,4 +20,10 @@ public interface IGuestService {
 	public abstract void save(Guest guest);
 
 	public abstract Page<GuestDto> findAll( Pageable pageable);
+
+	public abstract List<Guest> findGuestByRoomNo(String roomNo);
+
+	public abstract Page<GuestDto> findAllVipGuest(Pageable pageable);
+
+	public abstract Page<GuestDto> findAllCheckInGuest(Pageable pageable);
 }

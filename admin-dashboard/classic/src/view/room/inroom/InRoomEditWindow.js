@@ -407,7 +407,19 @@ function cleanServiceSubmit(roomNo){
                 fatherwin.close();
                 if(selectValue == 'checkoutClean'){
                     //跳转到订单
-                    overOrder();
+                    let GuestListTable1 = document.getElementById('CheckOutGuestInfoTable');
+                    if(typeof(GuestListTable1) != 'undefined' ){
+                        let guestLength1 = GuestListTable1.rows.length;
+                        while(guestLength1 > 1){
+                            if(guestLength1-1 > 0){
+                                GuestListTable1.deleteRow(guestLength1-1);
+                            }
+                            guestLength1--;   
+                        }
+                    }
+                   
+                    overOrder(roomNo);
+                   
                 }
             }
         });
@@ -427,8 +439,16 @@ function roomcardServiceSubmit(){
 /**
  * 结账
  */
-function overOrder(){
+function overOrder(roomNo){
 
+    let setCheckOutBookRoomNo = document.getElementById('CheckOutbookRoomNo');
+    let setCheckOutSelectRoomNo = document.getElementById('CheckOutselectRoomNo');
+    let setCheckOutCheckInTime = document.getElementById('CheckOutcheckInTime');
+    let setCheckOutCheckOutTime = document.getElementById('CheckOutcheckOutTime');
+    let setCheckOutRoomType = document.getElementById('CheckOutroomType');
+    let setCheckOutRoomPrice = document.getElementById('CheckOutroomPrice');
+    let setCheckOutTotalPrice = document.getElementById('CheckOuttotalPrice');
+    let setCheckOutrealGetPrice = document.getElementById('CheckOutrealGetPrice');
     /**
      * 访问后台获取订单信息
      */
@@ -437,35 +457,90 @@ function overOrder(){
         url : '/roomOrder/getOrderInfo',
         //从数据库中请求数据，动态获取items中的数据			
         params : {
-            'dataArray':dataArray,
-        },  
+            'roomNo':roomNo,
+        }, 
         method : 'Get',			
         success : function(result) {
-
+            var resultArray = Ext.decode(result.responseText);  //成功获取订单信息后，开始填充，然后再去获取用户信息
+            console.log(resultArray);
+            setCheckOutSelectRoomNo.innerText = roomNo+"号房";
+            setCheckOutBookRoomNo.innerText = resultArray[0]['bookRoomNo'];
+            setCheckOutRoomType.innerText = resultArray[0]['roomType'];
+            setCheckOutRoomPrice.innerText = resultArray[0]['roomPrice'];
+            setCheckOutCheckInTime.innerText = resultArray[0]['checkInTime'];
+            setCheckOutCheckOutTime.innerText =  resultArray[0]['checkOutTime'];
+            setCheckOutTotalPrice.innerText = resultArray[0]['totalIncome'];
+            setCheckOutrealGetPrice.innerText = resultArray[0]['shouldIncome'];
+        
+            Ext.Ajax.request({			
+                url : '/guest/findGuestByRoomNo',
+                //从数据库中请求数据，动态获取items中的数据			
+                params : {
+                    'roomNo':roomNo,
+                },   
+                method : 'Get',			
+                success : function(result1) {
+                    var resultArray1 = Ext.decode(result1.responseText);  //成功获取订单信息后，开始填充，然后再去获取用户信息
+                    console.log(resultArray1);
+                    loadCheckOutGuestInfoTable(resultArray1);
+                }
+            });
         }
-    })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    });
 
     let inroompanel = Ext.getCmp('inRoomPanel');
     let showPanel = inroompanel.items.get(3);
     let hiddenPanel = inroompanel.items.get(2);
     hiddenPanel.setHidden(true);
     showPanel.setHidden(false);
+
+}
+
+function loadCheckOutGuestInfoTable(data){
+     // 原来的行数    比如：此处获得表格的行数是5，则每一行对应的index是0~4，所以下面在insertRow时，使用的是表格的当前行数
+     for (let index = 0; index < data.length; index++) {
+
+        let currentRows = document.getElementById("CheckOutGuestInfoTable").rows.length; 
+ 
+        let insertTr = document.getElementById("CheckOutGuestInfoTable").insertRow(currentRows);
+
+        let insertTd = insertTr.insertCell(0);
+        insertTd.style="height: 30px;width: 120px;border-top: 1px solid #E3E6EA;";
+        insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+data[index].realName+'</div>';
+            
+        insertTd = insertTr.insertCell(1);
+        insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;";
+        insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+data[index].idCard+'</div>';
+            
+        insertTd = insertTr.insertCell(2);
+        insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;";
+        if (data[index].gender.trim()=="FEMALE") {
+            insertTd.innerHTML ='<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'女性'+'</div>';
+        }else if(data[index].gender.trim()=="MALE"){
+            insertTd.innerHTML ='<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'男性'+'</div>';
+        }
+            
+        insertTd = insertTr.insertCell(3);
+        insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;";
+        insertTd.innerHTML = '<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+data[index].phone+'</div>';
+
+        insertTd = insertTr.insertCell(4);
+        insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;"
+        if (data[index].guestState == 'CASUAL') {
+            insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'临时客人'+'</div>';
+        }else if(data[index].guestState == 'STARMEMBER'){
+             insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'星标会员'+'</div>';
+        }else if(data[index].guestState == 'MEMBER'){
+             insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'普通会员'+'</div>';
+        }else if(data[index].guestState == 'BLACKLIST'){
+             insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'黑名单'+'</div>';
+        }
+
+        
+
+        let inRoomPanel = Ext.getCmp('inRoomPanel');
+        let oldHeight = inRoomPanel.height;
+        inRoomPanel.setHeight(oldHeight+50);
+        
+    }
 }

@@ -29,6 +29,7 @@ import java.util.List;
  */
 @Component
 @Transactional
+
 public class ReportBackEndProcessor implements TaskListener 
 {
 	private static final long serialVersionUID = -8360605214753688651L;

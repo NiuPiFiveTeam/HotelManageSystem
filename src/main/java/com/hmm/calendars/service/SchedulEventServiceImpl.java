@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -166,7 +167,7 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 	@Override
 	public Page<SchedulEventEmpDTO> findAllByEmpDto(Specification<SchedulEvent> spec, Pageable pageable) {
 		// TODO Auto-generated method stub
-		List<SchedulEvent> events = (List<SchedulEvent>) schedulEventdao.findAll(spec);
+		List<SchedulEvent> events = schedulEventdao.findAll(spec);
 		List<SchedulEventEmpDTO> dtos = null;
 		if(null != events) {
 			dtos = new ArrayList<>();
@@ -184,6 +185,49 @@ public class SchedulEventServiceImpl implements SchedulEventService{
 		}
 		
 		return new PageImpl<SchedulEventEmpDTO>(dtos, pageable,null!=events?events.size():0);
+	}
+
+	@Override
+	public float findattenceTotalTime(String userbname) {
+		// TODO Auto-generated method stub
+		Float totalTime = schedulEventdao.findattenceTotalTime(userbname);
+		if(null != totalTime) {
+			return totalTime;
+			
+		}else {
+			return 0;
+		}
+		 
+	}
+
+	@Override
+	public int findWorkTotalDay(String username) {
+		// TODO Auto-generated method stub
+		Integer totalday = schedulEventdao.findWorkTotalDay(username);
+		if(null != totalday) {
+			return totalday;
+		}else {
+			return 0;
+		}
+		 
+	}
+
+	@Override
+	public Integer findTotalPerson() {
+		// TODO Auto-generated method stub
+		Integer totalday = schedulEventdao.findTotalPerson();
+		if(null != totalday) {
+			return totalday;
+		}else {
+			return 0;
+		}
+		
+	}
+
+	@Override
+	public List<SchedulEvent> findPassDay() {
+		// TODO Auto-generated method stub
+		return schedulEventdao.findPassDay();
 	}
 
 

@@ -19,7 +19,7 @@ import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.entity.Employee;
 
 @Entity
-@Table(name="OA_LEAVE")
+@Table(name="t_leave")
 public class Leave {
 
 	//private static final long serialVersionUID = 1L;
@@ -40,7 +40,7 @@ public class Leave {
     private Employee employ;
     
     @ManyToOne(cascade=CascadeType.MERGE,fetch=FetchType.LAZY)
-    @JoinColumn(name="ID_")
+    @JoinColumn(name="emp_id")
     public Employee getEmploy() {
 		return employ;
 	}

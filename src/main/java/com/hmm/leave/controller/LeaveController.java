@@ -154,7 +154,7 @@ public class LeaveController
                 groupNames[i] = groupListuser.get(i).getId();
             }
     		String groupUserList = ArrayUtils.toString(groupNames);
-    		System.out.println(groupUserList);
+    		//System.out.println(groupUserList);
     		if(groupUserList.indexOf("Manager") != -1) {
     			Map<String, Object> variables1 = new HashMap<String, Object>();
     			variables1.put("deptLeader", "Admin");

@@ -53,6 +53,21 @@ public class GuestController {
 		return guestPage;
 	}
 	
+	@RequestMapping("/findAllVipGuest")
+	public Page<GuestDto> getVipPages(ExtjsPageRequest pageable){
+		pageable.setSort("idCard");
+		Page<GuestDto> guestPage =  guestService.findAllVipGuest(pageable.getPageable());
+		
+		return guestPage;
+	}
+	
+	@RequestMapping("/findCheckInGuest")
+	public Page<GuestDto> getCheckInPages(ExtjsPageRequest pageable){
+		pageable.setSort("idCard");
+		Page<GuestDto> guestPage =  guestService.findAllCheckInGuest(pageable.getPageable());
+		
+		return guestPage;
+	}
 	
 	@RequestMapping("/findGuestByIdCard")
 	public @ResponseBody GuestInfoDto findGuestByIdCard(@RequestParam("cardNumber") String cardNumber) {
@@ -187,5 +202,29 @@ public class GuestController {
 			index+=guestList.length;
 		}
 		return "success";
+	}
+	
+	@RequestMapping("/findGuestByRoomNo")
+	public List<GuestInfoDto> findGuestByRoomNo(@RequestParam(name="roomNo") String roomNo){
+	
+//		System.out.println(roomNo);
+		List<Guest> guests =  guestService.findGuestByRoomNo(roomNo);
+		List<GuestInfoDto> guestDtos = new ArrayList<>();
+		for (Guest guest : guests) {
+			GuestInfoDto guestInfoDto = new GuestInfoDto();
+			Room room = guest.getRoom();
+			System.out.println(room);
+			BeanUtils.copyProperties(guest, guestInfoDto);
+			guestInfoDto.setGuestState(guest.getState());
+			if (room != null) {
+				BeanUtils.copyProperties(room, guestInfoDto);
+				guestInfoDto.setRoomState(room.getState());
+			}
+			System.out.println(guestInfoDto);
+			guestDtos.add(guestInfoDto);
+		}
+		System.out.println(guestDtos.size());
+		System.out.println(guestDtos);
+		return guestDtos;
 	}
 }

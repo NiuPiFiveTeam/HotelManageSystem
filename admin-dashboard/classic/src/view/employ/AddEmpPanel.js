@@ -262,50 +262,7 @@ Ext.define('Admin.view.employ.AddEmpPanel', {
             allowBlank: true
         }]    
         }
-    //     ,{
-    //     xtype: 'fieldset',
-    //     title: '其他信息',
-
-    //     defaultType: 'textfield',
-    //     defaults: {
-    //         anchor: '100%'
-    //     },
-
-    //     items: [{
-    //         fieldLabel: 'First Name',
-    //         emptyText: 'First Name',
-    //         name: 'first'
-    //     }, {
-    //         fieldLabel: 'Last Name',
-    //         emptyText: 'Last Name',
-    //         name: 'last'
-    //     }, {
-    //         fieldLabel: 'Company',
-    //         name: 'company'
-    //     }, {
-    //         fieldLabel: 'Email',
-    //         name: 'email',
-    //         vtype: 'email'
-    //     }, {
-    //         xtype: 'combobox',
-    //         fieldLabel: 'State',
-    //         name: 'state',
-    //         // store: {
-    //         //     type: 'states'
-    //         // },
-    //         valueField: 'abbr',
-    //         displayField: 'state',
-    //         typeAhead: true,
-    //         queryMode: 'local',
-    //         emptyText: 'Select a state...'
-    //     }, {
-    //         xtype: 'datefield',
-    //         fieldLabel: 'Date of Birth',
-    //         name: 'dob',
-    //         allowBlank: false,
-    //         maxValue: new Date()
-    //     }]
-    // }
+ 
     ],
 
     buttons: [{

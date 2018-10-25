@@ -3,16 +3,22 @@ package com.hmm.Work.entity;
 import java.util.Date;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hmm.employee.entity.Employee;
 import com.hmm.employee.entity.EmployeeDTO;
 
 public class WorkEmpDTO {
 	private Long workid; //上班id
 	private Float worktime;//正常工作时长
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	private Date ontudytime;//上班开始时间
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	private Date offdutytime;//下班时间
-	private Float Overtime;//加班时长
+	private Float overtime;//加班时长
 	private Integer normal;//打卡状态(1.正常  2.迟到  3.缺卡 4.早退)
 	private Integer late;
 	private Integer lackCard;
@@ -53,12 +59,7 @@ public class WorkEmpDTO {
 	public void setOffdutytime(Date offdutytime) {
 		this.offdutytime = offdutytime;
 	}
-	public Float getOvertime() {
-		return Overtime;
-	}
-	public void setOvertime(Float overtime) {
-		Overtime = overtime;
-	}
+
 
 	public Integer getNormal() {
 		return normal;
@@ -107,6 +108,12 @@ public class WorkEmpDTO {
 	}
 	public void setCalendar(String calendar) {
 		this.calendar = calendar;
+	}
+	public Float getOvertime() {
+		return overtime;
+	}
+	public void setOvertime(Float overtime) {
+		this.overtime = overtime;
 	}
 	
 }

@@ -10,6 +10,8 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -99,7 +101,7 @@ public class LeaveQueryDTO
 				List<Predicate> predicate = new ArrayList<>();
 				
 		
-				if (null!=leaveQueryDTO.getUserId()) {
+				if (StringUtils.isNotBlank(leaveQueryDTO.getUserId())) {
 					predicate.add(criteriaBuilder.equal(root.get("userId").as(String.class),
 							leaveQueryDTO.getUserId()));
 				}
@@ -113,17 +115,17 @@ public class LeaveQueryDTO
 							leaveQueryDTO.getEndTime()));
 				}
 				
-				if(leaveQueryDTO.getEmpName()!= null) {
+				if(StringUtils.isNotBlank(leaveQueryDTO.getEmpName())) {
 					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
 					criteriaBuilder.like(join.get("empNo").as(String.class), "%" + leaveQueryDTO.getEmpName() + "%");
 				}
 				
-				if(leaveQueryDTO.getEmpNo()!= null) {
+				if(StringUtils.isNotBlank(leaveQueryDTO.getEmpNo())) {
 					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
 					criteriaBuilder.equal(join.get("empNo").as(String.class), leaveQueryDTO.getEmpNo());
 				}
 				
-				if(leaveQueryDTO.getUserName()!= null) {
+				if(StringUtils.isNotBlank(leaveQueryDTO.getUserName())) {
 					Join<Leave, Employee> join = root.join("employ",JoinType.LEFT);
 					criteriaBuilder.equal(join.get("userName").as(String.class), leaveQueryDTO.getUserName());
 				}

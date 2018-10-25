@@ -13,5 +13,5 @@ Ext.define('Admin.store.finance.financeReport.FinanceReportSelectYearStore', {
             rootProperty: 'data'
         }
     },
-    autoLoad: 'true'
+    autoLoad: true
 });

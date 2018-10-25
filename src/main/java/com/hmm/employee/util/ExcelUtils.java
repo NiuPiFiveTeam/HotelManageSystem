@@ -103,7 +103,7 @@ public class ExcelUtils {
                 //如果是date类型则 ，获取该cell的date值  
                 Date date = HSSFDateUtil.getJavaDate(cell.getNumericCellValue());  
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");  
-                value = format.format(date);;  
+                value = format.format(date);
             }else {// 纯数字  
                 BigDecimal big=new BigDecimal(cell.getNumericCellValue());  
                 value = big.toString();  

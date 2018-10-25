@@ -2,7 +2,7 @@ package com.hmm.calendars.dao;
 
 import java.util.Date;
 import java.util.List;
-
+import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -23,5 +23,29 @@ public interface SchedulEventDao extends JpaSpecificationExecutor<SchedulEvent>,
 	SchedulEvent findStartDate(String date ,String userName);
 	
 	SchedulEvent findByEventDateAndEmploy(Date EventDate , Employee employee);
+	
+	@Query("select SUM(UNIX_TIMESTAMP(s.endDate)- UNIX_TIMESTAMP(s.startDate))  from "
+			+ "SchedulEvent s , Employee e , Calendar c where date_format(s.endDate,'%Y-%m')=date_format(now(),'%Y-%m')  "
+			+ "AND e.userName = ?1 and s.employ.emp_id = e.emp_id and c.title <> '休息' and c.id = s.calendar.id ")
+	public Float findattenceTotalTime(String userbname);
+	
+	
+	
+	@Query("select COUNT(*)  from "
+			+ "SchedulEvent s , Employee e , Calendar c where date_format(s.endDate,'%Y-%m')=date_format(now(),'%Y-%m')  "
+			+ "AND e.userName = ?1 and s.employ.emp_id = e.emp_id  and c.title <> '休息'  and c.title <> '加班'  and c.id = s.calendar.id ")
+	public Integer findWorkTotalDay(String username);
+	
+	
+	//查询当月应当出勤总人数
+	@Query("SELECT COUNT(DISTINCT e.empNo) FROM Employee e INNER JOIN SchedulEvent s ON e.emp_id = s.employ.emp_id "
+			+ "where date_format(s.startDate,'%Y-%m')=date_format(now(),'%Y-%m')")
+	public Integer findTotalPerson();
+	
+	@Query("from SchedulEvent e  where to_days(now())-to_days(e.eventDate) >= 1 AND to_days(now())-to_days(e.eventDate)<=7")
+	public List<SchedulEvent> findPassDay();
+	
+	
+	
 	
 }

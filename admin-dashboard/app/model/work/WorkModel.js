@@ -16,7 +16,7 @@ requires: [
 	    {type: 'int',name: 'lackCard'},
 	    {type: 'int',name: 'leaveEarly'},
 	    {type: 'float',name: 'worktime'},
-	    {type: 'float',name: 'Overtime'},
+	    {type: 'float',name: 'overtime'},
 	    {type: 'int',name: 'normal'}
 
 	    

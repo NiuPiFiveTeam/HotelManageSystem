@@ -1,5 +1,7 @@
 package com.hmm.travel.service;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,11 +34,19 @@ public interface TravelService {
 	
 	public void deleteAll(Long[] ids);
 	
-	public Page<TravelEmpDTO> findAllQueryDTO(Specification<Travel> whereClause, Pageable pageable);
+	public Page<TravelEmpDTO> findAllQueryDTO(@Nullable Specification<Travel> whereClause, Pageable pageable);
 	
 	public Page<TravelEmpDTO> findAll(String userId,String groupName, Pageable pageable);
 	
-	public Page<TravelEmpDTO> findByUserId(Specification<Travel> whereClause,String userId, Pageable pageable);
+	public Page<TravelEmpDTO> findByUserId(@Nullable Specification<Travel> whereClause,String userId, Pageable pageable);
+	
+	float findTotalTravelAllowance(String userName); 
+	
+	Integer findTatalPersonTravel();
+	
+	public List<Map<Object,Object>> findtravel(Integer year);
+	
+	List<Map<Object,Object>> findByyearAndOntudytimetravel(Integer year ,String userName);
 	
 	
 	

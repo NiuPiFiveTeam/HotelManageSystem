@@ -24,8 +24,12 @@ Ext.define('Admin.view.employ.EmployViewController', {
     }, 
 
     onOpenPhotoButton:function(btn){
-      btn.up("panel").up("panel").up("container").add(Ext.widget('addPhotoWindow')).show();
+        btn.up('panel').up('panel').up('container').add(Ext.widget('addPhotoWindow')).show();
     },
+
+    // onOpenPhotoButton:function(btn){
+    //   btn.up("panel").up("panel").up("container").add(Ext.widget('addPhotoWindow')).show();
+    // },
 
     // EditEmpFormCancel: function() {
     //     this.lookupReference('EditEmpForm').getForm().reset();

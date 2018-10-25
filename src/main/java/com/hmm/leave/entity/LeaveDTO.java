@@ -3,6 +3,7 @@ package com.hmm.leave.entity;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hmm.activiti.domain.ProcessStatus;
 
 public class LeaveDTO {
 	/**------------业务数据--------------**/
@@ -27,6 +28,7 @@ public class LeaveDTO {
     private String taskName;
     private Date   taskCreateTime;
     private String assignee;//受理人
+    private ProcessStatus processStatus;//流程状态
     private String taskDefinitionKey;
     /*流程实例*/
     private String processInstanceId;
@@ -168,6 +170,12 @@ public class LeaveDTO {
 	}
 	public void setVersion(int version) {
 		this.version = version;
+	}
+	public ProcessStatus getProcessStatus() {
+		return processStatus;
+	}
+	public void setProcessStatus(ProcessStatus processStatus) {
+		this.processStatus = processStatus;
 	}
     
     

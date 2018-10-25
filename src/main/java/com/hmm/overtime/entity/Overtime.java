@@ -39,7 +39,7 @@ public class Overtime {
 	}
 	
 	@ManyToOne(cascade=CascadeType.MERGE , fetch=FetchType.LAZY)
-	@JoinColumn(name="ID_")
+	@JoinColumn(name="emp_id")
 	public Employee getEmploy() {
 		return employ;
 	}
