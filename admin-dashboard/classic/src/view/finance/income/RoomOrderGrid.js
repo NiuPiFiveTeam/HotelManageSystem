@@ -24,8 +24,23 @@ Ext.define('Admin.view.finance.income.RoomOrderGrid', {
             	dataIndex:'bookRoomNo',
                 flex:1
             },{
+                header:'客房号',
+                dataIndex:'roomNo',
+                flex:1
+            },{
                 header:'房间类型',
                 dataIndex:'roomType',
+                flex:1
+            },{
+                header:'客房状态',
+                dataIndex:'roomOrderStatus',
+                renderer:function(value, metaData, record){
+                    if(value=='CHECKIN'){
+                        return '<span style="color:red;">已入住</span>';
+                    }else if(value =='CHECKOUT'){
+                        return '<span style="color:green;">已结账</span>';
+                    }
+                },
                 flex:1
             },{
                 header:'订房方式',
@@ -46,7 +61,7 @@ Ext.define('Admin.view.finance.income.RoomOrderGrid', {
                 renderer: Ext.util.Format.dateRenderer('Y/m/d H:i'),
                 flex:1
             },{
-                header:'预定人',
+                header:'预定方式',
                 dataIndex:'bookGuest',
                 flex:1
             },{
@@ -54,27 +69,18 @@ Ext.define('Admin.view.finance.income.RoomOrderGrid', {
                 dataIndex:'bookPhone',
                 flex:1
             },{
+                header:'实际收入',
+                dataIndex:'realIncome',
+                flex:1
+            },{
                 header:'订单总收入',
-                dataIndex:'totalAmout',
-                renderer:function(value, metaData, record){
-                    if(value=='0'){
-                        return '';
-                    }
-                },
+                dataIndex:'totalIncome',
                 flex:1
             },{
                 header:'备注',
                 dataIndex:'remark',
                 flex:1
             }],
-
-            tbar: ['->',{
-                text:'一键签收'
-            },'-', {
-                text:'入库申请',
-                // handler:'openAddInStoreOrderWindow'
-            }],
-        
         	
             dockedItems: [{
                 xtype: 'pagingtoolbar',

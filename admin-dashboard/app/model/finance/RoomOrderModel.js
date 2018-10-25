@@ -14,8 +14,14 @@ Ext.define('Admin.model.finance.RoomOrderModel', {
         {type: 'string',name: 'bookPhone'},//预定号码, 无
 
         {type: 'string',name: 'remark'},//备注
-        {type: 'float',name: 'totalAmout'},//订单总收入
+        {type: 'float',name: 'totalIncome'},//订单总收入
 
+
+        {type: 'int',name: 'roomNo'},//客房号
+        {type: 'float',name: 'realIncome'},//实际收入
+        {type: 'string',name: 'roomOrderStatus'},//客房状态
+        
+        
     ]
     
 });
