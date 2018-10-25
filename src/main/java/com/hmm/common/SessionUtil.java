@@ -12,6 +12,7 @@ public class SessionUtil
 	public static final String GROUPNAMES 	= "groupNames";
 	public static final String DEPTNAME 	= "deptName";
 	public static final String LOGINTYPE 	= "logintype";
+	public static final String IMAGE 	= "image";
     /**
      * 设置用户到session
      */
@@ -30,6 +31,10 @@ public class SessionUtil
     
     public static void setDeptName(HttpSession session, String deptName) {
         session.setAttribute(DEPTNAME, deptName);		
+    }
+    
+    public static void setIamge(HttpSession session, String Image) {
+        session.setAttribute(IMAGE, Image);		
     }
 
     /**
@@ -50,6 +55,11 @@ public class SessionUtil
         	String logintype = (String) session.getAttribute(LOGINTYPE);
         	return logintype == null ? null : logintype;
     }
+    
+    public static String getImage(HttpSession session) {
+    	String image = (String) session.getAttribute(IMAGE);
+    	return image == null ? null : image;
+}
     
     /**
      * 设置用户到session

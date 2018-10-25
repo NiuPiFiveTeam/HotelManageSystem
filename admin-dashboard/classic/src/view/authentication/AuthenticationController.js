@@ -31,7 +31,9 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
                         success: function(response1, options) {
                            
                             Ext.getCmp('loginUserName').setText(json.map.userName);
-
+                            var image = json.map.image;
+                            var src = 'resources/images/employee/' + image;
+                            Ext.getCmp('empimage').setSrc(src);
                             var naviTree = Ext.StoreManager.lookup('NavigationTree');
                             var selectmenu = Ext.util.JSON.decode(response1.responseText);
                             var deptName = selectmenu.map['deptName'];
