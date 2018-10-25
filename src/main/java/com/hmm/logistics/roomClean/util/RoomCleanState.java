@@ -11,5 +11,5 @@ package com.hmm.logistics.roomClean.util;
  */
 
 public enum RoomCleanState {
-	CLEANING,SERVICING,WAITING,CLEAN,SERVICE//清洁中，服务中，等待中，退房清洁，客房服务
+	CLEANING,SERVICING,WAITING1,WAITING2,CLEAN,SERVICE//清洁中，服务中，等待中退房清洁,等待中客房服务，退房清洁，客房服务
 }

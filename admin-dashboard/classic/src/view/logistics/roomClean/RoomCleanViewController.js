@@ -30,7 +30,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 				var gridStroe = grid.getStore().getAt(rowIndex);//获取grid选中行的数据
 				var store = Ext.data.StoreManager.lookup('roomCleanGridStroe');
 				var record = store.getById(gridStroe.get('id'));//获取id获取store中的数据
-				var values={"roomCleanState":"WAITING"};
+				var values={"roomCleanState":"WAITING1"};
 				record.set(values);//rest put 
 				grid.store.reload();
 				alert("完成退房清洁");
@@ -71,7 +71,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 				var gridStroe = grid.getStore().getAt(rowIndex);//获取grid选中行的数据
 				var store = Ext.data.StoreManager.lookup('roomCleanGridStroe');
 				var record = store.getById(gridStroe.get('id'));//获取id获取store中的数据
-				var values={"roomCleanState":"WAITING"};
+				var values={"roomCleanState":"WAITING2"};
 				record.set(values);//rest put 
 				grid.store.reload();
 				alert("可以开始客房服务");

@@ -20,7 +20,7 @@ public class OutDTO {
 	private String roomNo;
 	private String reason;
 	private Date outDate;
-	private String worker;
+	private String workers;
 	public String getReason() {
 		return reason;
 	}
@@ -34,10 +34,10 @@ public class OutDTO {
 		this.outDate = outDate;
 	}
 	public String getWorker() {
-		return worker;
+		return workers;
 	}
-	public void setWorker(String worker) {
-		this.worker = worker;
+	public void setWorker(String workers) {
+		this.workers = workers;
 	}
 	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
 	private Date createOutTimeStart;

@@ -32,6 +32,7 @@ import com.hmm.logistics.stock.util.StockType;
 import com.hmm.room.entity.Floor;
 import com.hmm.room.entity.Room;
 import com.hmm.room.repository.RoomRepository;
+import com.hmm.room.util.RoomState;
 import com.hmm.room.util.RoomType;
 
 /**
@@ -115,7 +116,7 @@ public class RoomCleanService implements IRoomCleanService{
 			else if(roomClean.getRoomCleanState()==RoomCleanState.SERVICING) {
 				floorVoRoomVoRoomClean.setRoomCleanState("服务中");
 			}
-			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING) {
+			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING1||roomClean.getRoomCleanState()==RoomCleanState.WAITING2) {
 				floorVoRoomVoRoomClean.setRoomOther("无");
 				floorVoRoomVoRoomClean.setRoomCleanState("等待中");
 			}
@@ -177,7 +178,7 @@ public class RoomCleanService implements IRoomCleanService{
 				floorVoRoomVoRoomClean.setRoomCleanState("服务中");
 				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
-			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING) {
+			else if(roomClean.getRoomCleanState()==RoomCleanState.WAITING1||roomClean.getRoomCleanState()==RoomCleanState.WAITING2) {
 				floorVoRoomVoRoomClean.setRoomCleanState("等待中");
 				floorVoRoomVoRoomCleanDTO.add(floorVoRoomVoRoomClean);
 			}
@@ -207,7 +208,7 @@ public class RoomCleanService implements IRoomCleanService{
 			RoomClean rc=new RoomClean();
 			rc.setRoom(room);
 			rc.setRoomOther("无");
-			rc.setRoomCleanState(RoomCleanState.WAITING);
+			rc.setRoomCleanState(RoomCleanState.WAITING1);
 			save(rc);
 		}
 	}
@@ -231,6 +232,11 @@ public class RoomCleanService implements IRoomCleanService{
 		
 		
 		if(selectValue.equals("roomserviceClean")) {//客房清洁
+			
+			Room room=roomRepository.findRoomByRoomNo(roomNo);
+			room.setState(RoomState.NEEDCLEAN);
+			roomRepository.save(room);
+			
 			RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
 			roomClean.setRoomCleanState(RoomCleanState.SERVICE);
 			roomCleanService.save(roomClean);
@@ -248,6 +254,11 @@ public class RoomCleanService implements IRoomCleanService{
 		
 		
 		else if(selectValue.equals("checkoutClean")) {//退房清洁
+			
+			Room room=roomRepository.findRoomByRoomNo(roomNo);
+			room.setState(RoomState.NEEDCLEAN);
+			roomRepository.save(room);
+			
 			RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
 			roomClean.setRoomCleanState(RoomCleanState.CLEAN);
 			if(StringUtils.isNotBlank(remark)) {
@@ -300,7 +311,9 @@ public class RoomCleanService implements IRoomCleanService{
 		roomClean.setRoomCleanState(RoomCleanState.SERVICE);
 		roomCleanService.save(roomClean);//改变roomClean的状态为客房服务
 		
-		
+		Room room=roomRepository.findRoomByRoomNo(roomNo);
+		room.setState(RoomState.NEEDCLEAN);
+		roomRepository.save(room);
 		
 		
 		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();

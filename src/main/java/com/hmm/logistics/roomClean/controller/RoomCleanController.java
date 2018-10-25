@@ -24,6 +24,7 @@ import com.hmm.common.SessionUtil;
 import com.hmm.common.beans.BeanUtils;
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.employee.entity.Employee;
 import com.hmm.employee.service.EmployeeService;
 import com.hmm.logistics.roomClean.dto.FloorVoRoomVoRoomCleanDTO;
 import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
@@ -99,11 +100,20 @@ public class RoomCleanController {
 				roomCleanService.save(entity);//更改状态
 				
 			};
-			if(dto.getRoomCleanState()==RoomCleanState.WAITING){
+			if(dto.getRoomCleanState()==RoomCleanState.WAITING1||dto.getRoomCleanState()==RoomCleanState.WAITING2){
 				
-				Room room=entity.getRoom();
-				room.setState(RoomState.EMPTY);
-				roomRepository.save(room);
+				
+				if(dto.getRoomCleanState()==RoomCleanState.WAITING1) {
+					Room room=entity.getRoom();
+					room.setState(RoomState.EMPTY);
+					roomRepository.save(room);
+				}
+				if(dto.getRoomCleanState()==RoomCleanState.WAITING2) {
+					Room room=entity.getRoom();
+					room.setState(RoomState.CHECKIN);
+					roomRepository.save(room);
+				}
+				
 				
 				
 				List<RoomCleanRecord> roomCleanRecords=roomCleanRecordService.findByRoomId(entity.getRoom().getRoomId());
@@ -121,7 +131,15 @@ public class RoomCleanController {
 							}
 						}
 						roomCleanRecord.setRoomDate(new Date());
-						roomCleanRecord.setRoomWorker(employeeService.findByUserName(SessionUtil.getUserName(session)));
+						//roomCleanRecord.setRoomWorker(employeeService.findByUserName(SessionUtil.getUserName(session)));
+						Employee employee=employeeService.findByUserName(SessionUtil.getUserName(session));
+						//System.out.println(employee);
+						if(employee!=null) {
+							if(roomCleanRecord.getOutStorage()!=null) {
+								roomCleanRecord.getOutStorage().setWorker(employee);
+							}
+							
+						}
 						roomCleanRecordService.save(roomCleanRecord);
 					}
 				}
@@ -142,6 +160,9 @@ public class RoomCleanController {
 	@RequestMapping("/changeRoomState")
 	public @ResponseBody String changeRoomState(@RequestParam("roomNo") String roomNo,@RequestParam("selectValue") String selectValue,@RequestParam("remark") String remark) {
 		roomCleanService.changeRoomState(roomNo, selectValue, remark);
+		
+		
+		
 		System.out.println(roomNo+" "+selectValue);
 		if (remark != null) {
 			System.out.println(remark);

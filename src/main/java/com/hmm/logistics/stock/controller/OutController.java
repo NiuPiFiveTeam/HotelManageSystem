@@ -33,14 +33,17 @@ public class OutController {
 	
 	@GetMapping
 	public Page<OutDTO> getOutPage(OutDTO outDTO,ExtjsPageRequest pageRequest){
-		Page<OutStorage> a=outStorageService.findAll(OutDTO.getWhereClause(outDTO), pageRequest.getPageable());
-		int b=outStorageService.findAll(null, pageRequest.getPageable()).getContent().size();
+		Page<OutStorage> a=outStorageService.findAll(null, pageRequest.getPageable());
+		ExtjsPageRequest pageRequests=pageRequest;
+		pageRequests.setLimit(100);
+		int looo=outStorageService.findAll(null, pageRequests.getPageable()).getContent().size();
 		List<OutStorage> OutStorages=a.getContent();
 		List<OutDTO>outDTOs=new ArrayList<OutDTO>();
 		for(OutStorage outStorage:OutStorages) {
 			OutDTO loutDTO=new OutDTO();
 			loutDTO.setId(outStorage.getId());
 			loutDTO.setOutDate(outStorage.getOutDate());
+			System.out.println(outStorage.getOutDate());
 			loutDTO.setReason(outStorage.getReason());
 			loutDTO.setRoomNo(outStorage.getRoomNo());
 			if(outStorage.getWorker()!=null) {
@@ -51,8 +54,8 @@ public class OutController {
 			}
 			outDTOs.add(loutDTO);
 		}
-		
-		return	new PageImpl<OutDTO> (outDTOs,  pageRequest.getPageable(), b);
+		System.out.println(looo);
+		return	new PageImpl<OutDTO> (outDTOs,  pageRequest.getPageable(),50);
 				
 	}
 }

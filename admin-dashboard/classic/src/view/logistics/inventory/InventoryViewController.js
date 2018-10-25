@@ -179,7 +179,7 @@ quickSearchOut:function(btn){
 	
 	var store =	btn.up('gridpanel').getStore();
 	//var store = Ext.getCmp('userGridPanel').getStore();// Ext.getCmp(）需要在OrderPanel设置id属性
-	Ext.apply(store.proxy.extraParams, {roomNo:"",createOutTimeStart:"",createOutTimeEnd:"",worker:""});
+	Ext.apply(store.proxy.extraParams, {roomNo:"",createOutTimeStart:"",createOutTimeEnd:"",workers:""});
 	
 	if(searchField==='roomNo'){
 		//alert(searchRoomNo);
@@ -193,7 +193,7 @@ quickSearchOut:function(btn){
 	}
 	if(searchField==='worker'){
 	   // alert(searchVender);
-		Ext.apply(store.proxy.extraParams, {worker:searchWorker});
+		Ext.apply(store.proxy.extraParams, {workers:searchWorker});
 	}
 	store.load({params:{start:0, limit:20, page:1}});
 },

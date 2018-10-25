@@ -336,7 +336,7 @@ Ext.define('Admin.view.logistics.inventory.InventoryPanel', {
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomNo',text: '房间号码', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'reason',  text: '出库原因', align:'center',flex: 1},
                 {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'outDate',text: '出库日期',align:'center',formatter: 'date("Y/m/d H:i:s")'},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'worker',  text: '出库员工', align:'center',flex: 1},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'workers',  text: '出库员工', align:'center',flex: 1},
                 {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '出库详细',align:'center',}
             ],
             tbar: [{//自定义主件
@@ -348,7 +348,7 @@ Ext.define('Admin.view.logistics.inventory.InventoryPanel', {
 				    data: [
 				      	{ name: '房间号码', value: 'roomNo' },
                         { name: '出库日期', value: 'outDate' },
-                        { name: '工作人员', value: 'worker' },
+                        // { name: '工作人员', value: 'workers' },
 				    ]
 				}),
 	            displayField: 'name',
