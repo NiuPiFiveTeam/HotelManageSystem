@@ -325,97 +325,97 @@ Ext.define('Admin.view.logistics.inventory.InventoryPanel', {
 
 
 
-        {
-            xtype: 'gridpanel',
-            cls: 'user-grid',
-            title: '出库记录',
-            bind: '{Out}',
-            scrollable: false,
-            columns: [
-                {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center',/* hidden :true,*/},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomNo',text: '房间号码', align:'center',flex: 1},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'reason',  text: '出库原因', align:'center',flex: 1},
-                {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'outDate',text: '出库日期',align:'center',formatter: 'date("Y/m/d H:i:s")'},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'workers',  text: '出库员工', align:'center',flex: 1},
-                {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '出库详细',align:'center',}
-            ],
-            tbar: [{//自定义主件
-	            xtype: 'combobox',
-                hideLabel: true,
-                reference:'searchFieldNameOut',//用于获取选框信息
-	            store:Ext.create("Ext.data.Store", {
-				    fields: ["name", "value"],
-				    data: [
-				      	{ name: '房间号码', value: 'roomNo' },
-                        { name: '出库日期', value: 'outDate' },
-                        // { name: '工作人员', value: 'workers' },
-				    ]
-				}),
-	            displayField: 'name',
-	            valueField:'value',
-	            editable: false,
-	            queryMode: 'local',
-	            triggerAction: 'all',
-	            emptyText: '选择查询条件',
-                width: 135,
-                listeners:{
-                    select: 'searchComboboxOut',
-				}
+        // {
+        //     xtype: 'gridpanel',
+        //     cls: 'user-grid',
+        //     title: '出库记录',
+        //     bind: '{Out}',
+        //     scrollable: false,
+        //     columns: [
+        //         {xtype: 'gridcolumn',width: 60,dataIndex: 'id',text: '编号',align:'center',/* hidden :true,*/},
+        //         {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'roomNo',text: '房间号码', align:'center',flex: 1},
+        //         {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'reason',  text: '出库原因', align:'center',flex: 1},
+        //         {xtype: 'datecolumn',cls: 'content-column',width: 120,dataIndex: 'outDate',text: '出库日期',align:'center',formatter: 'date("Y/m/d H:i:s")'},
+        //         {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'workers',  text: '出库员工', align:'center',flex: 1},
+        //         {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '出库详细',align:'center',}
+        //     ],
+        //     tbar: [{//自定义主件
+	    //         xtype: 'combobox',
+        //         hideLabel: true,
+        //         reference:'searchFieldNameOut',//用于获取选框信息
+	    //         store:Ext.create("Ext.data.Store", {
+		// 		    fields: ["name", "value"],
+		// 		    data: [
+		// 		      	{ name: '房间号码', value: 'roomNo' },
+        //                 { name: '出库日期', value: 'outDate' },
+        //                 // { name: '工作人员', value: 'workers' },
+		// 		    ]
+		// 		}),
+	    //         displayField: 'name',
+	    //         valueField:'value',
+	    //         editable: false,
+	    //         queryMode: 'local',
+	    //         triggerAction: 'all',
+	    //         emptyText: '选择查询条件',
+        //         width: 135,
+        //         listeners:{
+        //             select: 'searchComboboxOut',
+		// 		}
 
-            }, '-',
-            {//房间号码搜索条件
-            	xtype:'textfield',
-                name:'roomNoSearch',
-                reference:'searchRoomNo',
-                hidden :true,
-                width: 180,
-		    }, 
-            {//出库日期搜索条件start
-				xtype: 'datefield',
-				hideLabel: true,
-				hidden:true,
-				format: 'Y/m/d',
-				reference:'searchOutDate',
-				fieldLabel: 'From',
-                name: 'from_OutDate',
-                width:180,
-				//,id:'from_date',
-				//vtype: 'daterange',
-				//endDateField: 'to_date'
-			},
-            {//出库日期搜索条件end
-				xtype: 'datefield',
-				hideLabel: true,
-				hidden:true,
-				format: 'Y/m/d',// H:i:s
-				reference:'searchOutDate2',
-				fieldLabel: 'To',
-                name: 'to_OutDate',
-                width:180,
-				//,id:'to_date',
-				//vtype: 'daterange',
-				//startDateField: 'from_date'
-            },
-            {//工作人员搜索条件
-            	xtype:'textfield',
-                name:'workerSearch',
-                reference:'searchWorker',
-                hidden :true,
-                width: 180,
-            },
-            '-',{
-		        text: 'Search',
-		        iconCls: 'fa fa-search',
-		        handler: 'quickSearchOut'
-		    }, ],
-            dockedItems: [{
-                xtype: 'pagingtoolbar',
-                dock: 'bottom',
-                itemId: 'userPaginationToolbar',
-                displayInfo: true,
-                bind: '{Out}'
-            }]
-        },
+        //     }, '-',
+        //     {//房间号码搜索条件
+        //     	xtype:'textfield',
+        //         name:'roomNoSearch',
+        //         reference:'searchRoomNo',
+        //         hidden :true,
+        //         width: 180,
+		//     }, 
+        //     {//出库日期搜索条件start
+		// 		xtype: 'datefield',
+		// 		hideLabel: true,
+		// 		hidden:true,
+		// 		format: 'Y/m/d',
+		// 		reference:'searchOutDate',
+		// 		fieldLabel: 'From',
+        //         name: 'from_OutDate',
+        //         width:180,
+		// 		//,id:'from_date',
+		// 		//vtype: 'daterange',
+		// 		//endDateField: 'to_date'
+		// 	},
+        //     {//出库日期搜索条件end
+		// 		xtype: 'datefield',
+		// 		hideLabel: true,
+		// 		hidden:true,
+		// 		format: 'Y/m/d',// H:i:s
+		// 		reference:'searchOutDate2',
+		// 		fieldLabel: 'To',
+        //         name: 'to_OutDate',
+        //         width:180,
+		// 		//,id:'to_date',
+		// 		//vtype: 'daterange',
+		// 		//startDateField: 'from_date'
+        //     },
+        //     {//工作人员搜索条件
+        //     	xtype:'textfield',
+        //         name:'workerSearch',
+        //         reference:'searchWorker',
+        //         hidden :true,
+        //         width: 180,
+        //     },
+        //     '-',{
+		//         text: 'Search',
+		//         iconCls: 'fa fa-search',
+		//         handler: 'quickSearchOut'
+		//     }, ],
+        //     dockedItems: [{
+        //         xtype: 'pagingtoolbar',
+        //         dock: 'bottom',
+        //         itemId: 'userPaginationToolbar',
+        //         displayInfo: true,
+        //         bind: '{Out}'
+        //     }]
+        // },
 
 
 

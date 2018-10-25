@@ -69,19 +69,19 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                         },
                     },
             //添加标配外物品按钮
-                        {xtype: 'button',handler: 'onOutAddOtherButton',tooltip : '添加标配外物品',//iconCls: 'x-fa fa-ban'	 	,
-                        getClass : function (v, metadata, r, rowIndex, colIndex, store) {
-                            var roomCleanState = r.data.roomCleanState;
-                            var roomWorker = r.data.roomWorker;
-                            if(roomCleanState == '清洁中'){
-                                return 'x-fa fa-plus';
-                            }
-                            else{
-                                return 'x-hidden';
-                            }
+                    //     {xtype: 'button',handler: 'onOutAddOtherButton',tooltip : '添加标配外物品',//iconCls: 'x-fa fa-ban'	 	,
+                    //     getClass : function (v, metadata, r, rowIndex, colIndex, store) {
+                    //         var roomCleanState = r.data.roomCleanState;
+                    //         var roomWorker = r.data.roomWorker;
+                    //         if(roomCleanState == '清洁中'){
+                    //             return 'x-fa fa-plus';
+                    //         }
+                    //         else{
+                    //             return 'x-hidden';
+                    //         }
 
-                        },
-                    },
+                    //     },
+                    // },
             //清洁完成按钮
                         {xtype: 'button', handler: 'onOutFinishButton',tooltip : '退房清洁完成', //iconCls: 'x-fa fa-pencil' ,
                         getClass : function (v, metadata, r, rowIndex, colIndex, store) {
