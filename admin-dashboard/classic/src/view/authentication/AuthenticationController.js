@@ -30,7 +30,7 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
                         },
                         success: function(response1, options) {
                            
-                            Ext.getCmp('loginUserName').setText(json.map.userName);
+                            Ext.getCmp('loginUserName').setText(json.map.group + "   "+json.map.userName);
                             var image = json.map.image;
                             var src = 'resources/images/employee/' + image;
                             Ext.getCmp('empimage').setSrc(src);

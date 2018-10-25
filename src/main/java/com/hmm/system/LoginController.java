@@ -57,6 +57,8 @@ public class LoginController {
             SessionUtil.setLogintype(session, logintype);
             SessionUtil.setIamge(session, image);
             Map<String,String> map=new HashMap<String, String>();
+            String group = SessionUtil.getGroupNames(session).replace("{", "").replace("}", "");
+            map.put("group", group);
             map.put("image", image);
             map.put("userName", userName);
             map.put("msg", "登录成功!");
@@ -125,7 +127,7 @@ public class LoginController {
     			//读取角色Group
     			User user = identityService.createUserQuery().userId(userId).singleResult();
                 List<Group> groupList = identityService.createGroupQuery().groupMember(user.getId()).list();
-
+                
                 SessionUtil.setGroupList(session, groupList);
 
                 String[] groupNames = new String[groupList.size()];
@@ -135,6 +137,9 @@ public class LoginController {
                 SessionUtil.setGroupNames(session, ArrayUtils.toString(groupNames));//"groupNames"  : "admin,hrManager"
                 String image = SessionUtil.getImage(session);
                 Map<String,String> map=new HashMap<String, String>();
+                String group = SessionUtil.getGroupNames(session).replace("{", "").replace("}", "");
+                
+                map.put("group", group);
                 map.put("userName", userId);
                 map.put("image", image);
                 map.put("msg", "登录成功!");

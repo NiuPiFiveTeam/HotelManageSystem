@@ -32,7 +32,7 @@
                     xtype: 'component',
                     reference: 'senchaLogo',
                     cls: 'sencha-logo',
-                    html: '<div class="main-logo"><img src="resources/images/company-logo.png">致家酒店</div>',
+                    html: '<div class="main-logo"><img src="resources/images/Logo.png">致家酒店</div>',
                     width: 250
                 },
                 {

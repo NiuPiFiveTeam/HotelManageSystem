@@ -163,7 +163,8 @@ Ext.define('Admin.view.main.MainController', {
             success: function(response, options) {
                 var json = Ext.util.JSON.decode(response.responseText);
                 if(json.success){
-                    Ext.getCmp('loginUserName').setText(json.map.userName);
+
+                    Ext.getCmp('loginUserName').setText(json.map.group + "   "+json.map.userName);
                     me.redirectTo('dashboard',true);
                     var image = json.map.image;
                     var src = 'resources/images/employee/' + image;
