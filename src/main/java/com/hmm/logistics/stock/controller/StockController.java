@@ -1,6 +1,8 @@
 package com.hmm.logistics.stock.controller;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hmm.common.web.ExtAjaxResponse;
 import com.hmm.common.web.ExtjsPageRequest;
+import com.hmm.logistics.stock.dto.ShowInDetailedWinGrilDTO;
 import com.hmm.logistics.stock.dto.StockDTO;
+import com.hmm.logistics.stock.entity.InDetailed;
 import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.service.IInDetailedService;
 import com.hmm.logistics.stock.service.IOutDetailedService;
@@ -68,6 +72,35 @@ public class StockController {
 		return new PageImpl<StockDTO> (listStockDTO,  pageRequest.getPageable(), null!=listStockDTO?listStockDTO.size():0);
 	}
 	
+	
+	@GetMapping("/ShowInDetailedWinGril")
+	public Page<ShowInDetailedWinGrilDTO> getInDetailedPage(ShowInDetailedWinGrilDTO showInDetailedWinGrilDTO,ExtjsPageRequest pageRequest){
+		
+		Page<InDetailed> pageInDetailed = inDetailedService.findAll(ShowInDetailedWinGrilDTO.getWhereClause(showInDetailedWinGrilDTO), pageRequest.getPageable());
+		List<InDetailed> listInDetailed =pageInDetailed.getContent();
+		//System.out.println("listInDetailed:"+showInDetailedWinGrilDTO.getInStorageId());
+		List<ShowInDetailedWinGrilDTO> listShowInDetailedWinGrilDTO =new ArrayList<ShowInDetailedWinGrilDTO>();
+		for(InDetailed inDetailed:listInDetailed) {
+			ShowInDetailedWinGrilDTO showInDetailedWinGrilDTOs=new ShowInDetailedWinGrilDTO();
+			showInDetailedWinGrilDTOs.setAmount(inDetailed.getAmount());
+			showInDetailedWinGrilDTOs.setGoodsName(inDetailed.getGoodsName());
+			showInDetailedWinGrilDTOs.setUnit(inDetailed.getUnit());
+			showInDetailedWinGrilDTOs.setGoodsNo(inDetailed.getGoodsNo());
+			showInDetailedWinGrilDTOs.setInStorageId(inDetailed.getInAll().getInStorageId());
+			if(stockService.findByGoodsNo(inDetailed.getGoodsNo()).getStockType()==StockType.COMMODITY) {
+				showInDetailedWinGrilDTOs.setStockType("日用品");
+			}
+			else if(stockService.findByGoodsNo(inDetailed.getGoodsNo()).getStockType()==StockType.DURABLE) {
+				showInDetailedWinGrilDTOs.setStockType("耐久品");
+			}
+			listShowInDetailedWinGrilDTO.add(showInDetailedWinGrilDTOs);
+		}
+		
+		return new PageImpl<ShowInDetailedWinGrilDTO> (listShowInDetailedWinGrilDTO,  pageRequest.getPageable(), inDetailedService.findAll(ShowInDetailedWinGrilDTO.getWhereClause(showInDetailedWinGrilDTO)).size());
+	}
+	
+	
+	
 	@PostMapping
 	public ExtAjaxResponse saveEmploy(@RequestBody StockDTO stockDTO) {
 		try {
@@ -85,7 +118,11 @@ public class StockController {
 			if(stockDTO.getStockType().equals("COMMODITY")) {
 				stock.setStockType(StockType.COMMODITY);
 			}
-			stock.setGoodsNo(stockDTO.getGoodsNo());
+			Double random =Math.random();
+			String ss=random.toString().substring(2, 11);
+			Date date = new Date();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			stock.setGoodsNo(sdf.format(date)+String.valueOf(ss));
 			stock.setUnit(stockDTO.getUnit());
 			stockService.save(stock);
 			return new ExtAjaxResponse(true,"添加成功");

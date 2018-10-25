@@ -1,6 +1,21 @@
 
 // var store = Ext.create('Admin.store.room.InRoomTreeStore');
 
+function returnCheckOutRoomList() {
+    // history.go(-1);
+    let inRoomPanel = Ext.getCmp('inRoomPanel');
+//     //collapsible: true,  //是否可折叠
+//    // collapsed: true,
+   console.log(inRoomPanel);
+   let showPanel = inRoomPanel.items.get(3);
+   console.log(showPanel);
+   let hiddenPanel = inRoomPanel.items.get(2);
+   console.log(hiddenPanel);
+   
+   hiddenPanel.setHidden(false);
+   showPanel.setHidden(true);
+}
+
 Ext.define('Admin.view.room.inroom.InRoomPanel', {
     extend: 'Ext.panel.Panel',
     xtype: 'inRoomPanel',
@@ -91,6 +106,106 @@ Ext.define('Admin.view.room.inroom.InRoomPanel', {
                    
                 }},
             }
+        },{
+            xtype:'panel',
+            height:1000,
+            width:1200,
+            id:'roomCheckOutOrderPanel',
+            hidden:true,
+            html:[  
+                '<div style="width:90%;border-top:3px solid #35baf6;">',
+                    '<div style="width:84%;">',  //96%
+                        '<img id="CheckOutreturnIcon" style="float:left;height:30px;width:30px;cursor:pointer;" onclick="returnCheckOutRoomList()" onmousemove="changeCheckOutColor(\'return\')" onmouseout="changeCheckOutblackColor(\'return\')" src="classic/resources/images/return.png"></img>',
+                        '<h2 id="CheckOutselectRoomNo" style="margin-left:41px;padding-top: 6px;">505号房</h2>',
+                    '</div>',
+                '<hr style="opacity: 0.5;"/>',
+                '<table style="height: 160px;width:731px; margin-left:20px;margin-bottom:15px;margin-top:15px;" >',
+                      '<tr >',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">房单号</td>',
+                        '<td style="font-size: 12px; width: 250px;" id="CheckOutbookRoomNo">123456789456789133</td>',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px;" >房型</td>',
+                        '<td style="font-size: 12px; width: 250px;" id="CheckOutroomType"></td>',
+                      '</tr>',
+                      '<tr >',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">预定人</td>',
+                        '<td style="font-size: 12px; width: 250px;" id="CheckOutbookGuest">非预定</td>',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">电话</td>',
+                        '<td style="font-size: 12px; width: 250px;" id="CheckOutbookPhone">无</td>',
+                      '</tr>',
+                      '<tr>',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">房价</td>',
+                        '<td style="font-size: 12px; width: 250px;" id="CheckOutroomPrice"></td>',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">来源</td>',
+                        '<td style="font-size: 12px; width: 250px;" id="CheckOutbookSource">到店订房</td>',
+                      '</tr>',
+                      '<tr >',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px;">入住时间</td>',
+                        '<td style="font-size: 12px; width: 250px;"><span id="CheckOutcheckInTime">2017-03-15 16：51：26</span></td>',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">离店时间</td>',
+                        '<td style="font-size: 12px; width: 250px;"><span id="CheckOutcheckOutTime">2017-03-15 16：51：26</span></td>',
+                      '</tr>',
+                      '<tr >',
+                        '<td style="color:#7c8994;width: 70px; font-size: 12px; ">备注信息</td>',
+                        '<td style="font-size: 12px; width: 500px; "colspan="3"><textarea id="CheckOutremark" style="width: 600px;resize:none;"></textarea></td>',
+                      '</tr>',
+                '</table>',
+                '</div>',
+                '<hr style="opacity: 0.5;margin-left:20px;margin-right:20px; width:75%"/>',
+                '<div style="width:738px; margin-top:10px;">',
+                    '<h5  style="margin-left:20px;margin-top:15px;">客人信息</h5>',
+                    '<table id="CheckOutGuestInfoTable" style="width: 720px; margin-left:20px;  border-left: 1px solid #E3E6EA;border-bottom: 1px solid #E3E6EA;" cellspacing="0" >',
+                        '<tr style="text-align: left;font-size:12px;color:#7c8994;height:35px; background-color: #ececec;">',
+                            '<th style="padding-left:15px;"><strong>姓名</strong></th>',
+                            '<th style="padding-left:15px;"><strong>证件号码</strong></th>',
+                            '<th style="padding-left:15px;"><strong>性别</strong></th>',
+                            '<th style="padding-left:15px;"><strong>手机号码</strong></th>',
+                            '<th style="padding-left:15px;"><strong>状态</strong></th>',
+                        '</tr>',
+                    '</table>',
+                '</div>',
+                '<hr style="opacity: 0.5;margin-left:20px;margin-right:20px; width:75%"/>',
+                '<div style="width:738px; margin-top:8px; margin-bottom:15px;">',
+                '<span style="float: right; font-size: 11px; color: #19b9ed; cursor:pointer;" onclick="selectAccountType()" >添加收入操作</span>',
+                    '<h5 style="margin-left:20px;margin-top:15px;">消费明细</h5>',
+                    '<table id="CheckOutcashInfoTable" style="width: 720px; margin-left:20px;  border-left: 1px solid #E3E6EA;border-bottom: 1px solid #E3E6EA;" cellspacing="0" >',
+                        '<tr style="text-align: left;font-size:12px;color:#7c8994;height:35px; background-color: #ececec;">',
+                            '<th style="width:20px"><input type="checkbox"></input></th>',
+                            '<th style="padding-left:15px;"><strong>入账科目</strong></th>',
+                            '<th style="padding-left:15px;"><strong>金额</strong></th>',
+                            '<th style="padding-left:15px;"><strong>时间</strong></th>',
+                            '<th style="padding-left:15px;"><strong>操作员</strong></th>',
+                        '</tr>',
+                        '<tr>',
+                            '<td style=" height:30px;border-left: 1px solid #E3E6EA; border-top: 1px solid #E3E6EA;" ><input checked="checked" disabled="true"  type="checkbox"></input></td>',
+                            '<td style="border-left: 1px solid #E3E6EA; border-top: 1px solid #E3E6EA;padding-left:15px;">押金</td>',
+                            '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;padding-left:15px;">100</td>',
+                            '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;padding-left:15px;">'+new Date().toLocaleString().replace(/\//g,"-")+'</td>',
+                            '<td style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;padding-left:15px;"></td>',
+                        '</tr>',
+                    '</table>',
+                '</div>',
+                '<span>',
+                '<label style="font-size:13px;color:#7c8994;margin-left:20px;">应收(含押金)：</label>',
+                '<strong style="font-size:15px;color:#ff5813;" id="CheckOuttotalPrice">0</strong>',
+                '</span>',
+                '<span style="margin-left:62px;">',
+                '<label style="font-size:13px;color:#7c8994;margin-left:20px;">实收：</label>',
+                '<strong style="font-size:15px;color:#ff5813;" id="CheckOutrealGetPrice">0</strong>',
+                '</span>',
+                '<span style="margin-left:297px;">',
+                '<label style="font-size:13px;color:#7c8994;margin-right:6px;">找回:</label>',
+                '<strong style="font-size:15px;color:#ff5813;" id="CheckOutbackPrice">0</strong>',
+                '</span>',
+                '<hr style="opacity: 0.5;margin-left:20px;margin-right:20px;margin-top:15px; width:75%"/>',
+                '<div style="width:750px;">',
+                '<div style="border-radius:5px;float:left;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;margin-left:20px;color: #35baf6;cursor:pointer;">入账</div>',
+                '<div style="border-radius:5px;float:left;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #35baf6;cursor:pointer;">续住</div>',
+                '<div style="border-radius:5px;float:left;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #35baf6;cursor:pointer;">查看日志</div>',
+               
+                '<div style="border-radius:5px;float:right;border:1px solid #63a8eb;background-color:#63a8eb;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #fff;cursor:pointer;"  onclick="submitOverOrder();">结账</div>',
+                '<div style="border-radius:5px;float:right;border:1px solid #35baf6;width:80px;height:30px;text-align:center;padding-top:7px;margin-right:10px;color: #35baf6;cursor:pointer;">保存修改</div>',
+                '</div>'
+            ]
         }
 
     ]

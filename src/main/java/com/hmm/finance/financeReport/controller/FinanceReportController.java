@@ -19,7 +19,7 @@ public class FinanceReportController {
 	@Autowired
 	private IFinanceReportService financeReportService;
 	
-	@GetMapping()
+	@GetMapping
 	public List<FinanceReport> findFinanceReportDailyByYearGroupByMonth(Integer year){
 		if(year==null) {
 			 Calendar date = Calendar.getInstance();

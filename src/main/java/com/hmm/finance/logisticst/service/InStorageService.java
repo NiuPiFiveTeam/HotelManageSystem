@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.activiti.engine.impl.util.json.JSONArray;
+import org.activiti.engine.impl.util.json.JSONObject;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.springframework.beans.BeanUtils;
@@ -28,7 +30,9 @@ import com.hmm.finance.logisticst.domain.InStorageDTO;
 import com.hmm.finance.logisticst.domain.InStorageDetailedDTO;
 import com.hmm.finance.logisticst.repository.InStorageRepository;
 import com.hmm.logistics.stock.entity.InDetailed;
+import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.repository.InDetailedRepository;
+import com.hmm.logistics.stock.util.YesOrNoSend;
 
 @Service
 @Transactional
@@ -127,9 +131,10 @@ public class InStorageService implements IInStorageService {
 		ProcessInstance processInstance = workflowService.getProcessInstanceByTaskId(taskId);
 		InStorage inStorage = inStorageRepository.findById(processInstance.getBusinessKey()).get();
 		inStorage.setProcessStatus(ProcessStatus.UNRECEIPTED);//审批完成，重新回到[未签收]状态
-		//1.1若有供应商，则写入入库单实体类
-		if(variables.containsKey("supplier")) {
+		//1.1若有供应商和总金额，则写入入库单实体类
+		if(variables.containsKey("amountMoney") && variables.containsKey("supplier")) {
 			inStorage.setVender((variables.get("supplier")).toString());
+			inStorage.setAmount(Float.parseFloat(variables.get("amountMoney").toString()));
 		}
 		//2.再完成，否则完成后查找不到任务id会报错
 		workflowService.complete(taskId, variables);
@@ -168,7 +173,6 @@ public class InStorageService implements IInStorageService {
 	//查询入库详细记录
 	@Override
 	public Page<InStorageDetailedDTO> findInStorageDetailedByInStorageId(String inStorageId,Pageable pageable) {
-		List<InStorageDetailedDTO>  isdlist = null;
 		InStorage instorage = inStorageRepository.findById(inStorageId).get();
 		Page<InStorageDetailedDTO> lists = inDetailedRepository.findInStorageDetailedByInAll(instorage,pageable);
 		return lists;
@@ -178,6 +182,18 @@ public class InStorageService implements IInStorageService {
 	@Override
 	public Page<InStorageDTO> findCompleteInStorage(Pageable pageable) {
 		return inStorageRepository.findCompleteInStorage(pageable);
+	}
+	
+	//保存入库详细表的金额
+	@Override
+	public void saveInStorageDetailedPrice(String listString) {
+		JSONArray list = new JSONArray(listString);
+		for(int i = 0; i < list.length(); i++) {
+			JSONObject jsonObject = (JSONObject)list.get(i);
+			InDetailed inDetailed = inDetailedRepository.findById(jsonObject.getLong("inStorageDetailedId")).get();
+			inDetailed.setPrice(jsonObject.getLong("price"));
+			inDetailedRepository.save(inDetailed);
+		}
 	}
 	
 }

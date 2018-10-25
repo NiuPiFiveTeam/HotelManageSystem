@@ -20,7 +20,6 @@ Ext.define('Admin.store.finance.financeReport.FinanceReportStore', {
         simpleSortMode: true    //简单排序模式
     },
 
-    autoLoad: 'true',
     autoSync: true,//连后台后修改sotre数据自动触发rest请求
 
     remoteSort: true,//全局排序  
@@ -30,6 +29,9 @@ Ext.define('Admin.store.finance.financeReport.FinanceReportStore', {
         direction: 'DESC',
         property: 'financeReportDailyId'
     }
+    ,
+    autoLoad: 'true'
+    
 
     // constructor: function (config) {
     //     config = config || {};

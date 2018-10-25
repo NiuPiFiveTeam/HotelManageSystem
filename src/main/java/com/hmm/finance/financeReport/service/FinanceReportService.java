@@ -26,8 +26,8 @@ public class FinanceReportService implements IFinanceReportService{
 	@Override
 	public List<FinanceReport> findFinanceReportDailyByYearGroupByMonth(Integer year) {
 		List<Map<Object,Object>> listMap = financeReportDailyRepository.findFinanceReportDailyByYearGroupByMonth(year);
-		List<FinanceReport> list = new ArrayList();
-		List<Integer> existMonth = new ArrayList();
+		List<FinanceReport> list = new ArrayList<>();
+		List<Integer> existMonth = new ArrayList<>();
 		try {
 			for(Map map : listMap) {
 				FinanceReport financeReport = new FinanceReport();

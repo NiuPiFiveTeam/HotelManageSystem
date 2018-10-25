@@ -3,6 +3,8 @@ package com.hmm.logistics.roomClean.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hmm.common.web.ExtjsPageRequest;
 import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
@@ -33,5 +35,8 @@ public interface IRoomCleanService {
 //	public boolean existsById(Long id);
 //	public void deleteById(Long id);
 //	public void deleteAll(Long[] ids);
+	public void dailyNecessary(String roomNo,String dailyTagData);
+	public void changeRoomState(String roomNo,String selectValue,String remark);
+	public void aloadRoomCleantoDTO(RoomClean roomClean);
 	
 }

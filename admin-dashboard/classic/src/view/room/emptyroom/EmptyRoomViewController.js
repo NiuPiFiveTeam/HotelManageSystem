@@ -128,16 +128,27 @@ function addTableItems(data){
             
         insertTd = insertTr.insertCell(2);
         insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;";
-        insertTd.innerHTML ='<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+data[index].gender+'</div>';
+        if (data[index].gender.trim()=="FEMALE") {
+            insertTd.innerHTML ='<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'女性'+'</div>';
+        }else if(data[index].gender.trim()=="MALE"){
+            insertTd.innerHTML ='<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'男性'+'</div>';
+        }
             
         insertTd = insertTr.insertCell(3);
         insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;";
         insertTd.innerHTML = '<div  style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+data[index].phone+'</div>';
 
-        insertTd = insertTr.insertCell(4);
-        insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;"
-        insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+data[index].state+'</div>';
-
+          insertTd = insertTr.insertCell(4);
+        insertTd.style="border-left: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;"
+        if (data[index].state == 'CASUAL') {
+            insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'临时客人'+'</div>';
+        }else if(data[index].state == 'STARMEMBER'){
+             insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'星标会员'+'</div>';
+        }else if(data[index].state == 'MEMBER'){
+             insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'普通会员'+'</div>';
+        }else if(data[index].state == 'BLACKLIST'){
+             insertTd.innerHTML = '<div style="margin: 10px;padding: 4px;padding-left: 10px;border: 1px solid #E3E6EA;">'+'黑名单'+'</div>';
+        }
         insertTd = insertTr.insertCell(5);
         insertTd.style="border-left: 1px solid #E3E6EA;border-right: 1px solid #E3E6EA;border-top: 1px solid #E3E6EA;"
         insertTd.innerHTML = '<img id="deleteGuest'+currentRows+'" title="删除" style="width:20px;height:20px;margin-left: 12px;margin-top: 3px; cursor:pointer" onclick="deleteGuest('+currentRows+')" onmousemove="changeColor(\'delete\','+currentRows+')" onmouseout="changeblackColor(\'delete\','+currentRows+')" src="classic/resources/images/deleteGuest.png" />';
@@ -233,6 +244,7 @@ function enterAccount(){
         Ext.MessageBox.alert('错误提示','请添加收入类型！');
         return;
     }
+    let roomNo = document.getElementById('selectRoomNo').innerText;
     let bookRoomNo = document.getElementById('bookRoomNo').innerText;
     let selectRoomNo = (document.getElementById('selectRoomNo').innerText).substring(0,3);
     let roomType = document.getElementById('roomType').innerText;
@@ -244,6 +256,10 @@ function enterAccount(){
     let bookPhone = document.getElementById('bookPhone').innerText;  //预订电话
     let remark = document.getElementById('remark').innerText;
     let backPirce = document.getElementById('backPrice').innerText;
+    let totalMoney = document.getElementById('totalPrice').innerText;
+    let realGetPrice = document.getElementById('realGetPrice').innerText;
+    
+
     console.log(backPirce);
     if(parseInt(backPirce) < 0){
         Ext.MessageBox.alert('错误提示','请重新核对输入金额是否正确！');
@@ -259,6 +275,9 @@ function enterAccount(){
         'bookGuest':bookGuest,
         'bookPhone':bookPhone,
         'remark':remark,
+        'totalMoney':totalMoney,
+        'realGetPrice':realGetPrice,
+        'roomNo':roomNo.substring(0,3).trim()
     };
 
     console.log(dataArray);

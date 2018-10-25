@@ -1,51 +1,51 @@
 @-webkit-keyframes animate-width {
-    0% {
-      width: 0;
-    }
-    100% {
-      visibility: visible;
-    }
+  0% {
+    width: 0;
   }
-  @-moz-keyframes animate-width {
-    0% {
-      width: 0;
-    }
-    100% {
-      visibility: visible;
-    }
+  100% {
+    visibility: visible;
   }
-  @keyframes animate-width {
-    0% {
-      width: 0;
-    }
-    100% {
-      visibility: visible;
-    }
+}
+@-moz-keyframes animate-width {
+  0% {
+    width: 0;
   }
-  @-webkit-keyframes animate-height {
-    0% {
-      height: 0;
-    }
-    100% {
-      visibility: visible;
-    }
+  100% {
+    visibility: visible;
   }
-  @-moz-keyframes animate-height {
-    0% {
-      height: 0;
-    }
-    100% {
-      visibility: visible;
-    }
+}
+@keyframes animate-width {
+  0% {
+    width: 0;
   }
-  @keyframes animate-height {
-    0% {
-      height: 0;
-    }
-    100% {
-      visibility: visible;
-    }
+  100% {
+    visibility: visible;
   }
+}
+@-webkit-keyframes animate-height {
+  0% {
+    height: 0;
+  }
+  100% {
+    visibility: visible;
+  }
+}
+@-moz-keyframes animate-height {
+  0% {
+    height: 0;
+  }
+  100% {
+    visibility: visible;
+  }
+}
+@keyframes animate-height {
+  0% {
+    height: 0;
+  }
+  100% {
+    visibility: visible;
+  }
+}
   body {
     background-color: #fff;
     font-family: arial, sans-serif;
@@ -178,6 +178,7 @@
     animation-delay: 1.7s;
     -webkit-animation-delay: 1.7s;
   }
+  
   #bar-chart ul {
     list-style: none;
     margin: 0;
@@ -206,7 +207,7 @@
   #bar-chart .y-axis li {
     border-top: 1px solid #4e5464;
     display: block;
-    height: 31.5px;
+    height: 36px;
     width: 100%;
   }
   #bar-chart .y-axis li span {
@@ -231,5 +232,5 @@
   
   .huangxinjian{
     border-top:3px solid #35baf6;background-color: #f0f4f5;
-    height: 800px;
+    height: 1000px;
   }

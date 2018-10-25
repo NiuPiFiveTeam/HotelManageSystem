@@ -28,10 +28,13 @@ Ext.define('Admin.view.finance.inStorage.task.ContactSupplier',{
                 fieldLabel:'任务id',
                 hidden:true
             },{
-                xtype:'displayfield',
-                name:'amount',
+                name:'totalPrice',
                 labelAlign:'right',
-                fieldLabel:'总金额'
+                id:'inStorageAmount',
+                allowBlank:false, 
+                readOnly:true,
+                fieldLabel:'总金额',
+                emptyText: 'Total Price'
             },{
                 name:'supplier',
                 labelAlign:'right',
@@ -43,21 +46,48 @@ Ext.define('Admin.view.finance.inStorage.task.ContactSupplier',{
     },{
         xtype: 'gridpanel',
         store:'inStorageDetailedStore',
+        plugins: {
+            ptype: 'cellediting',
+            clicksToEdit: 1
+        },
         columns: [{
             header:'名称',
             dataIndex:'goodsName',
             flex:1
         },{
-            header:'单价',  
+            header:'数量',  
             dataIndex:'amount',
             flex:1 
         },{
-            header:'数量', 
+            header:'单位', 
             dataIndex:'unit', 
-            flex:1 
+            flex:1
         },{
-            header:'总价(元)',   
-            name:'price',
+            header:'单价',  
+            dataIndex:'price',
+            editor:{  
+                xtype: 'numberfield',
+                minValue: 1,
+                allowBlank:false,
+                listeners:{
+                    'blur':function(value){
+                        var store = this.up('grid').getStore();
+                        if(!window.ret){
+                          window.ret=[];
+                        }
+                        Ext.each(store.getRange(), function(record) {
+                                    ret.push(record.data);
+                                });
+                        window.list = [];
+                        for (var i = 0, j = ret.length; i < j; i++) {
+                                 if (list.indexOf(ret[i]) === -1) {
+                                     list.push(ret[i]);
+                                 }
+                              }
+                        }
+                }
+            },
+
             flex:1
         }],
         dockedItems: [{
@@ -69,6 +99,13 @@ Ext.define('Admin.view.finance.inStorage.task.ContactSupplier',{
 
 
     bbar:['->',{
+      xtype:'button',
+      ui:'soft-green',
+      text:'计算',
+        width:70,
+        height:40,
+        handler:'calculate'   
+    },{
       xtype:'button',
       ui:'soft-green',
       text:'提交',

@@ -58,7 +58,7 @@ Ext.define('Admin.store.finance.inStorageApply.InStorageApplyStore', {
     //         "processInstanceId":'1',
     //         'amount':9999,
     //         "taskDefinitionKey":"contactSupplier",
-    //         "vender":"啊啊啊啊啊"
+    //         "vender":"321"
     //     },{
     //         "processStatus": "APPROVAL",
     //         "taskId":'2',

@@ -1,6 +1,7 @@
 Ext.define('Admin.view.finance.cost.salaryCost.SalaryCostViewController',{
 	extend:Ext.app.ViewController,
 	alias:'controller.salaryCostViewController',
+    
 	//过滤工资单
 	filterSalaryOrder:function(){
 		var me = this,

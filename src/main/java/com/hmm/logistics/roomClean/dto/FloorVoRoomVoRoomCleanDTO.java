@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.logistics.roomClean.entity.FloorVoRoomVoRoomClean;
+import com.hmm.logistics.roomClean.util.RoomCleanState;
 
 public class FloorVoRoomVoRoomCleanDTO {
 	private String floorName; //楼层
@@ -69,8 +70,8 @@ public class FloorVoRoomVoRoomCleanDTO {
 					predicate.add(criteriaBuilder.like(root.get("type").as(String.class),
 							"%" + floorVoRoomVoRoomCleanDTO.getType() + "%"));}
 				
-//				predicate.add(criteriaBuilder.(root.get("type").as(String.class),
-//						"%" + floorVoRoomVoRoomCleanDTO.getType() + "%"));
+				predicate.add(criteriaBuilder.notLike(root.get("roomCleanState").as(String.class),
+						"等待中"));
 						
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();

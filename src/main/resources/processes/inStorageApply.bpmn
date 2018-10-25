@@ -55,7 +55,11 @@
     </subProcess>
     <sequenceFlow id="flow4" name="进入付费子流程" sourceRef="contactSupplier" targetRef="eventsubprocess1"></sequenceFlow>
     <endEvent id="endevent3" name="End"></endEvent>
-    <userTask id="confirmReceipt" name="收货确认" activiti:candidateGroups="logisticstManager"></userTask>
+    <userTask id="confirmReceipt" name="收货确认" activiti:candidateGroups="logisticstManager">
+      <extensionElements>
+        <activiti:taskListener event="complete" delegateExpression="#{confirmReceipt}"></activiti:taskListener>
+      </extensionElements>
+    </userTask>
     <sequenceFlow id="flow11" sourceRef="eventsubprocess1" targetRef="confirmReceipt"></sequenceFlow>
     <sequenceFlow id="flow12" sourceRef="confirmReceipt" targetRef="endevent3"></sequenceFlow>
     <boundaryEvent id="boundaryerror1" name="Error" attachedToRef="eventsubprocess1">
@@ -144,7 +148,7 @@
         <omgdi:waypoint x="420.0" y="317.0"></omgdi:waypoint>
         <omgdi:waypoint x="480.0" y="317.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="422.0" y="277.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="72.0" x="422.0" y="277.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
@@ -170,7 +174,7 @@
         <omgdi:waypoint x="303.0" y="337.0"></omgdi:waypoint>
         <omgdi:waypoint x="303.0" y="390.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="232.0" y="360.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="60.0" x="232.0" y="360.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow43" id="BPMNEdge_flow43">
@@ -209,7 +213,7 @@
         <omgdi:waypoint x="396.0" y="240.0"></omgdi:waypoint>
         <omgdi:waypoint x="270.0" y="194.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="60.0" x="339.0" y="164.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="60.0" x="339.0" y="134.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow52" id="BPMNEdge_flow52">

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.hmm.guest.dto.GuestDto;
 import com.hmm.guest.entity.Guest;
+import com.hmm.guest.util.GuestState;
 import com.hmm.logistics.roomClean.entity.RoomClean;
 
 @Repository
@@ -22,4 +23,15 @@ public interface GuestRepository extends PagingAndSortingRepository<Guest, Strin
 	@Query("select new com.hmm.guest.dto.GuestDto(g.realName,g.idCard,g.phone,g.gender,g.state)"
 			+" from Guest g where g.room is null")
 	public Page<GuestDto> findGuestInfo(Pageable pageable);
+
+	@Query("from Guest g where g.room.roomNo = ?1 ")
+	public List<Guest> findGuestByRoomNo(String roomNo);
+
+	@Query("select new com.hmm.guest.dto.GuestDto(g.realName,g.idCard,g.phone,g.gender,g.state)"
+			+" from Guest g where g.state in(?1,?2)")
+	public Page<GuestDto> findVipGuestInfo(GuestState guestState,GuestState guestState1,Pageable pageable);
+
+	@Query("select new com.hmm.guest.dto.GuestDto(g.realName,g.idCard,g.phone,g.gender,g.state)"
+			+" from Guest g where g.room is not null")
+	public Page<GuestDto> findAllCheckInGuest(Pageable pageable);
 }

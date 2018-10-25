@@ -105,24 +105,84 @@ Ext.define('Admin.view.finance.inStorage.InStorageApplyViewController',{
     	this.complete(url,variables,form);
     },
     //4.联系供货方
+    calculate:function(btn){
+        var totalPrice = 0;
+        Ext.each(list,function(i){
+            var a = i.amount * i.price;
+            totalPrice += a;
+        });
+        Ext.getCmp('inStorageAmount').setValue(totalPrice);
+    },
     contactSupplierSubmitButton:function(btn){
+        var flag = true;
+        //1.验证表单
         var form = btn.up('form');
         if(!form.isValid()){
             return;
-        }else{
-            var values = form.getValues();
-            var url = 'inStorage/complete/'+values.taskId;
-            var variables=[{
-                key:'amountMoney',
-                value:values.amount, 
-                type:'F'
-            },{
-                key:'supplier',
-                value:values.supplier, 
-                type:'S'
-            }];
-            this.complete(url,variables,form);
         }
+        console.log(window.list);
+        //2.验证表格
+        var store = btn.up('form').down('grid').getStore();
+        store.each(function(record){
+            var a = record.get('price');
+            if(a=='0'){
+                alert(record.get('goodsName')+' 单价不能为0');
+                flag = false;
+                return false;
+            }
+        });
+        if(!flag){
+            return;
+        }
+        //3.封装数据
+        var InStorageDetailedList = Ext.util.JSON.encode(list);
+        //4.发送--------------------
+        var values = form.getValues();
+        var url = 'inStorage/contactSupplier/'+values.taskId;
+        var variables=[{
+            key:'amountMoney',
+            value:values.totalPrice, 
+            type:'N'
+        },{
+            key:'supplier',
+            value:values.supplier, 
+            type:'S'
+        }];
+        var keys="", values="", types="";
+        if(variables){
+            Ext.each(variables,function(item){
+                if(keys != ""){
+                    keys+=",";
+                    values+=",";
+                    types+=",";
+                }
+                keys+=item.key;
+                values+=item.value;
+                types+=item.type;
+            });
+        }
+        //5.提交-------------------------------
+        Ext.Ajax.request({
+            url:url,
+            method:'post',
+            params:{
+                keys:keys,
+                values:values,
+                types:types,
+                listString:InStorageDetailedList
+            },
+            success:function(response,options){
+                var json = Ext.util.JSON.decode(response.responseText);
+                if(json.success){                   
+                    Ext.Msg.alert('操作成功',json.msg,function(){
+                        form.up('window').close();
+                        Ext.data.StoreManager.lookup('inStorageApplyStore').load();
+                    });
+                }else{
+                    Ext.Msg.alert('操作失败',json.msg);
+                }
+            }
+        });
     },
     //5.财务部门(员工)审批
     FinanceFormSubmitButton:function(btn){

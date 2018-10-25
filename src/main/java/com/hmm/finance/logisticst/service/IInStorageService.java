@@ -38,4 +38,6 @@ public interface IInStorageService {
 	public Page<InStorageDetailedDTO> findInStorageDetailedByInStorageId(String inStorageId,Pageable pageable);
 	//查询已完成入库订单
 	public Page<InStorageDTO> findCompleteInStorage(Pageable pageable);
+	//保存入库详细表的物品金额
+	public void saveInStorageDetailedPrice(String listString);
 }

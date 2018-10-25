@@ -112,7 +112,20 @@ public class InStorageController {
     public @ResponseBody ExtAjaxResponse complete(@PathVariable("id") String taskId, WorkflowVariable var) {
     	try{		
     		Map<String, Object> variables = var.getVariableMap();
-    		System.out.println(variables);
+    		inStorageService.complete(taskId, variables);
+	    	return new ExtAjaxResponse(true,"审批成功!");
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	        return new ExtAjaxResponse(false,"审批失败!");
+	    }
+    }
+    
+    @RequestMapping(value = "contactSupplier/{id}")
+    public @ResponseBody ExtAjaxResponse ContactSupplier(@PathVariable("id") String taskId, WorkflowVariable var
+    		,String listString) {
+    	try{		
+    		inStorageService.saveInStorageDetailedPrice(listString);
+    		Map<String, Object> variables = var.getVariableMap();
     		inStorageService.complete(taskId, variables);
 	    	return new ExtAjaxResponse(true,"审批成功!");
 	    } catch (Exception e) {
