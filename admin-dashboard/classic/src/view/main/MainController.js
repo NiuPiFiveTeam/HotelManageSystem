@@ -165,6 +165,9 @@ Ext.define('Admin.view.main.MainController', {
                 if(json.success){
                     Ext.getCmp('loginUserName').setText(json.map.userName);
                     me.redirectTo('dashboard',true);
+                    var image = json.map.image;
+                    var src = 'resources/images/employee/' + image;
+                    Ext.getCmp('empimage').setSrc(src);
                 }else{
                     //Ext.Msg.alert('未登入', json.msg);
                     me.redirectTo('login',true);

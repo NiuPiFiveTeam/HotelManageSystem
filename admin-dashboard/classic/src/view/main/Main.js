@@ -32,7 +32,7 @@
                     xtype: 'component',
                     reference: 'senchaLogo',
                     cls: 'sencha-logo',
-                    html: '<div class="main-logo"><img src="resources/images/hotel_logo.jpg">半岛酒店</div>',
+                    html: '<div class="main-logo"><img src="resources/images/company-logo.png">致家酒店</div>',
                     width: 250
                 },
                 {
@@ -53,6 +53,7 @@
                 {
                     xtype: 'image',
                     cls: 'header-right-profile-image',
+                    id:'empimage',
                     height: 35,
                     width: 35,
                     alt:'current user image',
