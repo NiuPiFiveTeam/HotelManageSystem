@@ -676,7 +676,6 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
                                 naviTree.setRoot(emplyeeMenuManager);
                             }
                                 
-                            alert('你好，加载好菜单了');
                             me.redirectTo('workTab', true);
                         }
                     });

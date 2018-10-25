@@ -3,7 +3,6 @@ Ext.define('Admin.view.room.allroom.AllRoomViewController', {
     alias: 'controller.allRoomViewController',
 	
     loadTotalStatus:function(){
-        alert(123);
         Ext.Ajax.request({     
             url : '/room/findAllRoom',
             method : 'Get',     
