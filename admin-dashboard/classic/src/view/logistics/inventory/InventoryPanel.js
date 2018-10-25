@@ -196,12 +196,12 @@ Ext.define('Admin.view.logistics.inventory.InventoryPanel', {
             bind: '{In}',
             scrollable: false,
             columns: [
-                {xtype: 'gridcolumn',width: 200,dataIndex: 'inStorageId',text: '入库编号',align:'center',menuDisabled:true,sortable:false,},
-                {xtype: 'datecolumn',cls: 'content-column',dataIndex: 'doDate',text: '申请日期',align:'center',formatter: 'date("Y/m/d H:i:s")',width:180},
-                {xtype: 'datecolumn',cls: 'content-column',dataIndex: 'inStorageDate',text: '入库日期',align:'center',formatter: 'date("Y/m/d H:i:s")',width:180,menuDisabled:true,sortable:false},
-                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'vender', text: '采购商家', align:'center',width: 165,menuDisabled:true,sortable:false},
-                {xtype: 'gridcolumn',cls: 'content-column',width: 140,dataIndex: 'amount', text: '总价', align:'center',menuDisabled:true,sortable:false},
-                {xtype: 'gridcolumn',width: 140,dataIndex: 'sendWorker',text: '申请员工',align:'center',menuDisabled:true,sortable:false},
+                {xtype: 'gridcolumn',width: 180,dataIndex: 'inStorageId',text: '入库编号',align:'center',menuDisabled:true,sortable:false,},
+                {xtype: 'datecolumn',cls: 'content-column',dataIndex: 'doDate',text: '申请日期',align:'center',formatter: 'date("Y/m/d H:i:s")',width:170},
+                {xtype: 'datecolumn',cls: 'content-column',dataIndex: 'inStorageDate',text: '入库日期',align:'center',formatter: 'date("Y/m/d H:i:s")',width:170,menuDisabled:true,sortable:false},
+                {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'vender', text: '采购商家', align:'center',width: 155,menuDisabled:true,sortable:false},
+                {xtype: 'gridcolumn',cls: 'content-column',width: 135,dataIndex: 'amount', text: '总价', align:'center',menuDisabled:true,sortable:false},
+                {xtype: 'gridcolumn',width: 130,dataIndex: 'sendWorker',text: '申请员工',align:'center',menuDisabled:true,sortable:false},
                 {xtype: 'actioncolumn',cls: 'content-column', width: 130,dataIndex: 'bool',text: '详细表',align:'center',menuDisabled:true,sortable:false,flex: 1,
                 items: [
                     {xtype: 'button',handler: 'showInDetailedButton',tooltip : '显示详细入库物品', iconCls: 'x-fa fa-close'},

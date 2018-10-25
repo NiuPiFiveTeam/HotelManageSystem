@@ -120,12 +120,19 @@ Ext.define('Admin.view.logistics.inventory.InventoryViewController', {
 		Ext.apply(store.proxy.extraParams, {InStorageId:"",createTimeStart:null,createTimeEnd:null,amountStart:0,amountEnd:0,vender:''});
 		store.load({params:{start:0, limit:20, page:1}});
 	},
-	showInDetailedButton:function(toolbar,rowIndex, colIndex){
-		var inStorageId=Ext.getCmp("ininin").getStore().getAt(rowIndex).get('inStorageId');
-		var store=Ext.getCmp('showInDetailedWinGril').store;
-		Ext.apply(store.proxy.extraParams, {InStorageId:inStorageId});//传送到DTO
-		store.load({params:{start:0, limit:10, page:1}});
-		toolbar.up('panel').up('container').add(Ext.widget('showInDetailed')).show();
+	showInDetailedButton:function(grid,rowIndex, colIndex){
+		 //var inStorageId=Ext.getCmp("ininin").getStore().getAt(rowIndex).get('inStorageId');//获取数据
+		 var record = Ext.getCmp("ininin").getStore().getAt(rowIndex);
+		 if (record) {
+			var win = grid.up('container').add(Ext.widget('showInDetailed'));
+			win.show();
+			win.down('form').getForm().loadRecord(record);
+		}
+		// toolbar.up('panel').up('container').add(Ext.widget('showInDetailed')).show(
+		// 	function(){
+		// 		alert("123");
+		// 	}
+		// );
 		
 	},
 /****************************************************	InSend	**************************************************************/
@@ -156,7 +163,7 @@ InSendAdd:function(){
 	{//显示工作人员搜索条件框
 		this.lookupReference('searchOutDate').hide();
 		this.lookupReference('searchOutDate2').hide();
-		this.lookupReference('searchWorker').show();
+		this.lookupReference('searchWorker').hide();
 		this.lookupReference('searchRoomNo').hide();
 	}
 },

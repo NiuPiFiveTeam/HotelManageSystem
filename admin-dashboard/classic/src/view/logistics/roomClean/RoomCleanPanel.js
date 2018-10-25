@@ -108,32 +108,32 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanPanel', {
                             }
                         },
                     },
-             //客房服务清洁按钮
-                        {xtype: 'button',handler: 'onInCleanButton',tooltip : '客房服务清洁', //iconCls: 'x-fa fa-close'	,
-                        getClass : function (v, metadata, r, rowIndex, colIndex, store) {
-                            var roomCleanState = r.data.roomCleanState;
-                            var roomWorker = r.data.roomWorker;
-                            if(roomCleanState == '服务中'){
-                                return 'x-fa fa-refresh';
-                            }
-                            else{
-                                return 'x-hidden';
-                            }
-                        },
-                    },
-             //送客人需要物品按钮
-                        {xtype: 'button',handler: 'onSendButton',tooltip : '送客人需要物品',//iconCls: 'x-fa fa-ban'	 	,
-                        getClass : function (v, metadata, r, rowIndex, colIndex, store) {
-                            var roomCleanState = r.data.roomCleanState;
-                            var roomWorker = r.data.roomWorker;
-                            if(roomCleanState == '服务中'){
-                                return 'x-fa fa-paper-plane-o';
-                            }
-                            else{
-                                return 'x-hidden';
-                            }
-                        },
-                        },
+            //  //客房服务清洁按钮
+            //             {xtype: 'button',handler: 'onInCleanButton',tooltip : '客房服务清洁', //iconCls: 'x-fa fa-close'	,
+            //             getClass : function (v, metadata, r, rowIndex, colIndex, store) {
+            //                 var roomCleanState = r.data.roomCleanState;
+            //                 var roomWorker = r.data.roomWorker;
+            //                 if(roomCleanState == '服务中'){
+            //                     return 'x-fa fa-refresh';
+            //                 }
+            //                 else{
+            //                     return 'x-hidden';
+            //                 }
+            //             },
+            //         },
+            //  //送客人需要物品按钮
+            //             {xtype: 'button',handler: 'onSendButton',tooltip : '送客人需要物品',//iconCls: 'x-fa fa-ban'	 	,
+            //             getClass : function (v, metadata, r, rowIndex, colIndex, store) {
+            //                 var roomCleanState = r.data.roomCleanState;
+            //                 var roomWorker = r.data.roomWorker;
+            //                 if(roomCleanState == '服务中'){
+            //                     return 'x-fa fa-paper-plane-o';
+            //                 }
+            //                 else{
+            //                     return 'x-hidden';
+            //                 }
+            //             },
+            //             },
              //客房服务完成按钮
              {xtype: 'button', handler: 'onFinishServiceButton',tooltip : '客房服务完成', //iconCls: 'x-fa fa-pencil' ,
              getClass : function (v, metadata, r, rowIndex, colIndex, store) {

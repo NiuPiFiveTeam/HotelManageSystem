@@ -39,6 +39,7 @@ public class OutStorage {
 	private RoomCleanRecord roomCleanRecord;//操作记录
 	private Employee worker;//出库的工作人员
 	private List<OutDetailed> outDetailed=new ArrayList<OutDetailed>();//出库详情表
+	private String roomNo;
 	
 	
 	
@@ -67,7 +68,9 @@ public class OutStorage {
 	public List<OutDetailed> getOutDetailed() {
 		return outDetailed;
 	}
-	
+	public String getRoomNo() {
+		return roomNo;
+	}
 	
 	
 	public void setId(Long id) {
@@ -88,6 +91,9 @@ public class OutStorage {
 	public void setOutDetailed(List<OutDetailed> outDetailed) {
 		this.outDetailed = outDetailed;
 	}
-	
+
+	public void setRoomNo(String roomNo) {
+		this.roomNo = roomNo;
+	}
 
 }

@@ -55,14 +55,14 @@ Ext.define('Admin.view.logistics.roomClean.RoomCleanViewController', {
 		}  
 		);
 	},
-	//客房服务清洁按钮
-	onInCleanButton:function(grid, rowIndex, colIndex){
+	// //客房服务清洁按钮
+	// onInCleanButton:function(grid, rowIndex, colIndex){
 
-	},
-	//送客人需要物品按钮
-	onSendButton:function(toolbar,rowIndex, colIndex){
-		toolbar.up('panel').up('container').add(Ext.widget('sendWindow')).show();
-	},
+	// },
+	// //送客人需要物品按钮
+	// onSendButton:function(toolbar,rowIndex, colIndex){
+	// 	toolbar.up('panel').up('container').add(Ext.widget('sendWindow')).show();
+	// },
 	//客房服务完成按钮
 	onFinishServiceButton:function(grid, rowIndex, colIndex){
 		Ext.MessageBox.confirm('结束客房服务', '结束客房服务?', 

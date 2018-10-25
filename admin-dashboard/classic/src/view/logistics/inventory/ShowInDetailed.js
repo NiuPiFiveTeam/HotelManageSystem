@@ -17,15 +17,17 @@ Ext.define('Admin.view.logistics.inventory.ShowInDetailed', {
       title: '申请入库详细物品',
       closable: true,
       constrain: true,
-      listeners:{
-          afterrender:function(){
-              alert("123");
-          }
-      },
       items: [{
           xtype: 'form',
           layout: 'fit',
           items: [
+            {
+                xtype: 'textfield',
+                name:'inStorageId',
+                id:"ddd",
+                hidden :true
+  
+            },
             {
               xtype: 'gridpanel',
               cls: 'user-grid',
@@ -39,6 +41,18 @@ Ext.define('Admin.view.logistics.inventory.ShowInDetailed', {
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'stockType',  text: '类型', align:'center',flex: 1},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'goodsNo',  text: '物品编号', align:'center',flex: 1},
               ],
+              tbar:[
+                "->",{
+                    text:"显示该条入库记录的详细物品",
+                    handler:function(){
+                      var inStorageId=Ext.getCmp("ddd").getValue();
+                      var store=Ext.getCmp('showInDetailedWinGril').store;
+                      Ext.apply(store.proxy.extraParams, {InStorageId:inStorageId});//传送到DTO
+                      store.load({params:{start:0, limit:10, page:1}});
+                      alert(inStorageId);
+                    }
+              },"->"
+            ],
               dockedItems: [{
                   xtype: 'pagingtoolbar',
                   dock: 'bottom',
@@ -58,4 +72,4 @@ Ext.define('Admin.view.logistics.inventory.ShowInDetailed', {
               btn.up('window').close();
           }
       },'->']
-});
+  });

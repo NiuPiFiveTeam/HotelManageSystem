@@ -9,36 +9,18 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.hmm.logistics.stock.entity.OutStorage;
 
 public class OutDTO {
-	private int id;
+	private Long id;
 	private String roomNo;
 	private String reason;
-	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss") 
 	private Date outDate;
 	private String worker;
-	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
-	private Date createOutTimeStart;
-	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
-	private Date createOutTimeEnd;
-	
-
-	public int getId() {
-		return id;
-	}
-	public void setId(int id) {
-		this.id = id;
-	}
-	public String getRoomNo() {
-		return roomNo;
-	}
-	public void setRoomNo(String roomNo) {
-		this.roomNo = roomNo;
-	}
 	public String getReason() {
 		return reason;
 	}
@@ -56,6 +38,24 @@ public class OutDTO {
 	}
 	public void setWorker(String worker) {
 		this.worker = worker;
+	}
+	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
+	private Date createOutTimeStart;
+	@DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss")
+	private Date createOutTimeEnd;
+	
+
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+	public String getRoomNo() {
+		return roomNo;
+	}
+	public void setRoomNo(String roomNo) {
+		this.roomNo = roomNo;
 	}
 	public Date getCreateOutTimeStart() {
 		return createOutTimeStart;
@@ -76,8 +76,17 @@ public class OutDTO {
 			public Predicate toPredicate(Root<OutStorage> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 			
 				List<Predicate> predicate = new ArrayList<>();
-				
-				
+				if (StringUtils.isNotBlank(outDTO.getRoomNo())) {
+					predicate.add(criteriaBuilder.like(root.get("roomNo").as(String.class),
+							"%" + outDTO.getRoomNo() + "%"));}
+				if (null!=outDTO.getCreateOutTimeStart()) {
+					predicate.add(criteriaBuilder.greaterThanOrEqualTo(root.get("outDate").as(Date.class),
+							outDTO.getCreateOutTimeStart()));
+				}
+				if (null!=outDTO.getCreateOutTimeEnd()) {
+					predicate.add(criteriaBuilder.lessThanOrEqualTo(root.get("outDate").as(Date.class),
+							outDTO.getCreateOutTimeStart()));
+				}
 				Predicate[] pre = new Predicate[predicate.size()];
 				return query.where(predicate.toArray(pre)).getRestriction();
 			}

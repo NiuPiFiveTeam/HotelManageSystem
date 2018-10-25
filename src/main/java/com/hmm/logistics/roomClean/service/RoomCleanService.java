@@ -24,8 +24,11 @@ import com.hmm.logistics.roomClean.repository.RoomCleanRepository;
 import com.hmm.logistics.roomClean.util.RoomCleanState;
 import com.hmm.logistics.stock.entity.OutDetailed;
 import com.hmm.logistics.stock.entity.OutStorage;
+import com.hmm.logistics.stock.entity.Stock;
 import com.hmm.logistics.stock.repository.OutDetailedRepository;
 import com.hmm.logistics.stock.repository.OutStorageRepository;
+import com.hmm.logistics.stock.repository.StockRepository;
+import com.hmm.logistics.stock.util.StockType;
 import com.hmm.room.entity.Floor;
 import com.hmm.room.entity.Room;
 import com.hmm.room.repository.RoomRepository;
@@ -62,6 +65,8 @@ public class RoomCleanService implements IRoomCleanService{
 	private OutStorageRepository OutStorageService;
 	@Autowired
 	private OutDetailedRepository OutDetailedService;
+	@Autowired
+	private StockRepository StockService;
 	@Override
 	public RoomClean save(RoomClean entity) {
 		return roomCleanRepository.save(entity);
@@ -192,45 +197,7 @@ public class RoomCleanService implements IRoomCleanService{
 	
 	
 	
-	@Override
-	public void dailyNecessary(String roomNo,String dailyTagData) {
-		// TODO Auto-generated method stub
-		RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
-		roomClean.setRoomCleanState(RoomCleanState.SERVICE);
-		roomCleanService.save(roomClean);//改变roomClean的状态为客房服务
-		FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
-		floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
-		floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
-		
-		
-		
-		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();
-		roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));//操作记录表
-		roomCleanRecord.setRoomHandle("客房服务");
-		roomCleanRecord.setRoomOther("无");
-		
-		
-		OutStorage outStorage=new OutStorage();//b
-		outStorage.setReason("客房服务");
-		outStorage.setRoomCleanRecord(roomCleanRecord);
-	//	OutStorageService.save(outStorage);
-		roomCleanRecord.setOutStorage(outStorage);
-		
-		
-		JSONArray list = new JSONArray(dailyTagData);
-		for (int i = 0; i < list.length(); i++) {//c
-			JSONObject jsonObject = (JSONObject) list.get(i);
-			OutDetailed outDetailed=new OutDetailed();
-			outDetailed.setAmount((float)jsonObject.getDouble("number"));
-			outDetailed.setGoodsName(jsonObject.getString("show"));
-			outDetailed.setGoodsNo(jsonObject.getString("name"));
-			outDetailed.setOutStorage(outStorage);
-			outStorage.getOutDetailed().add(outDetailed);
-			
-		}
-		//OutStorageService.save(outStorage);
-		roomCleanRecordService.save(roomCleanRecord);
-	}
+
 	
 	//设置RoomClean表
 	@Override
@@ -252,10 +219,17 @@ public class RoomCleanService implements IRoomCleanService{
 		return floorVoRoomVoRoomCleanDTORepository.findAll(spec, pageRequest.getPageable());
 	}
 
+	
+	
+	
 	@Override
 	public void changeRoomState(String roomNo, String selectValue, String remark) {
 		// TODO Auto-generated method stub
 		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();
+		
+		
+		
+		
 		if(selectValue.equals("roomserviceClean")) {//客房清洁
 			RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
 			roomClean.setRoomCleanState(RoomCleanState.SERVICE);
@@ -265,16 +239,26 @@ public class RoomCleanService implements IRoomCleanService{
 			roomCleanRecord.setRoomOther("无");
 			FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
 			floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
+			floorVoRoomVoRoomClean.setRoomOther("客房清洁");;
 			floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
 			roomCleanRecordService.save(roomCleanRecord);
 		}
+		
+		
+		
+		
 		else if(selectValue.equals("checkoutClean")) {//退房清洁
 			RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
 			roomClean.setRoomCleanState(RoomCleanState.CLEAN);
 			if(StringUtils.isNotBlank(remark)) {
 				roomClean.setRoomOther(remark);
 			}
+			else {
+				roomClean.setRoomOther("无");
+			}
 			roomCleanService.save(roomClean);
+			
+			//记录的生成
 			roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));
 			roomCleanRecord.setRoomHandle("退房清洁");
 			if(StringUtils.isNotBlank(remark)) {
@@ -288,10 +272,68 @@ public class RoomCleanService implements IRoomCleanService{
 				roomCleanRecord.setRoomOther("无");
 				FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
 				floorVoRoomVoRoomClean.setRoomCleanState("退房清洁");
-				floorVoRoomVoRoomClean.setRoomOther(remark);
+				floorVoRoomVoRoomClean.setRoomOther("无");
 				floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
+			}
+			List<Stock>stocks=StockService.findByStockType(StockType.COMMODITY);
+			OutStorage outStorage=new OutStorage();
+			outStorage.setRoomNo(roomNo);
+			outStorage.setReason("退房清洁");
+			outStorage.setRoomCleanRecord(roomCleanRecord);
+			roomCleanRecord.setOutStorage(outStorage);
+			for(Stock stock:stocks) {
+				OutDetailed outDetailed=new OutDetailed();
+				outDetailed.setAmount(1);
+				outDetailed.setGoodsName(stock.getGoodsName());
+				outDetailed.setGoodsNo(stock.getGoodsNo());
+				outDetailed.setOutStorage(outStorage);
+				outStorage.getOutDetailed().add(outDetailed);
 			}
 			roomCleanRecordService.save(roomCleanRecord);
 		}
+	}
+	
+	@Override
+	public void dailyNecessary(String roomNo,String dailyTagData) {
+		// TODO Auto-generated method stub
+		RoomClean roomClean=roomCleanService.findByRoomId(roomRepository.findRoomByRoomNo(roomNo).getRoomId());
+		roomClean.setRoomCleanState(RoomCleanState.SERVICE);
+		roomCleanService.save(roomClean);//改变roomClean的状态为客房服务
+		
+		
+		
+		
+		RoomCleanRecord roomCleanRecord=new RoomCleanRecord();
+		roomCleanRecord.setRoom(roomRepository.findRoomByRoomNo(roomNo));//操作记录表
+		roomCleanRecord.setRoomHandle("客房服务");
+		roomCleanRecord.setRoomOther("无");
+		
+		
+		OutStorage outStorage=new OutStorage();//b
+		outStorage.setReason("客房服务");
+		outStorage.setRoomCleanRecord(roomCleanRecord);
+		outStorage.setRoomNo(roomNo);
+	//	OutStorageService.save(outStorage);
+		roomCleanRecord.setOutStorage(outStorage);
+		
+		String rrr="送:";
+		JSONArray list = new JSONArray(dailyTagData);
+		for (int i = 0; i < list.length(); i++) {//c
+			JSONObject jsonObject = (JSONObject) list.get(i);
+			OutDetailed outDetailed=new OutDetailed();
+			outDetailed.setAmount((float)jsonObject.getDouble("number"));
+			outDetailed.setGoodsName(jsonObject.getString("show"));
+			outDetailed.setGoodsNo(jsonObject.getString("name"));
+			outDetailed.setOutStorage(outStorage);
+			outStorage.getOutDetailed().add(outDetailed);
+			rrr=rrr+jsonObject.getString("show")+(int)jsonObject.getDouble("number")+" ";
+		}
+		FloorVoRoomVoRoomClean floorVoRoomVoRoomClean=floorVoRoomVoRoomCleanDTORepository.findById(roomClean.getRoomCleanId()).get();
+		floorVoRoomVoRoomClean.setRoomCleanState("客房服务");
+		floorVoRoomVoRoomClean.setRoomOther(rrr);
+		floorVoRoomVoRoomCleanDTORepository.save(floorVoRoomVoRoomClean);
+		
+		//OutStorageService.save(outStorage);
+		roomCleanRecordService.save(roomCleanRecord);
 	}
 }
