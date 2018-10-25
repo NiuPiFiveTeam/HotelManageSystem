@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hmm.finance.financeReportDaily.Repository.FinanceReportDailyRepository;
 import com.hmm.finance.financeReportDaily.domain.FinanceReportDaily;
+import com.hmm.finance.logisticst.repository.InStorageRepository;
+import com.hmm.finance.roomOrder.repository.RoomOrderRepository;
 import com.hmm.finance.salary.repository.SalaryOrderRepository;
 
 @Service
@@ -26,7 +28,11 @@ public class FinanceReportDailyService implements IFinanceReportDailyService {
 	private FinanceReportDailyRepository financeReportDailyRepository;
 	@Autowired
 	private SalaryOrderRepository salaryOrderRepository;
-	
+	@Autowired
+	private RoomOrderRepository roomOrderRepository;
+	@Autowired
+	private InStorageRepository inStorageRepository;
+
 	@Override
 	public void save(FinanceReportDaily financeReportDaily) {
 		financeReportDailyRepository.save(financeReportDaily);
@@ -38,7 +44,17 @@ public class FinanceReportDailyService implements IFinanceReportDailyService {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 		String dateString = formatter.format(date);
 
-		System.out.println(salaryOrderRepository.findSalaryByDay(dateString));
+		Float salaryCost = salaryOrderRepository.findSalaryByDay(dateString);
+		Float roomIncome = roomOrderRepository.findRoomOrderByDay(dateString);
+		Float inStorageCost = inStorageRepository.findInStorageOrderByDay(dateString);
+
+		
+		FinanceReportDaily financeReportDaily = new FinanceReportDaily(roomIncome,salaryCost,inStorageCost);
+		financeReportDaily.setDate(new Date());
+		financeReportDaily.setTotalIncome(roomIncome);
+		financeReportDaily.setTotalCost(salaryCost+inStorageCost);
+		financeReportDaily.setProfit(financeReportDaily.getRoomIncome()-financeReportDaily.getLogisticstCost()-financeReportDaily.getSalaryCost());
+		financeReportDailyRepository.save(financeReportDaily);
 	}
 	
 	//查询所有记录

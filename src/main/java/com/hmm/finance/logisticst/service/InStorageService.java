@@ -195,7 +195,7 @@ public class InStorageService implements IInStorageService {
 			inDetailedRepository.save(inDetailed);
 		}
 	}
-	
+
 }
 
 

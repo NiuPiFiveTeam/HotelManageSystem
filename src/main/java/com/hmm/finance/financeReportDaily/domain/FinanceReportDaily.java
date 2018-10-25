@@ -23,6 +23,9 @@ public class FinanceReportDaily {
 	private float profit;
 	
 	
+	public FinanceReportDaily() {
+		super();
+	}
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	public Long getFinanceReportDailyId() {
@@ -34,6 +37,12 @@ public class FinanceReportDaily {
 	}
 	public float getRoomIncome() {
 		return roomIncome;
+	}
+	public FinanceReportDaily(float roomIncome, float logisticstCost, float salaryCost) {
+		super();
+		this.roomIncome = roomIncome;
+		this.logisticstCost = logisticstCost;
+		this.salaryCost = salaryCost;
 	}
 	public float getLogisticstCost() {
 		return logisticstCost;

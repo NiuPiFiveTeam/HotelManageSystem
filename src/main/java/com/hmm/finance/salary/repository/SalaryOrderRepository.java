@@ -13,6 +13,6 @@ import com.hmm.finance.salary.domain.SalaryOrder;
 @Repository
 public interface SalaryOrderRepository extends PagingAndSortingRepository<SalaryOrder, Long>,JpaSpecificationExecutor<SalaryOrder>{
 	
-	@Query("select s.basicwage+s.overtimefee+s.allowance from SalaryOrder s where DATE_FORMAT(date,'%Y-%m-%d') = ?1")
+	@Query("select sum(s.basicwage+s.overtimefee+s.allowance) from SalaryOrder s where DATE_FORMAT(date,'%Y-%m-%d') = ?1 group by date")
 	public Float findSalaryByDay(String date);
 } 
