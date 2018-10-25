@@ -26,7 +26,7 @@ import com.hmm.Work.entity.Work;
 import com.hmm.calendars.entity.SchedulEvent;
 import com.hmm.department.entity.Department;
 import com.hmm.leave.entity.Leave;
-import com.hmm.overtime.entity.Overtime;
+
 import com.hmm.travel.entity.Travel;
 import com.hmm.userRole.entity.GroupRole;
 
@@ -58,7 +58,7 @@ public class Employee {
 	
 	private Set<Leave> leaves;
 	
-	private Set<Overtime> overtimes;
+
 	
 	private Set<Travel> travels;
 	
@@ -89,10 +89,7 @@ public class Employee {
 		return leaves;
 	}
 	
-	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
-	public Set<Overtime> getOvertimes() {
-		return overtimes;
-	}
+
 	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public Set<Bcard> getBcards() {
 		return bcards;
@@ -195,9 +192,7 @@ public class Employee {
 		this.works = works;
 	}
 
-	public void setOvertimes(Set<Overtime> overtimes) {
-		this.overtimes = overtimes;
-	}
+
 
 	public void setTravels(Set<Travel> travels) {
 		this.travels = travels;

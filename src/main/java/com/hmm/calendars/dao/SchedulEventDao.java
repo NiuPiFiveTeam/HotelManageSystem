@@ -42,7 +42,7 @@ public interface SchedulEventDao extends JpaSpecificationExecutor<SchedulEvent>,
 			+ "where date_format(s.startDate,'%Y-%m')=date_format(now(),'%Y-%m')")
 	public Integer findTotalPerson();
 	
-	@Query("from SchedulEvent e  where to_days(now())-to_days(e.eventDate) >= 1 AND to_days(now())-to_days(e.eventDate)<=7")
+	@Query("from SchedulEvent e  where to_days(now())-to_days(e.eventDate) >= 1 AND to_days(now())-to_days(e.eventDate)<=30")
 	public List<SchedulEvent> findPassDay();
 	
 	

@@ -3,7 +3,7 @@ Ext.define('Admin.view.employ.AddEmpPanel', {
     xtype: 'addEmpPanel',
     //controller: 'empTabController',
     id:'addEmpPanel',
-
+    reference:'addEmpPanel2',
     padding:'20 20 0 150',
     scrollable:true,
     width: 1000,
@@ -268,24 +268,25 @@ Ext.define('Admin.view.employ.AddEmpPanel', {
     buttons: [{
         xtype:'button',
         text: '添加',
-        handler:function()  
+        handler:function(btn)  
             {  
-                // if(!Ext.getCmp('addEmpPanel').getForm().isValid()) 
-                //     return;  
-                var record = Ext.create('Admin.model.employ.EmployModel');
-                var values =Ext.getCmp('addEmpPanel').getForm().getValues();//获取form数据
-                record.set(values);
-                record.save();
-                Ext.data.StoreManager.lookup('EmployStoreid').load();
-                Ext.MessageBox.alert('添加成功');
-                Ext.getCmp('addEmpPanel').getForm().reset();
-                //Ext.getCmp('AddEmpWindow').close(); 
+                
+                 var record = Ext.create('Admin.model.employ.EmployModel');
+                  // var values = Ext.getCmp('addEmpPanel').getForm().getValues();
+                  // var form = this.lookupReference('addEmpPanelgai').getForm().getValues();
+                  var form = btn.up('form').getForm();
+                  var values = btn.up('form').getForm().getValues();
+                  record.set(values);
+                  record.save();
+                  Ext.data.StoreManager.lookup('EmployStoreid').load();
+                  Ext.MessageBox.alert('添加成功');
+                  form.reset();
         }
     },{
         xtype:'button',
         text: '重置',
-        handler:function(){  
-            Ext.getCmp('addEmpPanel').getForm().reset();  
+        handler:function(btn){  
+            btn.up('form').getForm().reset();  
         } 
     }]
 });

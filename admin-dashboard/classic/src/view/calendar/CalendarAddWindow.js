@@ -1,6 +1,7 @@
 Ext.define('Admin.view.calendar.CalendarAddWindow', {
     extend: 'Ext.window.Window',
     alias: 'widget.calendarAddWindow',
+    controller: 'calendarViewController',
     height: 350,
     minHeight: 350,
     
