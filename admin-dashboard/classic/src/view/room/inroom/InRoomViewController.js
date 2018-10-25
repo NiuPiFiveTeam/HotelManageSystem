@@ -86,7 +86,7 @@ function submitOverOrder(){
         },   
         method : 'Get',			
         success : function(result1) {
-            Ext.MessageBox.alert('成功提示',"退房成功");
+            
             returnCheckOutRoomList();
             Ext.Ajax.request({			
                 url : '/room/changeCheckOutRoomStatus',
@@ -96,7 +96,7 @@ function submitOverOrder(){
                 },   
                 method : 'Get',			
                 success : function(result1) {
-                    Ext.MessageBox.alert('成功提示',"哈哈哈");
+                    Ext.MessageBox.alert('成功提示',"退房成功！请等待房间清洁完成！");
                 }
             });
         }

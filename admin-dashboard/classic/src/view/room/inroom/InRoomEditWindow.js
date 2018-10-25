@@ -5,7 +5,7 @@ var serviceType = Ext.create('Ext.data.Store', {
     data : [
         {"abbr":"cleanService", "name":"清洁服务"},
         {"abbr":"dailyNecessaryService", "name":"日用品补充"},
-        {"abbr":"roomcardService", "name":"房卡服务"},
+       
         // {"abbr":"AZ", "name":"Arizona"}
     ]
 });
