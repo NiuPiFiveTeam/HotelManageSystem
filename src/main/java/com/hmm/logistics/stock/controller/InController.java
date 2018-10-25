@@ -98,7 +98,7 @@ public class InController {
 			List<DoSend> find= iDoSendService.findAll();
 			for(int i=0;i<find.size();i++) {
 				if(find.get(i).getInAll().getProcessStatus().equals(ProcessStatus.COMPLETE)&&find.get(i).getInin().equals(InIn.NO)) {
-					System.out.println(find.get(i).getInAll().getProcessStatus());
+					//System.out.println(find.get(i).getInAll().getProcessStatus());
 					find.get(i).setInin(InIn.YES);
 					iDoSendService.save(find.get(i));
 					Iterator<InDetailed> getd=find.get(i).getInAll().getInDetaileds().iterator();//获取详细表
@@ -115,6 +115,13 @@ public class InController {
 						stockService.save(stock);
 					}
 				}
+				
+//				if(find.get(i).getInAll().getProcessStatus().equals(ProcessStatus.CANCEL)&&find.get(i).getInin().equals(InIn.NO)) {
+//					//System.out.println(find.get(i).getInAll().getProcessStatus());
+//					find.get(i).setInin(InIn.YES);
+//				
+//					iDoSendService.save(find.get(i));
+//				}
 				
 			}
 			return new ExtAjaxResponse(true,"添加成功");

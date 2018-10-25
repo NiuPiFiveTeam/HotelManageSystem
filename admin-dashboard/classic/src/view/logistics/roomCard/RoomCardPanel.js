@@ -17,6 +17,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCardPanel', {
             xtype: 'gridpanel',
             cls: 'user-grid',
             title: '遗漏物品管理',
+            id:"Lose",
             bind: '{roomCardContent}',
             scrollable: false,
             columns: [
@@ -28,7 +29,7 @@ Ext.define('Admin.view.logistics.roomClean.RoomCardPanel', {
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'goodsGetNo',  text: '领取人身份证号', align:'center',flex: 1,},
                 {xtype: 'gridcolumn',cls: 'content-column',dataIndex: 'goodsGetPhone',  text: '领取人电话号码', align:'center',flex: 1,},
                 {xtype: 'actioncolumn',cls: 'content-column', width: 150,dataIndex: 'bool',text: '领取操作',align:'center',
-                items: [{xtype: 'button',handler: 'onOutCleanButton',tooltip : '退房清洁', //iconCls: 'x-fa fa-close'	,
+                items: [{xtype: 'button',handler: 'getGoods',tooltip : '退房清洁', //iconCls: 'x-fa fa-close'	,
                         getClass : function (v, metadata, r, rowIndex, colIndex, store) {
                         var goodsGet = r.data.goodsGet;
                         if(goodsGet == ''){

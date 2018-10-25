@@ -6,7 +6,7 @@
     //viewModel: {type: 'orderlist'},	//viewModel：配置Stote数据源。多个视图共享Store。
     
      controller: 'roomCardViewController',
-    // viewModel: {type: 'roomCardViewModel'},
+     viewModel: {type: 'roomCardViewModel'},
     	
     layout: 'fit',
     items: [{xtype:'roomCardPanel'}]

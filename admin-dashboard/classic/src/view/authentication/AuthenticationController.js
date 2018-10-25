@@ -464,7 +464,7 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
                                                 leaf: true,
                                             },
                                             {
-                                                text: '房卡管理',
+                                                text: '遗漏物品管理',
                                                 iconCls: 'x-fa fa-credit-card',
                                                 viewType: 'roomCard',
                                                 leaf: true
