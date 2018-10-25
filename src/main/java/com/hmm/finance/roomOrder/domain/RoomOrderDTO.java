@@ -20,7 +20,14 @@ public class RoomOrderDTO {
 	private Long bookPhone;//预定号码, 无
 	private String remark;//备注
 	private Float totalIncome;//总收入(含押金)
-	private Float realIncome;//实际收入
+	private Float shouldIncome;//实际收入
+	private Float realIncome;
+	public Float getRealIncome() {
+		return realIncome;
+	}
+	public void setRealIncome(Float realIncome) {
+		this.realIncome = realIncome;
+	}
 	private RoomOrderStatus roomOrderStatus;
 	public Long getBookRoomNo() {
 		return bookRoomNo;
@@ -57,9 +64,7 @@ public class RoomOrderDTO {
 	public Float getTotalIncome() {
 		return totalIncome;
 	}
-	public Float getRealIncome() {
-		return realIncome;
-	}
+
 	public RoomOrderStatus getRoomOrderStatus() {
 		return roomOrderStatus;
 	}
@@ -96,8 +101,12 @@ public class RoomOrderDTO {
 	public void setTotalIncome(Float totalIncome) {
 		this.totalIncome = totalIncome;
 	}
-	public void setRealIncome(Float realIncome) {
-		this.realIncome = realIncome;
+
+	public Float getShouldIncome() {
+		return shouldIncome;
+	}
+	public void setShouldIncome(Float shouldIncome) {
+		this.shouldIncome = shouldIncome;
 	}
 	public void setRoomOrderStatus(RoomOrderStatus roomOrderStatus) {
 		this.roomOrderStatus = roomOrderStatus;

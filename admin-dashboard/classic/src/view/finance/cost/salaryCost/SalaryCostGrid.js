@@ -55,7 +55,9 @@ Ext.define('Admin.view.finance.cost.salaryCost.SalaryCostGrid', {
                 flex:1
             },{ 
             	header: '实发工资' ,
-                dataIndex: 'realwage',
+                renderer:function(value, metaData, record){
+                        return record.get('basicwage') + record.get('overtimefee') + record.get('allowance');
+                },
                 flex:1
             },{ 
                 header: '日期' ,

@@ -65,16 +65,12 @@ Ext.define('Admin.view.finance.income.RoomOrderGrid', {
                 dataIndex:'bookGuest',
                 flex:1
             },{
-                header:'预定号码',
-                dataIndex:'bookPhone',
+                header:'应收',
+                dataIndex:'totalIncome',
                 flex:1
             },{
                 header:'实际收入',
                 dataIndex:'realIncome',
-                flex:1
-            },{
-                header:'订单总收入',
-                dataIndex:'totalIncome',
                 flex:1
             },{
                 header:'备注',
