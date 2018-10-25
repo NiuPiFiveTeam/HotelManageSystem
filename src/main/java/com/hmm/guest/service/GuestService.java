@@ -12,6 +12,7 @@ import com.hmm.guest.dto.GuestDto;
 import com.hmm.guest.dto.GuestInfoDto;
 import com.hmm.guest.entity.Guest;
 import com.hmm.guest.repository.GuestRepository;
+import com.hmm.guest.util.GuestState;
 import com.hmm.logistics.roomClean.entity.RoomClean;
 
 @Service
@@ -43,5 +44,23 @@ public class GuestService implements IGuestService {
 	@Override
 	public Page<GuestDto> findAll(Pageable pageable) {
 		return guestRepository.findGuestInfo(pageable);
+	}
+
+	@Override
+	public List<Guest> findGuestByRoomNo(String roomNo) {
+		// TODO Auto-generated method stub
+		return guestRepository.findGuestByRoomNo(roomNo);
+	}
+
+	@Override
+	public Page<GuestDto> findAllVipGuest(Pageable pageable) {
+		// TODO Auto-generated method stub
+		return guestRepository.findVipGuestInfo(GuestState.MEMBER,GuestState.STARMEMBER,pageable);
+	}
+
+	@Override
+	public Page<GuestDto> findAllCheckInGuest(Pageable pageable) {
+		// TODO Auto-generated method stub
+		return guestRepository.findAllCheckInGuest(pageable);
 	}
 }

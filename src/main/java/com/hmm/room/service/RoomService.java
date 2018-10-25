@@ -43,4 +43,12 @@ public class RoomService implements IRoomService {
 		
 		return roomRepository.findAll();
 	}
+
+
+	@Override
+	public void changeCheckOutRoomStatus(String roomNo) {
+		Room room = roomRepository.findRoomByRoomNo(roomNo);
+		room.setState(RoomState.NEEDCLEAN);
+		roomRepository.save(room);
+	}
 }

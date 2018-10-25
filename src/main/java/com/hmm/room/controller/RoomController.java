@@ -200,9 +200,9 @@ public class RoomController {
 						if(room.getState() == RoomState.CHECKIN) {
 							roomDto.setState(1);  //表示正常入住状态
 						}else if(room.getState() == RoomState.NEEDCLEAN){
-							roomDto.setState(2);  //表示需要清洁状态
+							roomDto.setState(3);  //表示需要清洁状态
 						}else if(room.getState() == RoomState.NEED_DAILY_NECESSITIES){
-							roomDto.setState(3);  //表示需要日用品状态
+							roomDto.setState(2);  //表示需要日用品状态
 						}
 						if (room.getType() == RoomType.SINGLEROOM) {  //说明是单人房
 							roomDto.setType(1);
@@ -274,6 +274,21 @@ public class RoomController {
 		return dailyNecessaryList;
 	}
 	
+	
+	@RequestMapping("/changeCheckOutRoomStatus")
+	public @ResponseBody ExtAjaxResponse changeCheckOutRoomStatus(String roomNo){
+		
+		roomService.changeCheckOutRoomStatus(roomNo); //修改房间状态为需要清洁
+		List<Guest> guests = guestService.findGuestByRoomNo(roomNo);
+		for (Guest guest : guests) {
+			guest.setRoom(null);
+			System.out.println(guest);
+			guestService.save(guest);
+		}
+		return new ExtAjaxResponse(true);
+		
+	}
+		
 	
 	
 }

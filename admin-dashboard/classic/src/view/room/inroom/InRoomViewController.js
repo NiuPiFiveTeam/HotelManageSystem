@@ -22,6 +22,23 @@ Ext.define('Admin.view.room.inroom.InRoomViewController', {
 
 });
 
+function changeCheckOutColor(type,currentRows) {
+    if(type=="return"){
+        document.getElementById('CheckOutreturnIcon').src="classic/resources/images/returnblue.png";
+    }else if(type=="delete"){
+        document.getElementById('deleteGuest'+currentRows).src="classic/resources/images/deleteblue.png";
+    }
+}
+
+
+function changeCheckOutblackColor(type,currentRows) {
+    console.log(123223);
+    if(type=="return"){
+        document.getElementById('CheckOutreturnIcon').src="classic/resources/images/return.png";
+    }else if(type=="delete"){
+        document.getElementById('deleteGuest'+currentRows).src="classic/resources/images/deleteGuest.png";
+    }
+}
 
 /** 给Room添加边框，显示选中状态 */
 function addBorder(roomId){
@@ -56,4 +73,32 @@ function loadAllRoom(id){
     console.log(room);
     room.setStore(store);
     room.store.load();
+}
+
+function submitOverOrder(){
+    let submitRoomNo = document.getElementById('CheckOutselectRoomNo').innerText.substring(0,3);
+    let bookRoomNoSubmit = document.getElementById('CheckOutbookRoomNo').innerText;
+    Ext.Ajax.request({			
+        url : '/roomOrder/overOrder',
+        //从数据库中请求数据，动态获取items中的数据			
+        params : {
+            'bookRoomNo':bookRoomNoSubmit,
+        },   
+        method : 'Get',			
+        success : function(result1) {
+            Ext.MessageBox.alert('成功提示',"退房成功");
+            returnCheckOutRoomList();
+            Ext.Ajax.request({			
+                url : '/room/changeCheckOutRoomStatus',
+                //从数据库中请求数据，动态获取items中的数据			
+                params : {
+                    'roomNo':submitRoomNo,
+                },   
+                method : 'Get',			
+                success : function(result1) {
+                    Ext.MessageBox.alert('成功提示',"哈哈哈");
+                }
+            });
+        }
+    });
 }

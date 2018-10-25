@@ -13,4 +13,6 @@ public interface IRoomService {
 	
 	Iterable<Room> findAllRoom();
 
+	void changeCheckOutRoomStatus(String roomNo);
+
 }
