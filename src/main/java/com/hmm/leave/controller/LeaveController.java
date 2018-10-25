@@ -128,13 +128,27 @@ public class LeaveController
 	{
 		Page<LeaveEmpDTO> page;
 		String userId = SessionUtil.getUserName(session);
-		if(userId!=null) {
-			leaveQueryDTO.setUserId(SessionUtil.getUserName(session));
-			page = leaveService.findAll(LeaveQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
+		if(null != userId) {
+			List<Group> groupList = identityService.createGroupQuery().groupMember(userId).list();
+	        String[] groupNames = new String[groupList.size()];
+	        for (int i = 0; i < groupNames.length; i++) {
+	            groupNames[i] = groupList.get(i).getName();
+	        }
+	        
+	        String groupName = ArrayUtils.toString(groupNames);
+	        
+			if(groupName.indexOf("Manager")!= -1 || groupName.indexOf("Admin")!= -1) {
+				page = new PageImpl<LeaveEmpDTO>(new ArrayList<LeaveEmpDTO>(),pageable.getPageable(),0);
+				
+			}else {
+				leaveQueryDTO.setUserId(SessionUtil.getUserName(session));
+				page = leaveService.findAll(LeaveQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
+			}
+			return page;
 		}else {
-			page = new PageImpl<LeaveEmpDTO>(new ArrayList<LeaveEmpDTO>(),pageable.getPageable(),0);
+			return null;
 		}
-		return page;
+		
     }
 	/*-------------------------------------流程引擎web层------------------------------------------*/
 	

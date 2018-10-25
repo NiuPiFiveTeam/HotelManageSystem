@@ -41,7 +41,7 @@ Ext.define('Admin.view.employ.EmployGridPanel' , {
                         renderer: function(value) {
                             if(value==null){
                                 return "<img src='/resources/images/user-profile/" + "2_.png" + "' alt='Profile Pic' height='40px' width='40px'>";
-                            }else if(value==" "){
+                            }else if(value==""){
                                 return "<img src='/resources/images/user-profile/" + "2_.png" + "' alt='Profile Pic' height='40px' width='40px'>";
                             }else{
                                 return "<img src='/resources/images/employee/" + value + "' alt='Profile Pic' height='40px' width='40px'>";

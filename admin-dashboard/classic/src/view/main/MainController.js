@@ -164,11 +164,15 @@ Ext.define('Admin.view.main.MainController', {
                 var json = Ext.util.JSON.decode(response.responseText);
                 if(json.success){
 
-                    Ext.getCmp('loginUserName').setText(json.map.group + "   "+json.map.userName);
-                    me.redirectTo('dashboard',true);
+                    Ext.getCmp('loginUserName').setText(json.map.group);
+                    Ext.getCmp('loginUserName').setText(json.map.userName);
                     var image = json.map.image;
-                    var src = 'resources/images/employee/' + image;
-                    Ext.getCmp('empimage').setSrc(src);
+                    if(image!=null||image!=""){
+                        var src = 'resources/images/employee/' + image;
+                        Ext.getCmp('empimage').setSrc(src);
+                    }        
+                    me.redirectTo('dashboard',true);
+                    
                 }else{
                     //Ext.Msg.alert('未登入', json.msg);
                     me.redirectTo('login',true);

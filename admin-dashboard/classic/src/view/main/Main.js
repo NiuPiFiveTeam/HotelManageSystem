@@ -43,6 +43,12 @@
                     handler: 'onToggleNavigationSize'
                 },
                 '->',
+                {
+                    xtype: 'tbtext',
+                    text: '',
+                    id:'groupName',
+                    cls: 'top-user-name'
+                },
                 
                 {
                     xtype: 'tbtext',

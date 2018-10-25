@@ -13,7 +13,7 @@ Ext.define('Admin.view.employ.addEmp.AddPhotoWindow', {
     minWidth: 300,
     width: 500,
     scrollable: true,
-    title: 'Upload Window',
+    title: '上传头像',
     closable: true,
     constrain: true,
     defaultFocus: 'textfield',

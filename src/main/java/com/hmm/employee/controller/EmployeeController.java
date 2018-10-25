@@ -203,46 +203,51 @@ public class EmployeeController {
 	
 	
 	@RequestMapping("/file")
-	public ExtAjaxResponse FileUpload(@RequestParam("file") MultipartFile file,HttpServletRequest request, HttpServletResponse response) {
-		if(file.isEmpty()) {
-			return new ExtAjaxResponse(false,"文件为空");
-		}else {
-			String filename = file.getOriginalFilename();
-			String suffixName = filename.substring(filename.lastIndexOf("."));
-			String empNo = StringUtils.substringBefore(filename,"+");
-			Employee employee = employServiceImpl.findByEmpNo(empNo);
-			if(null != employee) {
-				String filetype = ".jpg" + ".jpeg" +".png";
-				if(filetype.indexOf(suffixName) != -1) {
-					String savePath  = request.getServletContext().getRealPath("/resources/images/employee/");
-					//String realPath = "/resources/images/employee/"+filename;
-					//System.out.println(savePath);
-					//System.out.println(realPath);
-					File dest = new File(savePath + filename);
-					if(!dest.getParentFile().exists()) {
-						dest.getParentFile().mkdirs();
+	public ExtAjaxResponse FileUpload(@RequestParam("file") MultipartFile file,HttpServletRequest request, HttpServletResponse response,HttpSession httpSession) {
+		String userName = SessionUtil.getUserName(httpSession);
+		if(null!=userName) {
+			if(file.isEmpty()) {
+				return new ExtAjaxResponse(false,"文件为空");
+			}else {
+				String filename = file.getOriginalFilename();
+				String suffixName = filename.substring(filename.lastIndexOf("."));
+				String empNo = StringUtils.substringBefore(filename,"+");
+				Employee employee = employServiceImpl.findByEmpNo(empNo);
+				if(null != employee) {
+					String filetype = ".jpg" + ".jpeg" +".png";
+					if(filetype.indexOf(suffixName) != -1) {
+						String savePath  = request.getServletContext().getRealPath("/resources/images/employee/");
+						//String realPath = "/resources/images/employee/"+filename;
+						//System.out.println(savePath);
+						//System.out.println(realPath);
+						File dest = new File(savePath + filename);
+						if(!dest.getParentFile().exists()) {
+							dest.getParentFile().mkdirs();
+						}
+						//String path2 = "C:/Users/Lenovo/git/HotelManageSystem/admin-dashboard/resources/images/employee/";
+						//File dest2 = new File(path2 + filename);
+						try {
+							employee.setEmpImage(filename);
+							file.transferTo(dest);
+							//file.transferTo(dest2);
+							employServiceImpl.save(employee);
+							return new ExtAjaxResponse(true,"上传成功");
+						} catch (IllegalStateException | IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							return new ExtAjaxResponse(false,"上传失败");
+						}
+						
+					}else {
+						return new ExtAjaxResponse(false,"文件格式不正确");
 					}
-					String path2 = "C:/Users/Lenovo/git/HotelManageSystem/admin-dashboard/resources/images/employee/";
-					File dest2 = new File(path2 + filename);
-					try {
-						employee.setEmpImage(filename);
-						file.transferTo(dest);
-						file.transferTo(dest2);
-						employServiceImpl.save(employee);
-						return new ExtAjaxResponse(true,"上传成功");
-					} catch (IllegalStateException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return new ExtAjaxResponse(false,"上传失败");
-					}
-					
 				}else {
 					return new ExtAjaxResponse(false,"文件格式不正确");
 				}
-			}else {
-				return new ExtAjaxResponse(false,"文件格式不正确");
-			}
 
+			}
+		}else {
+			return new ExtAjaxResponse(false,"未登入");
 		}
 	}
 	

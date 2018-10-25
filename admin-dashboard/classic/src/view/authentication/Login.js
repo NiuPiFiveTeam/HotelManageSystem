@@ -80,24 +80,7 @@ Ext.define('Admin.view.authentication.Login', {
                         }
                     }
                 },
-                {
-                    xtype: 'container',
-                    layout: 'hbox',
-                    items: [
-                        {
-                            xtype: 'checkboxfield',
-                            flex : 1,
-                            cls: 'form-panel-font-color rememberMeCheckbox',
-                            height: 30,
-                            bind: '{persist}',
-                            boxLabel: 'Remember me'
-                        },
-                        {
-                            xtype: 'box',
-                            html: '<a href="#passwordreset" class="link-forgot-password"> Forgot Password ?</a>'
-                        }
-                    ]
-                },
+                
                 {
                     xtype: 'button',
                     reference: 'loginButton',
