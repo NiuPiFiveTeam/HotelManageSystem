@@ -78,8 +78,15 @@ public class RoomOrderService implements IRoomOrderService{
 	}
 
 	@Override
-	public List<RoomOrder> findByRoomNo(String roomNo) {
-		return roomOrderRepository.findByRoomNo(Long.parseLong(roomNo));
+	public List<RoomOrderDTO> findByRoomNo(String roomNo) {
+		List<RoomOrder> a = roomOrderRepository.findByRoomNo(Long.parseLong(roomNo));
+		List <RoomOrderDTO> roomOrderDTOList = new ArrayList<>();
+		for(RoomOrder b : a) {
+			RoomOrderDTO roomOrderDTO = new RoomOrderDTO();
+			BeanUtils.copyProperties(b, roomOrderDTO);
+			roomOrderDTOList.add(roomOrderDTO);
+		}
+		return roomOrderDTOList;
 	}
 
 	@Override

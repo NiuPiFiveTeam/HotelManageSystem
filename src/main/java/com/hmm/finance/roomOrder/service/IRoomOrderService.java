@@ -17,7 +17,7 @@ public interface IRoomOrderService {
 
 	Page<RoomOrderDTO> findAll(Specification<RoomOrder> whereClause, Pageable pageable);
 
-	List<RoomOrder> findByRoomNo(String roomNo);
+	List<RoomOrderDTO> findByRoomNo(String roomNo);
 
 	void save2(String bookRoomNo, User user);
 }
