@@ -3,7 +3,15 @@ Ext.define('Admin.view.logistics.roomCard.RoomCardViewController', {
 	alias: 'controller.roomCardViewController',
 
 	add:function(toolbar,rowIndex, colIndex){
-		alert("123");
+		toolbar.up('panel').up('container').add(Ext.widget('loseGoodsAddWindow')).show();
+	},
+	getGoods:function(grid, rowIndex, colIndex){
+		var record = grid.getStore().getAt(rowIndex);
+		if (record) {
+			var win = grid.up('container').add(Ext.widget('loseGoodsAddWindow1'));
+			win.show();
+			win.down('form').getForm().loadRecord(record);
+		}
+		//toolbar.up('panel').up('container').add(Ext.widget('loseGoodsAddWindow1')).show();
 	}
-
 });

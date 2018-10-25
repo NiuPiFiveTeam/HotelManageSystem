@@ -14,6 +14,6 @@ Ext.define('Admin.model.logistics.roomCard.RoomCardModel', {
 	],
 	proxy: {
 		type: 'rest',
-		url: '/roomCard',
+		url: '/LoseGoods',
 	}
 });
