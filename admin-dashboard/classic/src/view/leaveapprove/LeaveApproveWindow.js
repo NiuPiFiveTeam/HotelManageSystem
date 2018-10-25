@@ -3,7 +3,7 @@
     alias: 'widget.leaveApproveWindow',
     autoShow: true,
     modal: true,
-
+    controller: 'leaveApproveViewController',
     layout: 'fit',
 
     width: 500,

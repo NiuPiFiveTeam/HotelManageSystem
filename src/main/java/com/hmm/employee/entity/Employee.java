@@ -21,6 +21,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hmm.Work.entity.Bcard;
 import com.hmm.Work.entity.Work;
 import com.hmm.calendars.entity.SchedulEvent;
 import com.hmm.department.entity.Department;
@@ -64,6 +65,8 @@ public class Employee {
 	private Department departmentes;
 	
 	private List<SchedulEvent> SchedulEventlist;
+	
+	private Set<Bcard> bcards;
 
 	
 	@Id
@@ -90,6 +93,11 @@ public class Employee {
 	public Set<Overtime> getOvertimes() {
 		return overtimes;
 	}
+	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
+	public Set<Bcard> getBcards() {
+		return bcards;
+	}
+
 	
 	@OneToMany(cascade=CascadeType.MERGE,mappedBy="employ",fetch=FetchType.LAZY)
 	public Set<Travel> getTravels() {
@@ -296,6 +304,11 @@ public class Employee {
 
 	public void setSchedulEventlist(List<SchedulEvent> schedulEventlist) {
 		SchedulEventlist = schedulEventlist;
+	}
+
+
+	public void setBcards(Set<Bcard> bcards) {
+		this.bcards = bcards;
 	}
 	
 }

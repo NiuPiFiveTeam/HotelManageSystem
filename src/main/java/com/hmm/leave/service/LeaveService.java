@@ -82,8 +82,9 @@ public class LeaveService implements ILeaveService {
 		Leave leave = leaveRepository.findById(leaveId).get();
 		if(leave!=null){
 			try {
-				processInstance = workflowService.startWorkflow(userId, "myProcess", leave.getId().toString(), variables);
+				processInstance = workflowService.startWorkflow(userId, "leave", leave.getId().toString(), variables);
 				leave.setProcessInstanceId(processInstance.getId());
+				leave.setProcessStatus(ProcessStatus.APPROVAL);
 				leave.setApplyTime(new Date());
 				leaveRepository.save(leave);
 			} catch (Exception e) {
@@ -170,7 +171,7 @@ public class LeaveService implements ILeaveService {
 	@Override
 	public Page<LeaveEmpDTO> findAll(Specification<Leave> whereClause, Pageable pageable) {
 		// TODO Auto-generated method stub
-		List<Leave> leaves = leaveRepository.findAll(whereClause);
+		Page<Leave> leaves = leaveRepository.findAll(whereClause,pageable);
 		List<LeaveEmpDTO> empDTOs = null;
 		if(null != leaves) {
 			empDTOs = new ArrayList<>();
@@ -185,7 +186,42 @@ public class LeaveService implements ILeaveService {
 			}
 		}
 		
-		return new PageImpl<LeaveEmpDTO>(empDTOs, pageable, null!=leaves?leaves.size():0);
+		return new PageImpl<LeaveEmpDTO>(empDTOs, pageable, null!=leaves?leaves.getTotalElements():0);
+	}
+
+	@Override
+	public float findTotalLeaveTimes(String userName) {
+		// TODO Auto-generated method stub
+		Float leaveTimes = leaveRepository.findTotalLeaveTimes(userName);
+		if(null != leaveTimes) {
+			return leaveTimes;
+		}else {
+			return 0;
+		}
+		 
+	}
+
+	public int findTatalPersonLeave() {
+		// TODO Auto-generated method stub
+		Integer leaveTimes = leaveRepository.findTatalPersonLeave();
+		if(null != leaveTimes) {
+			return leaveTimes;
+		}else {
+			return 0;
+		}
+		
+	}
+
+	@Override
+	public List<Map<Object, Object>> findleave(Integer year) {
+		// TODO Auto-generated method stub
+		return leaveRepository.findleave(year);
+	}
+
+	@Override
+	public List<Map<Object, Object>> findByyearAndOntudytimeleave(Integer year, String userName) {
+		// TODO Auto-generated method stub
+		return leaveRepository.findByyearAndOntudytimeleave(year, userName);
 	}
 
 	

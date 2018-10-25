@@ -2,7 +2,7 @@ Ext.define('Admin.view.travel.TravelTab', {
     extend: 'Ext.tab.Panel',
     xtype: 'travelTab',
     //controller: 'paiBanTabController',
-    controller: 'travelViewController',
+    //controller: 'travelTabController',
     requires: [
         'Ext.tab.Panel'
     ],

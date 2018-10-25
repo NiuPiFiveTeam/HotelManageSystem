@@ -19,6 +19,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hmm.activiti.domain.ProcessStatus;
 import com.hmm.employee.entity.Employee;
 
 @Entity
@@ -38,7 +39,10 @@ public class Work {
 	private String workDate;//打卡日期
 	private Employee employ;
 
+
 	
+	
+
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	public Long getWorkid() {

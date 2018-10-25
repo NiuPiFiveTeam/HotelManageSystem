@@ -18,7 +18,7 @@ public class WorkEmpDTO {
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
 	@DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
 	private Date offdutytime;//下班时间
-	private Float Overtime;//加班时长
+	private Float overtime;//加班时长
 	private Integer normal;//打卡状态(1.正常  2.迟到  3.缺卡 4.早退)
 	private Integer late;
 	private Integer lackCard;
@@ -59,12 +59,7 @@ public class WorkEmpDTO {
 	public void setOffdutytime(Date offdutytime) {
 		this.offdutytime = offdutytime;
 	}
-	public Float getOvertime() {
-		return Overtime;
-	}
-	public void setOvertime(Float overtime) {
-		Overtime = overtime;
-	}
+
 
 	public Integer getNormal() {
 		return normal;
@@ -113,6 +108,12 @@ public class WorkEmpDTO {
 	}
 	public void setCalendar(String calendar) {
 		this.calendar = calendar;
+	}
+	public Float getOvertime() {
+		return overtime;
+	}
+	public void setOvertime(Float overtime) {
+		this.overtime = overtime;
 	}
 	
 }

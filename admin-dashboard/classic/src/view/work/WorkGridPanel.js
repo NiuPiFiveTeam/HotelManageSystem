@@ -16,7 +16,17 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
         stripeRows:true //True来实现隔行换颜色
     },
 
-    //layout: 'fit',
+    listeners: {
+        render: function(){
+            var store = Ext.data.StoreManager.lookup('workStoreId')
+            store.load();
+            var requestType = "personal";     
+            Ext.apply(store.proxy.extraParams, {requestType:requestType});
+            store.load({params:{start:0, limit:5, page:1}});
+            }
+    },
+
+    //
     items:[{
 
         
@@ -24,8 +34,9 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
         layout:'hbox',
         items:[{
             xtype:'form',
+            reference:'workFormTal',
             layout:'hbox',
-            padding:'20 0 20 20',
+            padding:'20 0 20 0',
             listeners: {
                'render': function(form) {
                    form.getForm().load({  
@@ -44,8 +55,8 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'attenceTotalTime',//今天应该出勤
                 style:'background:#FAEBD7;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>本月应该出勤</p>"+
@@ -60,8 +71,8 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'exactlyTime',
                 style:'background:#E6E6FA;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>本月实际出勤</p>"+
@@ -75,8 +86,8 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'worktime',//今天应该出勤
                 style:'background:#FFF0F5;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>基本时长</p>"+
@@ -90,12 +101,27 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'overtime',//今天应该出勤
                 style:'background:#FFF0F5;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>加班时长</p>"+
                                 "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"小时"+"</p>";
+                            }
+                            
+                }
+            },{
+            //加班时长
+                xtype: 'displayfield',
+                name:'travelAttence',//今天应该出勤
+                style:'background:#FFF0F5;',
+                margin:'0 10 0 0',
+                width:110,
+                padding:'10 5 10 0',
+                renderer: function(value) {
+                            if(value!=null){
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>出差应补工资</p>"+
+                                "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"元"+"</p>";
                             }
                             
                 }
@@ -105,8 +131,8 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'totalLate',//今天应该出勤
                 style:'background:#FFF0F5;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>迟到次数</p>"+
@@ -120,8 +146,8 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'totalleaveEarly',//今天应该出勤
                 style:'background:#D3D3D3;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
                                 return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>早退次数</p>"+
@@ -135,11 +161,11 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 name:'totalCard',//今天应该出勤
                 style:'background:#98FB98;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
-                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>未打卡</p>"+
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>未补卡</p>"+
                                 "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"次"+"</p>";
                             }
                             
@@ -147,14 +173,14 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
             },{
                 //正常
                 xtype: 'displayfield',
-                name:'totalnormal',//今天应该出勤
+                name:'leaveTimes',//今天应该出勤
                 style:'background:#FFF5EE;',
                 margin:'0 10 0 0',
-                width:120,
-                padding:'10 10 10 0',
+                width:110   ,
+                padding:'10 5 10 0',
                 renderer: function(value) {
                             if(value!=null){
-                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>未补卡</p>"+
+                                return "<p style='text-align:center;font-size:16px;line-height:30px;color:black;'>请假次数</p>"+
                                 "<p style='text-align:center;font-size:12px;line-height:30px;color:red;'>"+value+"次"+"</p>";
                             }
                             
@@ -209,6 +235,7 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
         ]},{
         xtype: 'gridpanel',
         scrollable: true,
+        layout: 'fit',
         bind: '{workLists}',
         //scrollable: false,
         selModel: {type: 'checkboxmodel',checkOnly: true},//开启复选框
@@ -233,7 +260,12 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
 
 
             },
-            {    text:'加班时长' , flex:1 , align:'center' , dataIndex:'Overtime'},
+            {    text:'加班时长' , flex:1 , align:'center' , dataIndex:'overtime',
+                renderer:function(value){
+                    return value.toFixed(1);
+                 }
+
+            },
             {    text:'迟到' , flex:1 , align:'center' , dataIndex:'late',
                  renderer:function(value){
                     if(value == 1){
@@ -278,22 +310,23 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                         return value;
                     }
                     
-                 }},
-            {xtype: 'actioncolumn', flex:1 ,align:'center',text: '操作',
-                        items: [
-                            {xtype: 'button',iconCls: 'x-fa fa-pencil' ,text:"申请补卡",handler: 'onEditAttenceButton'},
-                        ]
-            }
-         
+            }}
+
         ],
         dockedItems:[{
+            xtype: 'pagingtoolbar',
+            dock: 'bottom',
+            itemId: 'EmployPaginationToolbar',
+            displayInfo: true,
+            bind: '{workLists}'
+            },{
             xtype:'toolbar',
             dock:'top',
             items:[
             {
                 xtype: 'datefield',
                 fieldLabel: '请选择时间',
-                format: 'Y-m-d H:i:s',
+                format: 'Y-m-d',
                 reference:'searchDataFieldValue2',
                 name: 'to_date'
             },'-',{
@@ -308,6 +341,12 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                 iconCls: 'fa fa-search-plus',
                 style:'background:#;',
                 handler: 'openSearchWindow' 
+            }, '-',{
+                xtype:'button',
+                text: '刷新统计',
+                iconCls: 'fa fa-search-plus',
+                style:'background:#;',
+                handler: 'workmonthrefresh' 
             },'->',{
                 xtype:'button',
                 text: '批量导出',

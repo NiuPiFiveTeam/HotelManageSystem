@@ -96,6 +96,7 @@ public class TravelServiceImpl implements TravelService {
 			try {
 				processInstance = workflowService.startWorkflow(userId, "Travel", travel.getTravelId().toString(), variables);
 				travel.setProcessInstanceId(processInstance.getId());
+				travel.setProcessStatus(ProcessStatus.APPROVAL);
 				travel.setApplyTime(new Date());
 				travelDao.save(travel);
 			} catch (Exception e) {
@@ -162,7 +163,7 @@ public class TravelServiceImpl implements TravelService {
 	@Override
 	public Page<TravelEmpDTO> findAllQueryDTO(Specification<Travel> whereClause, Pageable pageable) {
 		// TODO Auto-generated method stub
-		List<Travel> travels = travelDao.findAll(whereClause);
+		Page<Travel> travels = travelDao.findAll(whereClause,pageable);
 		List<TravelEmpDTO> empDTOs = null;
 		if(null != travels) {
 			empDTOs = new ArrayList<>();
@@ -177,7 +178,7 @@ public class TravelServiceImpl implements TravelService {
 			}
 		}
 		
-		return new PageImpl<TravelEmpDTO>(empDTOs, pageable, null!=travels?travels.size():0);
+		return new PageImpl<TravelEmpDTO>(empDTOs, pageable, null!=travels?travels.getTotalElements():0);
 	}
 
 	@Override
@@ -233,6 +234,52 @@ public class TravelServiceImpl implements TravelService {
 		}
 		
 	}
+
+	@Override
+	public float findTotalTravelAllowance(String userName) {
+		// TODO Auto-generated method stubif()
+		if(null != userName) {
+			Float allence = null;
+			allence = travelDao.findTotalTravelAllowance(userName);
+			if(null != allence) {
+				return allence;
+			}else {
+				return (float) 0.0;
+			}
+			
+			
+			 
+		}else {
+			return (float) 0.0;
+		}
+		
+	}
+
+	@Override
+	public Integer findTatalPersonTravel() {
+		// TODO Auto-generated method stub
+		Integer travel = travelDao.findTatalPersonTravel();
+		if(null != travel) {
+			return travel;
+		}else {
+			
+			return 0;
+		}
+	}
+
+	@Override
+	public List<Map<Object, Object>> findtravel(Integer year) {
+		// TODO Auto-generated method stub
+		return travelDao.findtravel(year);
+	}
+
+	@Override
+	public List<Map<Object, Object>> findByyearAndOntudytimetravel(Integer year, String userName) {
+		// TODO Auto-generated method stub
+		return travelDao.findByyearAndOntudytimetravel(year, userName);
+	}
+
+	
 	
 	
 	

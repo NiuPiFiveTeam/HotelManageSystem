@@ -1,5 +1,7 @@
 package com.hmm.leave.service;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -32,5 +34,14 @@ public interface ILeaveService {
 		
 		public void deleteAll(Long[] ids);
 		public Page<LeaveEmpDTO> findAll(Specification<Leave> whereClause, Pageable pageable);
+		
+		float findTotalLeaveTimes(String userName);
+		
+		//Integer findTatalPersonLeave();
+		public int findTatalPersonLeave();
+		
+		public List<Map<Object,Object>> findleave(Integer year);
+		
+		List<Map<Object,Object>> findByyearAndOntudytimeleave(Integer year ,String userName);//早退次数（当月）
 
 }

@@ -1,7 +1,7 @@
 Ext.define('Admin.view.leave.LeaveTab', {
     extend: 'Ext.tab.Panel',
     xtype: 'leaveTab',
-    controller: 'leaveViewController',
+ 	controller: 'leaveTabController',
     requires: [
         'Ext.tab.Panel'
     ],

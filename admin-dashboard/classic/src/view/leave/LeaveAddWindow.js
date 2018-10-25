@@ -1,7 +1,7 @@
 ﻿Ext.define('Admin.view.leave.LeaveAddWindow', {
     extend: 'Ext.window.Window',
     alias: 'widget.leaveAddWindow',
-    controller: 'leaveViewController',
+    //controller: 'leaveViewController',
     height: 350,
     minHeight: 350,
     minWidth: 300,

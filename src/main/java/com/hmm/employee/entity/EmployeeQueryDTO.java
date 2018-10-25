@@ -68,7 +68,7 @@ public class EmployeeQueryDTO {
 			public Predicate toPredicate(Root<Employee> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
 				List<Predicate> predicates = new ArrayList<>();
 				
-				if(null != employQueryDTO.getDeptName()) {
+				if(StringUtils.isNotBlank(employQueryDTO.getDeptName())) {
 					Join<Department, Employee> join = root.join("departmentes",JoinType.LEFT);
 					predicates.add(criteriaBuilder.like(join.get("deptName").as(String.class), 
 							"%" + employQueryDTO.getDeptName() + "%"));
@@ -76,17 +76,22 @@ public class EmployeeQueryDTO {
 					
 				}
 				
-				if(null != employQueryDTO.getEmpName()) {
+				if(StringUtils.isNotBlank(employQueryDTO.getEmpName())) {
 					predicates.add(criteriaBuilder.like(root.get("empName").as(String.class), 
 							"%" + employQueryDTO.getEmpName() + "%"));
 				}
 				
-				if(null != employQueryDTO.getEmpNo()) {
-					predicates.add(criteriaBuilder.like(root.get("empNo").as(String.class), 
+				if(StringUtils.isNotBlank(employQueryDTO.getEmpNo())) {
+					predicates.add(criteriaBuilder.equal(root.get("empNo").as(String.class), 
 							"%" + employQueryDTO.getEmpNo() + "%"));
 				}
 				
-				if(null != employQueryDTO.getUserName()) {
+				if(StringUtils.isNotBlank(employQueryDTO.getIdcard())) {
+					predicates.add(criteriaBuilder.equal(root.get("idcard").as(String.class), 
+							"%" + employQueryDTO.getIdcard() + "%"));
+				}
+				
+				if(StringUtils.isNotBlank(employQueryDTO.getUserName())) {
 					predicates.add(criteriaBuilder.like(root.get("userName").as(String.class), 
 							"%" + employQueryDTO.getUserName() + "%"));
 				}

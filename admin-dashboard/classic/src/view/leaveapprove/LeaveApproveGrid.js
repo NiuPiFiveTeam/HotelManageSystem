@@ -3,6 +3,8 @@
 	xtype:'leaveApproveGrid',
 	title: 'tiele',		//需要修改
 	iconCls: 'fa-arrow-circle-o-up',
+	controller: 'leaveApproveViewController',
+    viewModel : { type: 'leaveApproveViewModel'},
 	bind: '{leaveApproveStore}',//调用组件4
 	//align:'center' ,
 	columns: [{

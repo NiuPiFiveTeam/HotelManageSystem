@@ -9,8 +9,6 @@ Ext.define('Admin.view.employ.EmpTabController', {
     //     Ext.resumeLayouts(true);
     // },
 
-    onOpenPhotoButton:function(btn){
-    	btn.up('panel').up('panel').up('container').add(Ext.widget('addPhotoWindow')).show();
-    }
+    
     
 });

@@ -11,6 +11,7 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.hmm.department.entity.Department;
@@ -77,12 +78,12 @@ public class TravelQueryDTO {
 			
 				List<Predicate> predicate = new ArrayList<>();
 		
-				if (null!=travalQueryDTO.getApproval()) {
+				if (StringUtils.isNotBlank(travalQueryDTO.getApproval())) {
 					predicate.add(criteriaBuilder.equal(root.get("approval").as(String.class),
 							travalQueryDTO.getApproval()));
 				}
 				
-				if (null!=travalQueryDTO.getEmpNo()) {
+				if (StringUtils.isNotBlank(travalQueryDTO.getEmpNo())) {
 					predicate.add(criteriaBuilder.equal(root.get("empNo").as(String.class),
 							travalQueryDTO.getEmpNo()));
 				}
@@ -96,17 +97,17 @@ public class TravelQueryDTO {
 							travalQueryDTO.getTraEndTime()));
 				}
 				
-				if(travalQueryDTO.getEmpName()!= null) {
+				if(StringUtils.isNotBlank(travalQueryDTO.getEmpName())) {
 					Join<Travel, Employee> join = root.join("employ",JoinType.LEFT);
 					criteriaBuilder.like(join.get("empNo").as(String.class), "%" + travalQueryDTO.getEmpName() + "%");
 				}
 				
-				if(travalQueryDTO.getEmpNo()!= null) {
+				if(StringUtils.isNotBlank(travalQueryDTO.getEmpNo())) {
 					Join<Travel, Employee> join = root.join("employ",JoinType.LEFT);
 					criteriaBuilder.equal(join.get("empNo").as(String.class), travalQueryDTO.getEmpNo());
 				}
 				
-				if(travalQueryDTO.getUserName()!= null) {
+				if(StringUtils.isNotBlank(travalQueryDTO.getUserName())) {
 					Join<Travel, Employee> join = root.join("employ",JoinType.LEFT);
 					criteriaBuilder.equal(join.get("userName").as(String.class), travalQueryDTO.getUserName());
 				}

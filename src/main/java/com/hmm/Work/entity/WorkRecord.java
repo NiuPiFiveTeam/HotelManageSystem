@@ -1,63 +1,71 @@
 package com.hmm.Work.entity;
 
 public class WorkRecord {
-	public  Integer totalLate;//
-	public  Integer totalleaveEarly;
-	public  Integer totalCard;//补卡
-	public  Integer totalnormal;//
-	public  Float exactlyTime;
-	public  Float attenceTotalTime;
-	public  Float worktime;
-	public  Float overtime;
-
-	public Float getAttenceTotalTime() {
-		return attenceTotalTime;
-	}
-	public void setAttenceTotalTime(Float attenceTotalTime) {
-		this.attenceTotalTime = attenceTotalTime;
-	}
-	public Float getWorktime() {
-		return worktime;
-	}
-	public void setWorktime(Float worktime) {
-		this.worktime = worktime;
-	}
-	public Float getOvertime() {
-		return overtime;
-	}
-	public void setOvertime(Float overtime) {
-		this.overtime = overtime;
-	}
-	public Integer getTotalLate() {
+	public  int totalLate;//
+	public  int totalleaveEarly;
+	public  int totalCard;//补卡
+	public  float exactlyTime;
+	public  float attenceTotalTime;
+	public  float worktime;
+	public  float overtime;
+	
+	public  float leaveTimes;
+	public  float travelAttence;
+	public int getTotalLate() {
 		return totalLate;
 	}
-	public void setTotalLate(Integer totalLate) {
+	public void setTotalLate(int totalLate) {
 		this.totalLate = totalLate;
 	}
-	public Integer getTotalleaveEarly() {
+	public int getTotalleaveEarly() {
 		return totalleaveEarly;
 	}
-	public void setTotalleaveEarly(Integer totalleaveEarly) {
+	public void setTotalleaveEarly(int totalleaveEarly) {
 		this.totalleaveEarly = totalleaveEarly;
 	}
-	public Integer getTotalCard() {
+	public int getTotalCard() {
 		return totalCard;
 	}
-	public void setTotalCard(Integer totalCard) {
+	public void setTotalCard(int totalCard) {
 		this.totalCard = totalCard;
 	}
-	public Integer getTotalnormal() {
-		return totalnormal;
-	}
-	public void setTotalnormal(Integer totalnormal) {
-		this.totalnormal = totalnormal;
-	}
-	public Float getExactlyTime() {
+	public float getExactlyTime() {
 		return exactlyTime;
 	}
-	public void setExactlyTime(Float exactlyTime) {
+	public void setExactlyTime(float exactlyTime) {
 		this.exactlyTime = exactlyTime;
 	}
+	public float getAttenceTotalTime() {
+		return attenceTotalTime;
+	}
+	public void setAttenceTotalTime(float attenceTotalTime) {
+		this.attenceTotalTime = attenceTotalTime;
+	}
+	public float getWorktime() {
+		return worktime;
+	}
+	public void setWorktime(float worktime) {
+		this.worktime = worktime;
+	}
+	public float getOvertime() {
+		return overtime;
+	}
+	public void setOvertime(float overtime) {
+		this.overtime = overtime;
+	}
+	public float getLeaveTimes() {
+		return leaveTimes;
+	}
+	public void setLeaveTimes(float leaveTimes) {
+		this.leaveTimes = leaveTimes;
+	}
+	public float getTravelAttence() {
+		return travelAttence;
+	}
+	public void setTravelAttence(float travelAttence) {
+		this.travelAttence = travelAttence;
+	}
+	
 
 	
 }

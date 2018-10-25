@@ -1,6 +1,8 @@
 ﻿Ext.define('Admin.view.leave.LeaveGridPanel', {
 	extend: 'Ext.panel.Panel',
 	xtype: 'leaveGridPanel',
+	controller: 'leaveViewController',
+	viewModel: {type: 'leaveViewModel'},
 	requires: [
 		'Ext.grid.Panel',
 		'Ext.toolbar.Paging',
