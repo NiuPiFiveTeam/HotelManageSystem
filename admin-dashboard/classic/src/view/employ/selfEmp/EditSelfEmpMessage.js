@@ -210,6 +210,7 @@ Ext.define('Admin.view.employ.selfEmp.EditSelfEmpMessage', {
                     fieldLabel: '离职时间',
                     name: 'endDate',
                     //labelWidth: 100,
+                    hidden:true,
                     allowBlank: true
                 },{
                   

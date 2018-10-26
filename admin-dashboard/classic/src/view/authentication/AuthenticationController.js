@@ -29,7 +29,7 @@ Ext.define('Admin.view.authentication.AuthenticationController', {
                             logintype: btn.up("form").getForm().findField("logintype").getValue(),
                         },
                         success: function(response1, options) {
-                            Ext.getCmp('loginUserName').setText(json.map.group);
+                            Ext.getCmp('groupName').setText(json.map.group);
                             Ext.getCmp('loginUserName').setText(json.map.userName);
                             var image = json.map.image;
                             if(image!=null||image!=""){

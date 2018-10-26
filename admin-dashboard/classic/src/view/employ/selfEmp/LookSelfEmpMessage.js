@@ -83,7 +83,7 @@ Ext.define('Admin.view.employ.selfEmp.LookSelfEmpMessage', {
                 allowBlank: true
             }, {
                 
-                fieldLabel: '部门',
+                fieldLabel: '员工部门',
                 name: 'deptName',           
                 editable : false,
                 allowBlank: true
@@ -91,12 +91,12 @@ Ext.define('Admin.view.employ.selfEmp.LookSelfEmpMessage', {
                 
             }, {
                 
-                fieldLabel: '性别',
+                fieldLabel: '员工性别',
                 name: 'empSex',
                 editable : false,
                 allowBlank: true
             }, {
-                fieldLabel: '类别',
+                fieldLabel: '员工类别',
                 name: 'jobtype',              
                 editable : false,
 
@@ -105,6 +105,7 @@ Ext.define('Admin.view.employ.selfEmp.LookSelfEmpMessage', {
                 fieldLabel: '离职时间',
                 name: 'endDate',
                 //labelWidth: 100,
+                hidden:true,
                 editable : false,
                 allowBlank: true
             }]
@@ -129,7 +130,7 @@ Ext.define('Admin.view.employ.selfEmp.LookSelfEmpMessage', {
                 allowBlank: true
             }, {
                 
-                fieldLabel: '职称',
+                fieldLabel: '员工职称',
                 name: 'groupName',
                 editable : false,
                 allowBlank: true

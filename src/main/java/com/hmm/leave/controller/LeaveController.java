@@ -132,14 +132,17 @@ public class LeaveController
 			List<Group> groupList = identityService.createGroupQuery().groupMember(userId).list();
 	        String[] groupNames = new String[groupList.size()];
 	        for (int i = 0; i < groupNames.length; i++) {
-	            groupNames[i] = groupList.get(i).getName();
+	            groupNames[i] = groupList.get(i).getId();
 	        }
 	        
 	        String groupName = ArrayUtils.toString(groupNames);
+	        System.out.println(groupName);
 	        
-			if(groupName.indexOf("Manager")!= -1 || groupName.indexOf("Admin")!= -1) {
-				page = new PageImpl<LeaveEmpDTO>(new ArrayList<LeaveEmpDTO>(),pageable.getPageable(),0);
+			if(groupName.indexOf("Manager")!= -1 ) {
+				page = leaveService.findAll(LeaveQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
 				
+			}else if(groupName.indexOf("Admin")!= -1){
+				page = leaveService.findAll(LeaveQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());
 			}else {
 				leaveQueryDTO.setUserId(SessionUtil.getUserName(session));
 				page = leaveService.findAll(LeaveQueryDTO.getWhereClause(leaveQueryDTO), pageable.getPageable());

@@ -272,14 +272,6 @@ public class workController {
 	public List<WorkEmpChart>  findWorkEmpcahrt(@RequestParam("year") Integer year ,HttpSession httpSession){
 		try {
 			
-			//Integer year = 2018;
-			//@RequestParam("year") Integer year ,
-			//List<Workchart> list = new ArrayList<>();
-			//List<Integer> existMonth = new ArrayList<>();
-//			 SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM-dd");
-//			 Date date = new Date();
-//			 Integer year = 2018;
-//			St 
 			String userName = SessionUtil.getUserName(httpSession);
 			
 			List<WorkEmpChart> workcharts = new ArrayList<>();

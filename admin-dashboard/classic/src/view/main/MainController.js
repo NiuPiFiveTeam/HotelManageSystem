@@ -164,7 +164,7 @@ Ext.define('Admin.view.main.MainController', {
                 var json = Ext.util.JSON.decode(response.responseText);
                 if(json.success){
 
-                    Ext.getCmp('loginUserName').setText(json.map.group);
+                    Ext.getCmp('groupName').setText(json.map.group);
                     Ext.getCmp('loginUserName').setText(json.map.userName);
                     var image = json.map.image;
                     if(image!=null||image!=""){

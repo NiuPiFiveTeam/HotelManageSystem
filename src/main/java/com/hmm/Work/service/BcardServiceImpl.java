@@ -100,8 +100,9 @@ public class BcardServiceImpl implements BcardService {
 	            if (workflow.getBusinessKey() == null) {
 	                continue;
 	            }
-	            
+	            System.out.println(businessKey);
 	            Bcard leave = bcardRepository.findById(businessKey).get();
+	           
 	            if(leave!=null){
 	            	BcardDTO leaveDTO = new BcardDTO();
 	            	BeanUtils.copyProperties(leave, leaveDTO);

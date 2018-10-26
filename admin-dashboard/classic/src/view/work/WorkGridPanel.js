@@ -273,7 +273,7 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                     }else if(value == 0){
                         return '<span style="color:green;">正常</span>';
                     }else{
-                        return value;
+                        return '<span style="color:red;">无状态</span>';
                     }
                     
                  }
@@ -287,7 +287,7 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                     }else if(value == 0){
                         return '<span style="color:green;">正常</span>';
                     }else{
-                        return value;
+                        return '<span style="color:red;">无状态</span>';
                     }
                     
                  }},
@@ -297,7 +297,7 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                     }else if(value == 0){
                         return '<span style="color:green;">正常</span>';
                     }else{
-                        return value;
+                        return '<span style="color:red;">无状态</span>';
                     }
                     
                  }},
@@ -307,7 +307,7 @@ Ext.define('Admin.view.work.WorkGridPanel' , {
                     }else if(value == 0){
                         return '<span style="color:red;">异常</span>';
                     }else{
-                        return value;
+                        return '<span style="color:red;">无状态</span>';
                     }
                     
             }}
